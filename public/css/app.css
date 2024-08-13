@@ -1,0 +1,36 @@
+/* public/css/app.css */
+body {
+    background-color: #121212; /* Cor de fundo escura */
+    color: #e0e0e0; /* Cor do texto clara */
+}
+
+.container {
+    background-color: #1e1e1e; /* Cor de fundo do container */
+    padding: 20px;
+    border-radius: 8px;
+}
+
+form {
+    background-color: #2c2c2c; /* Cor de fundo dos formulários */
+    padding: 20px;
+    border-radius: 8px;
+}
+
+input, select, textarea, button {
+    background-color: #333333; /* Cor de fundo dos campos de entrada */
+    color: #ffffff; /* Cor do texto dos campos de entrada */
+    border: 1px solid #444444; /* Cor da borda dos campos de entrada */
+}
+
+input::placeholder, select::placeholder, textarea::placeholder {
+    color: #888888; /* Cor do placeholder */
+}
+
+button {
+    background-color: #007bff; /* Cor do botão */
+    color: #ffffff; /* Cor do texto do botão */
+}
+
+button:hover {
+    background-color: #0056b3; /* Cor do botão ao passar o mouse */
+}
