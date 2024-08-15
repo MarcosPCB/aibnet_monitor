@@ -30,6 +30,8 @@ class Post extends Migration
             $table->boolean('is_image')->default(false);
             $table->boolean('is_external')->default(false);
             $table->string('mentions')->nullable();
+            $table->unsignedInteger('num_comments')->default(0);
+            $table->unsignedInteger('view_count')->default(0);
             $table->foreignId('internal_platform_id')->constrained('platform')->onDelete('cascade');
             $table->timestamps();
         });

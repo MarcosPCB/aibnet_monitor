@@ -7,8 +7,11 @@ use App\Models\Brand;
 use App\Models\MainBrand;
 use App\Models\ApiToken;
 use App\Models\Platform;
+use App\Models\Post;
+use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
 
 class DeltaController extends Controller
 {
@@ -189,6 +192,67 @@ class DeltaController extends Controller
         }
     }
 
+    // Explora o edge de posts, contabiliza mudanças nos posts do sistema e retorna os mais novos
+    private function postExplorer($posts, $count, $type, $platform_id) {
+        $newPosts = Array();
+        for($i = 0; $i < $count; $i++) {
+            if($type == 'instagram') {
+                $post = $posts[$i]->node;
+                $p = Post::where('internal_platform_id', $post->shortcode);
+
+                if($p) {
+                    $p->update([
+                        'likes' => $post->edge_liked_by->count,
+                        'num_comments' => $post->edge_media_to_comment->count
+                    ]);
+                    continue;
+                }
+
+                $tags = '';
+                if (preg_match_all('/#\w+\s/g', $input, $matches, PREG_PATTERN_ORDER)) {
+                    foreach ($matches[1] as $word) {
+                       $tags .= $word.', ';
+                    }
+                 }
+
+                $mentions = '';
+                if(count($post->edge_media_to_tagged_user->edges) > 0) {
+                    foreach($post->edge_media_to_tagged_user->edges as $mention) {
+                        $mentions .= $mention->node->user->username.', ';
+                    }
+                }
+
+                $p = Post::create([
+                    'platform_id' => $post->shortcode,
+                    'url' => 'https://www.instagram.com/p/'.$post->shortcode,
+                    'title' => '',
+                    'description' => $post->edge_media_to_caption->edges[0]->node->text,
+                    'tags' => $tags,
+                    'likes' => $post->edge_liked_by->count,
+                    'num_comments' => $post->edge_media_to_comment->count,
+                    'is_video' => $post->is_video,
+                    'is_image' => !$post->is_video,
+                    'is_external' => false,
+                    'item_url' => !$post->is_video ? $post->display_url : $post->video_url,
+                    'platform_id' => $platform_id,
+                    'mentions' => $mentions,
+                    'internal_platform_id' => $platform_id
+                ]);
+
+                // Converte o timestamp para uma instância de Carbon
+                $date = Carbon::createFromTimestamp($post->taken_at_timestamp);
+
+                // Verifica se a data está na semana atual
+                $isInCurrentWeek = $date->isSameWeek(Carbon::now());
+
+                if ($isInCurrentWeek)
+                    $newPosts[] = $p;
+            }
+        }
+
+        return $newPosts;
+    }
+
     /**
      * Função deltaBuilder para construir o Delta com base nos dados fornecidos.
      */
@@ -236,6 +300,21 @@ class DeltaController extends Controller
         // Lógica de captura com base no bitwise de 'capture'
         $platforms = Platform::where('brand_id', $brand->id)->get();
 
+        // Verifica se já existe um Delta da semana
+         $delta = Delta::where('main_brand_id', $mainBrand->id)
+         ->where('week', date('W'))
+         ->where('year', date('Y'))
+         ->first();
+
+         // Se não existir, cria
+         if(!$delta)
+            $delta = Delta::create([
+                'week' => date('W'),
+                'year' => date('Y'),
+                'main_brand_id' => $mainBrand->id
+            ]);
+
+
         foreach ($platforms as $platform) {
             // Lógica para capturar perfil
             if ($capture == 0) {
@@ -245,7 +324,16 @@ class DeltaController extends Controller
                     'platform' => $platform->type,
                     'api_id' => $apiToken->id]);
                 
-                $response = $socialFetcher->fetchProfile($sRequest);
+                $response = $socialFetcher->fetchProfile($sRequest)['data'];
+
+                $json = json_decode($response);
+
+                $platform->description = $json->biography;
+                $platform->num_followers = $json->edge_followed_by->count;
+                $platform->avatar_url = $json->profile_pic_url;
+                
+                $posts = postExplorer($platform->edge_owner_to_timeline_media->edges, $platform->edge_owner_to_timeline_media->count, $platform->type);
+
                 return $response;
             }
 

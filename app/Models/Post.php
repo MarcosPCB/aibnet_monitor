@@ -33,6 +33,8 @@ class Post extends Model
         'is_image',
         'is_external',
         'mentions',
+        'num_comments',
+        'view_count',
         'internal_platform_id'
     ];
 
