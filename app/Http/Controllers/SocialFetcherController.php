@@ -10,7 +10,7 @@ class SocialFetcherController extends Controller
 {
     private function updateApiTokenUsage($id, $usedAmount)
     {
-        $apiToken = ApiToken::where('id', $token)->first();
+        $apiToken = ApiToken::where('id', $id)->first();
         if ($apiToken) {
             $apiToken->limit_used += $usedAmount;
             $apiToken->last_used = date_format(now(), 'Y-m-d H:i:s');
@@ -20,16 +20,19 @@ class SocialFetcherController extends Controller
 
     public function fetchProfile(Request $request)
     {
-        $url = $request->input('url');
+        $id = $request->input('id');
+        $platform = $request->input('platform');
         $apiToken = $request->input('api_id');
+        
+        $apiTokenData = ApiToken::where('id', $apiToken)->first();
 
-        $response = Http::withoutVerifying()->withHeaders([
-            'Authorization' => 'Bearer ' . $apiToken,
-        ])->post($url, [
-            'api_token' => $apiToken,
-        ]);
+        $response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/user/detailed-info?username='.$id.'&token='.$apiTokenData->token);
 
-        $this->updateApiTokenUsage($apiToken, 1); // Exemplo de uso
+        $cost = 1;
+        if($platform == 'instagram')
+            $cost = 10;
+
+        $this->updateApiTokenUsage($apiToken, $cost);
 
         return $response->json();
     }
@@ -92,9 +95,7 @@ class SocialFetcherController extends Controller
         $apiTokenData = ApiToken::where('id', $apiToken)->first();
 
         if ($apiTokenData) {
-            $response = Http::withoutVerifying()->withHeaders([
-                'Authorization' => 'Bearer ' . $apiTokenData->token,
-            ])->get($apiTokenData->url.'customer/get-used-units?date='.date_format(now(), 'Y-m-d').'&token='.$apiTokenData->token);
+            $response = Http::withoutVerifying()->get($apiTokenData->url.'customer/get-used-units?date='.date_format(now(), 'Y-m-d').'&token='.$apiTokenData->token);
 
             return $response->json()['data'];
         }

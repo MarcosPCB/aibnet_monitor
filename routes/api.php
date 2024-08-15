@@ -73,6 +73,8 @@ Route::middleware(['auth:sanctum', 'isOperator'])->group(function () {
     Route::patch('/delta/{id}', [DeltaController::class, 'update']);
     Route::get('/delta/find', [DeltaController::class, 'findByDate']);
     Route::delete('/delta/delete/{id?}', [DeltaController::class, 'delete']);
+    Route::post('/delta/builder', [DeltaController::class, 'deltaBuilder']);
+    Route::get('/delta/find', [DeltaController::class, 'findDelta']);
 
     // Get routes
     Route::get('operator/{id}', [OperatorController::class, 'get'])->name('operator.get');

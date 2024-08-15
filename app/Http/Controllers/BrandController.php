@@ -17,7 +17,7 @@ class BrandController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'platforms' => 'required|array',
+            /*'platforms' => 'nullable|array',
             'platforms.*.type' => 'required|string',
             'platforms.*.url' => 'required|url',
             'platforms.*.platform_id' => 'required|string',
@@ -28,14 +28,15 @@ class BrandController extends Controller
             'platforms.*.num_followers' => 'nullable|integer',
             'platforms.*.num_likes' => 'nullable|integer',
             'platforms.*.capture_comments' => 'nullable|boolean',
-            'platforms.*.capture_users_from_comments' => 'nullable|boolean',
+            'platforms.*.capture_users_from_comments' => 'nullable|boolean',*/
         ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
-        $platforms = $request->input('platforms'); // Assumindo que as platforms são enviadas em um array
+
+        /*$platforms = $request->input('platforms'); // Assumindo que as platforms são enviadas em um array
         $platformExists = false;
 
         foreach ($platforms as $platformData) {
@@ -49,16 +50,16 @@ class BrandController extends Controller
 
         if ($platformExists) {
             return response()->json(['message' => 'One or more platforms already exist'], 409);
-        }
+        }*/
 
         // Criação da Brand, caso nenhuma platform já exista
         $brand = Brand::create($request->except('platforms'));
-
+        /*
         // Registro das platforms associadas
         foreach ($platforms as $platformData) {
             $platformData['brand_id'] = $brand->id; // Associa a platform à brand recém-criada
             Platform::create($platformData);
-        }
+        }*/
 
         return response()->json($brand, 201);
     }
