@@ -124,3 +124,19 @@ Route::middleware(['auth:sanctum', 'isOperatorOrAccountUser'])->group(function (
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum'); // Middleware para autenticação com Sanctum ou outro guard
+
+Route::get('/mock-complete-profile', function () {
+    $filePath = base_path('tests/Mocks/complete-profile.json');
+
+    // Verifica se o arquivo existe
+    if (File::exists($filePath)) {
+        // Lê o conteúdo do arquivo
+        $jsonContent = File::get($filePath);
+
+        // Retorna o conteúdo como JSON
+        return response()->json(json_decode($jsonContent), 200);
+    }
+
+    // Caso o arquivo não exista, retorna uma resposta de erro
+    return response()->json(['error' => 'Mock file not found'], 404);
+});

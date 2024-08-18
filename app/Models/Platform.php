@@ -21,6 +21,7 @@ class Platform extends Model
         'type',
         'url',
         'platform_id',
+        'platform_id2',
         'name',
         'avatar_url',
         'description',

@@ -12,6 +12,7 @@ use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
+use App\Http\Services\PostDecoder;
 
 class DeltaController extends Controller
 {
@@ -191,7 +192,8 @@ class DeltaController extends Controller
             ], 404);
         }
     }
-
+    
+    /*
     // Explora o edge de posts, contabiliza mudanças nos posts do sistema e retorna os mais novos
     private function postExplorer($posts, $count, $type, $platform_id) {
         $newPosts = Array();
@@ -209,7 +211,7 @@ class DeltaController extends Controller
                 }
 
                 $tags = '';
-                if (preg_match_all('/#\w+\s/g', $input, $matches, PREG_PATTERN_ORDER)) {
+                if (preg_match_all('/#\w+\s/', $input, $matches, PREG_PATTERN_ORDER)) {
                     foreach ($matches[1] as $word) {
                        $tags .= $word.', ';
                     }
@@ -252,6 +254,7 @@ class DeltaController extends Controller
 
         return $newPosts;
     }
+    */
 
     /**
      * Função deltaBuilder para construir o Delta com base nos dados fornecidos.
@@ -314,6 +317,8 @@ class DeltaController extends Controller
                 'main_brand_id' => $mainBrand->id
             ]);
 
+        $decoder = new PostDecoder();
+
 
         foreach ($platforms as $platform) {
             // Lógica para capturar perfil
@@ -322,29 +327,71 @@ class DeltaController extends Controller
                     'POST',
                     ['id' => $platform->platform_id,
                     'platform' => $platform->type,
+                    'type' => 'complete',
                     'api_id' => $apiToken->id]);
                 
-                $response = $socialFetcher->fetchProfile($sRequest)['data'];
+                $response = $socialFetcher->fetchProfile($sRequest);
 
-                $json = json_decode($response);
+                $json = (object) $response;
+                $json = $json->data;
 
                 $platform->description = $json->biography;
                 $platform->num_followers = $json->edge_followed_by->count;
                 $platform->avatar_url = $json->profile_pic_url;
-                
-                $posts = postExplorer($platform->edge_owner_to_timeline_media->edges, $platform->edge_owner_to_timeline_media->count, $platform->type);
 
-                return $response;
+                $posts = $decoder->instagramDecoder($json->edge_owner_to_timeline_media, 'month');
+
+                // Lógica para capturar comments
+                if ($posts->count > 0) {
+                    foreach($posts->posts as $post) {
+                        $sRequest = Request::create('/',
+                            'POST',
+                            ['id' => $post->shortcode,
+                            'platform' => $platform->type,
+                            'comments_limit' => 50,
+                            'api_id' => $apiToken->id]);
+                        
+                        $response = $socialFetcher->fetchComments($sRequest);
+
+                        $json = (object) $response;
+                        $json = $json->data;
+                        $post->comments = $decoder->instagramCommentDecoder($json->edge_media_to_comment);
+                    }
+                }
+
+                return $posts;
             }
 
             // Lógica para capturar posts
             if ($capture & 1) {
-                app(SocialFetcherController::class)->fetchPosts($apiToken, $platform->url, $request->input('start_date'), $request->input('end_date'));
-            }
+                $sRequest = Request::create('/',
+                    'POST',
+                    ['id' => $platform->platform_id2,
+                    'platform' => $platform->type,
+                    'date_range' => 'week',
+                    'api_id' => $apiToken->id]);
 
-            // Lógica para capturar comments
-            if ($capture & 2) {
-                app(SocialFetcherController::class)->fetchComments($apiToken, $platform->url, $request->input('post_id'));
+                $response = $socialFetcher->fetchPosts($sRequest);
+
+                $json = $decoder->instagramDecoder($response, 'week');
+
+                 // Lógica para capturar comments
+                if ($capture & 2 && $json->count > 0) {
+                    foreach($json->posts as $post) {
+                        $sRequest = Request::create('/',
+                            'POST',
+                            ['id' => $post->shortcode,
+                            'platform' => $platform->type,
+                            'comments_limit' => 50,
+                            'api_id' => $apiToken->id]);
+                        
+                        $response = $socialFetcher->fetchComments($sRequest);
+                    }
+                }
+
+                //$json = json_decode($response);
+
+                return $json;
             }
         }
 

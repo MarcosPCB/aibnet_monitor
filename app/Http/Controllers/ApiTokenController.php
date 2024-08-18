@@ -8,6 +8,12 @@ use Carbon\Carbon;
 
 class ApiTokenController extends Controller
 {
+    public function checkResponse($response) {
+        $status = $response->status;
+
+        //switch
+    }
+
     public function create(Request $request)
     {
         $this->validate($request, [
@@ -53,6 +59,8 @@ class ApiTokenController extends Controller
     {
         $apiToken = ApiToken::findOrFail($id);
         $now = Carbon::now();
+
+        print_r($apiToken);
 
         switch ($apiToken->limit_type) {
             case 'daily':

@@ -5,11 +5,17 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Models\ApiToken;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\File;
 
 class SocialFetcherController extends Controller
 {
     private function updateApiTokenUsage($id, $usedAmount)
     {
+        $api = new ApiTokenController();
+        //$api->restartLimit(Request::create('/', 'POST', ['id' => $id]));
+
         $apiToken = ApiToken::where('id', $id)->first();
         if ($apiToken) {
             $apiToken->limit_used += $usedAmount;
@@ -20,73 +26,152 @@ class SocialFetcherController extends Controller
 
     public function fetchProfile(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required|string',
+            'platform' => 'required|string',
+            'type' => 'required|in:complete,likes,basic',
+            'api_id' => 'required|exists:api_tokens,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
         $id = $request->input('id');
         $platform = $request->input('platform');
+        $type = $request->input('type');
         $apiToken = $request->input('api_id');
         
         $apiTokenData = ApiToken::where('id', $apiToken)->first();
 
-        $response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/user/detailed-info?username='.$id.'&token='.$apiTokenData->token);
+        $response = null;
+
+        switch($type) {
+            case 'complete':
+                //$response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/user/detailed-info?username='.$id.'&token='.$apiTokenData->token);
+                $filePath = base_path('tests/Mocks/complete-profile.json');
+
+                // Verifica se o arquivo existe
+                if (File::exists($filePath)) {
+                    // Lê o conteúdo do arquivo
+                    $jsonContent = File::get($filePath);
+
+                    // Retorna o conteúdo como JSON
+                    //return response()->json(json_decode($jsonContent), 200);
+                    $response = json_decode($jsonContent);
+                }
+                break;
+            
+            case 'likes':
+                $response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/user/followers?user_id='.$id.'&token='.$apiTokenData->token);
+                break;
+
+            case 'basic':
+                $response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/user/info?username='.$id.'&token='.$apiTokenData->token);
+                break;
+        }
 
         $cost = 1;
-        if($platform == 'instagram')
-            $cost = 10;
+        if($platform == 'instagram') {
 
-        $this->updateApiTokenUsage($apiToken, $cost);
+            switch($type) {
+                case 'complete':
+                    $cost = 10;
+                    break;
 
-        return $response->json();
+                case 'likes':
+                    $cost = 2;
+                    break;
+
+                case 'basic':
+                    $cost = 3;
+                    break;
+            }
+        }
+
+        //$this->updateApiTokenUsage($apiToken, $cost);
+
+        return $response;//->json();
     }
 
     public function fetchPosts(Request $request)
     {
-        $url = $request->input('url');
+        $id = $request->input('id');
+        $platform = $request->input('platform');
         $apiToken = $request->input('api_id');
         $dateRange = $request->input('date_range'); // Pode ser 'today', 'week', 'month', 'year'
         $startDate = $request->input('start_date'); // Data de início para intervalos específicos (formato: 'YYYY-MM-DD')
-        $endDate = $request->input('end_date'); // Data de fim para intervalos específicos (formato: 'YYYY-MM-DD')
 
-        // Valida se dateRange está presente e não usa start_date e end_date
-        $postData = [];
+        $apiTokenData = ApiToken::where('id', $apiToken)->first();
+
+        $timestamp = 0;
+        $depth = 1;
+        $chunk = 10;
+
         if ($dateRange) {
-            $postData['date_range'] = $dateRange;
-        } elseif ($startDate && $endDate) {
-            // Usa intervalo de datas se disponível
-            $postData['start_date'] = $startDate;
-            $postData['end_date'] = $endDate;
+            switch($dateRange) {
+                case 'today':
+                    $timestamp = Carbon::today()->timestamp;
+                    break;
+
+                case 'week':
+                    $timestamp = Carbon::now()->startOfWeek(Carbon::SUNDAY)->timestamp;
+                    $depth = 3;
+                    break;
+
+                case 'month':
+                    $timestamp = Carbon::now()->startOfMonth()->timestamp;
+                    $depth = 10;
+                    break;
+
+                case 'year':
+                    $timestamp = Carbon::now()->startOfYear()->timestamp;
+                    $depth = 100;
+                    $chunk = 12;
+                    break;
+            }
+        } elseif ($startDate) {
+            $timestamp = Carbon::parse($startDate)->timestamp;
+            $depth = 15;
         } else {
             return response()->json(['error' => 'Date range or specific date range must be provided'], 400);
         }
         
-        $response = Http::withoutVerifying()->withHeaders([
-            'Authorization' => 'Bearer ' . $apiToken,
-        ])->post($url, [
-            'api_token' => $apiToken,
-            'date_range' => $dateRange,
-        ]);
+        $response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/user/posts?user_id='.$id.'&token='.$apiTokenData->token.'&depth='.$depth.'&chunk_size='.$chunk.'&oldest_timestamp='.$timestamp);
 
-        $this->updateApiTokenUsage($apiToken, 1); // Exemplo de uso
+        //$cost = $response['data']['count'];
 
-        return $response->json();
+        //$this->updateApiTokenUsage($apiToken, $cost); // Exemplo de uso
+
+        return $response;
     }
 
     public function fetchComments(Request $request)
     {
-        $url = $request->input('url');
+        $id = $request->input('id');
+        $platform = $request->input('platform');
         $apiToken = $request->input('api_id');
-        $postId = $request->input('post_id');
-        $commentsLimit = $request->input('comments_limit');
+        $limit = $request->input('comments_limit');
+
+        $apiTokenData = ApiToken::where('id', $apiToken)->first();
         
-        $response = Http::withoutVerifying()->withHeaders([
-            'Authorization' => 'Bearer ' . $apiToken,
-        ])->post($url, [
-            'api_token' => $apiToken,
-            'post_id' => $postId,
-            'comments_limit' => $commentsLimit,
-        ]);
+        //$response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/post/details?code='.$id.'&token='.$apiTokenData->token.'&n_comments_to_fetch='.$limit);
 
-        $this->updateApiTokenUsage($apiToken, 1); // Exemplo de uso
+        $filePath = base_path('tests/Mocks/comments.json');
 
-        return $response->json();
+        // Verifica se o arquivo existe
+        if (File::exists($filePath)) {
+            // Lê o conteúdo do arquivo
+            $jsonContent = File::get($filePath);
+
+            $response = json_decode($jsonContent);
+        }
+
+        //$this->updateApiTokenUsage($apiToken, 1); // Exemplo de uso
+
+        return $response;//->json();
     }
 
     public function getLimit(Request $request)
