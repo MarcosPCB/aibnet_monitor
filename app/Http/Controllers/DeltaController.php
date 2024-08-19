@@ -251,8 +251,6 @@ class DeltaController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'brand_id' => 'required|exists:brand,id',
-            'is_opponent' => 'required|boolean',
-            'capture' => 'required|integer',
         ]);
 
         if ($validator->fails()) {
@@ -260,8 +258,6 @@ class DeltaController extends Controller
                 'errors' => $validator->errors()
             ], 422);
         }
-
-        $capture = $request->input('capture');
 
         // Busca as informações de Brand
         $brand = Brand::findOrFail($request->input('brand_id'));
@@ -406,8 +402,6 @@ class DeltaController extends Controller
 
         $delta->save();
 
-        return $deltaWeek;
-
-        return response()->json(['message' => 'Delta construído com sucesso!'], 200);
+        return response()->json($deltaWeek, 200);
     }
 }

@@ -52,6 +52,39 @@ class MainBrandController extends Controller
         return response()->json($mainBrand, 200);
     }
 
+    public function buildDelta(Request $request, $id) {
+        $mainBrand = MainBrand::findOrFail($id);
+
+        $primary = $mainBrand->primaryBrand()->first();
+        $opponents = $mainBrand->opponents()->get();
+
+        $delta = new DeltaController();
+
+        $sRequest = Request::create('/', 'POST', [
+            'brand_id' => $primary->id,
+        ]);
+
+        $primaryJson = $delta->deltaBuilder($sRequest);
+
+        $opponentsJson = [];
+
+        if($opponents) {
+            foreach($opponents as $brand) {
+                $sRequest = Request::create('/', 'POST', [
+                    'brand_id' => $brand->id,
+                ]);
+        
+                $opponentsJson[] = $delta->deltaBuilder($sRequest);
+            }
+        }
+
+        $completeDelta = new \stdClass();
+        $completeDelta->primary_brand = $primaryJson;
+        $completeDelta->opponents = $opponentsJson;
+
+        return response()->json($completeDelta, 200);
+    }
+
     // Deleta uma MainBrand e suas associações
     public function delete($id)
     {
