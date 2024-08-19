@@ -20,9 +20,8 @@ class DeltaFactory extends Factory
         return [
             'week' => $this->faker->numberBetween(1, 52),
             'year' => $this->faker->year,
-            'main_brand_id' => MainBrand::factory(),
-            'primary_posts' => $this->faker->randomElements(['post1', 'post2', 'post3', 'post4'], 2),
-            'opponents_posts' => $this->faker->randomElements(['post5', 'post6', 'post7', 'post8'], 2),
+            'brand_id' => MainBrand::factory(),
+            'json' => $this->faker->randomElements(['post1', 'post2', 'post3', 'post4'], 2),
         ];
     }
 }

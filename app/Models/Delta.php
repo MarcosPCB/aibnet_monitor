@@ -14,17 +14,15 @@ class Delta extends Model
     protected $fillable = [
         'week',
         'year',
-        'main_brand_id',
-        'primary_posts',
-        'opponents_posts'
+        'brand_id',
+        'json'
     ];
 
     protected $casts = [
-        'primary_posts' => 'array',
-        'opponents_posts' => 'array',
+        'json' => 'json'
     ];
 
-    public function mainBrand(): BelongsTo {
-        return $this->belongsTo(MainBrand::class, 'main_brand');
+    public function brand(): BelongsTo {
+        return $this->belongsTo(Brand::class);
     }
 }

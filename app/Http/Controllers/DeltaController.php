@@ -23,11 +23,8 @@ class DeltaController extends Controller
         $validator = Validator::make($request->all(), [
             'week' => 'required|integer',
             'year' => 'required|integer',
-            'main_brand_id' => 'required|exists:main_brand,id',
-            'primary_posts' => 'array',
-            'primary_posts.*' => 'integer|exists:post,id',
-            'opponents_posts' => 'array',
-            'opponents_posts.*' => 'integer|exists:post,id',
+            'brand_id' => 'required|exists:brand,id',
+            'json' => 'json',
         ]);
 
         if ($validator->fails()) {
@@ -40,13 +37,11 @@ class DeltaController extends Controller
         $data = $request->only([
             'week',
             'year',
-            'main_brand_id',
-            'primary_posts',
-            'opponents_posts'
+            'brand_id',
+            'json',
         ]);
 
-        $data['primary_posts'] = json_encode($data['primary_posts']);
-        $data['opponents_posts'] = json_encode($data['opponents_posts']);
+        $data['json'] = json_encode($data['json']);
 
         // Cria o Delta
         $delta = Delta::create($data);
@@ -61,10 +56,7 @@ class DeltaController extends Controller
 
         // Valida os dados recebidos
         $validator = Validator::make($request->all(), [
-            'primary_posts' => 'array',
-            'primary_posts.*' => 'integer|exists:post,id',
-            'opponents_posts' => 'array',
-            'opponents_posts.*' => 'integer|exists:post,id',
+            'json' => 'json',
         ]);
 
         if ($validator->fails()) {
@@ -76,12 +68,8 @@ class DeltaController extends Controller
         // Atualiza os dados, mas não altera week e year
         $delta->update($request->except(['week', 'year']));
 
-        if ($request->has('primary_posts')) {
-            $delta->primary_posts = json_encode($request->input('primary_posts'));
-        }
-
-        if ($request->has('opponents_posts')) {
-            $delta->opponents_posts = json_encode($request->input('opponents_posts'));
+        if ($request->has('json')) {
+            $delta->primary_posts = json_encode($request->input('json'));
         }
 
         $delta->save();
@@ -125,7 +113,7 @@ class DeltaController extends Controller
         $validator = Validator::make($request->all(), [
             'week' => 'required|integer',
             'year' => 'required|integer',
-            'main_brand_id' => 'required|exists:main_brand,id',
+            'brand_id' => 'required|exists:brand,id',
         ]);
 
         if ($validator->fails()) {
@@ -136,7 +124,7 @@ class DeltaController extends Controller
 
         $deleted = Delta::where('week', $request->input('week'))
                         ->where('year', $request->input('year'))
-                        ->where('main_brand_id', $request->input('main_brand_id'))
+                        ->where('brand_id', $request->input('brand_id'))
                         ->delete();
 
         if ($deleted) {
@@ -151,7 +139,7 @@ class DeltaController extends Controller
     {
         // Validação dos dados fornecidos
         $request->validate([
-            'main_brand_id' => 'required|exists:main_brand,id',
+            'brand_id' => 'required|exists:brand,id',
             'use_current_week' => 'sometimes|boolean',
             'week' => 'required_without_all:use_current_week,date|integer',
             'year' => 'required_without_all:use_current_week,date|integer',
@@ -176,7 +164,7 @@ class DeltaController extends Controller
         }
 
         // Busca por um Delta com os parâmetros fornecidos
-        $delta = Delta::where('main_brand_id', $mainBrandId)
+        $delta = Delta::where('brand_id', $mainBrandId)
                       ->where('week', $week)
                       ->where('year', $year)
                       ->first();
@@ -262,7 +250,6 @@ class DeltaController extends Controller
     public function deltaBuilder(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'main_brand_id' => 'required|exists:main_brand,id',
             'brand_id' => 'required|exists:brand,id',
             'is_opponent' => 'required|boolean',
             'capture' => 'required|integer',
@@ -276,8 +263,7 @@ class DeltaController extends Controller
 
         $capture = $request->input('capture');
 
-        // Busca as informações da MainBrand e Brand
-        $mainBrand = MainBrand::findOrFail($request->input('main_brand_id'));
+        // Busca as informações de Brand
         $brand = Brand::findOrFail($request->input('brand_id'));
 
         // Avalia qual ApiToken pode ser usado (a lógica exata de escolha pode variar)
@@ -300,11 +286,10 @@ class DeltaController extends Controller
         // Instancia o controlador SocialFetcher
         $socialFetcher = new SocialFetcherController();
 
-        // Lógica de captura com base no bitwise de 'capture'
         $platforms = Platform::where('brand_id', $brand->id)->get();
 
         // Verifica se já existe um Delta da semana
-         $delta = Delta::where('main_brand_id', $mainBrand->id)
+         $delta = Delta::where('brand_id', $brand->id)
          ->where('week', date('W'))
          ->where('year', date('Y'))
          ->first();
@@ -314,89 +299,114 @@ class DeltaController extends Controller
             $delta = Delta::create([
                 'week' => date('W'),
                 'year' => date('Y'),
-                'main_brand_id' => $mainBrand->id
+                'brand_id' => $brand->id
             ]);
+
+        //Pega o delta da semana passada para comparar
+        $lastDelta = Delta::where('brand_id', $brand->id)
+        ->where('week', strval((intval(date('W')) - 1)))
+        ->where('year', date('Y'))
+        ->first();
 
         $decoder = new PostDecoder();
 
+        $deltaWeek = new \stdClass();
+        $deltaWeek->week = date('W');
+        $deltaWeek->year = date('Y');
+        $deltaWeek->brand_name = $brand->name;
+        $deltaWeek->platforms = [];
 
-        foreach ($platforms as $platform) {
-            // Lógica para capturar perfil
-            if ($capture == 0) {
-                $sRequest = Request::create('/',
-                    'POST',
-                    ['id' => $platform->platform_id,
-                    'platform' => $platform->type,
-                    'type' => 'complete',
-                    'api_id' => $apiToken->id]);
-                
-                $response = $socialFetcher->fetchProfile($sRequest);
+        for($i = 0; $i < count($platforms); $i++) {
+            $platform = $platforms[$i];
 
-                $json = (object) $response;
-                $json = $json->data;
+            // Lógica para capturar perfil e posts
+            $sRequest = Request::create('/',
+                'POST',
+                ['id' => $platform->platform_id,
+                'platform' => $platform->type,
+                'type' => 'complete',
+                'api_id' => $apiToken->id]);
+            
+            $response = $socialFetcher->fetchProfile($sRequest);  
 
-                $platform->description = $json->biography;
-                $platform->num_followers = $json->edge_followed_by->count;
-                $platform->avatar_url = $json->profile_pic_url;
+            $json = (object) $response;
+            $json = $json->data;
 
-                $posts = $decoder->instagramDecoder($json->edge_owner_to_timeline_media, 'month');
+            $platform->description = $json->biography;
+            $platform->num_followers = $json->edge_followed_by->count;
+            $platform->avatar_url = $json->profile_pic_url;
 
-                // Lógica para capturar comments
-                if ($posts->count > 0) {
-                    foreach($posts->posts as $post) {
-                        $sRequest = Request::create('/',
-                            'POST',
-                            ['id' => $post->shortcode,
-                            'platform' => $platform->type,
-                            'comments_limit' => 50,
-                            'api_id' => $apiToken->id]);
-                        
-                        $response = $socialFetcher->fetchComments($sRequest);
+            
+            $deltaWeek->platforms[] = new \stdClass();
+            $deltaWeek->platforms[$i]->id = $platform->id;
+            $deltaWeek->platforms[$i]->followers = $json->edge_followed_by->count;
+            $deltaWeek->platforms[$i]->total_platform_posts = $json->edge_owner_to_timeline_media->count;
 
-                        $json = (object) $response;
-                        $json = $json->data;
-                        $post->comments = $decoder->instagramCommentDecoder($json->edge_media_to_comment);
+            $postsDelta = 0;
+
+            // Só para saber se a diferença de posts de uma semana a outra é maior que 9
+            // Se for o caso, ele tem que chamar o fetchPosts
+            if($lastDelta) {
+                $lastJson =  (object) json_decode($lastDelta->json);
+                if($lastJson && isset($lastJson->platforms)) {
+                    $found = -1;
+                    for($j = 0; $j < count($lastJson->platforms); $j++) {
+                        if($lastJson->platforms[$j]->id == $platform->id) {
+                            $found = $j;
+                            break;
+                        }
                     }
-                }
 
-                return $posts;
+                    if($found != -1)
+                        $postsDelta = $deltaWeek->platforms[$i]->total_platform_posts - $lastJson->platforms[$found]->total_platform_posts;
+                }
             }
 
-            // Lógica para capturar posts
-            if ($capture & 1) {
+            if($postsDelta <= 9)
+                $posts = $decoder->instagramDecoder($json->edge_owner_to_timeline_media, 'edges', 'month');
+            else {
                 $sRequest = Request::create('/',
                     'POST',
                     ['id' => $platform->platform_id2,
                     'platform' => $platform->type,
                     'date_range' => 'week',
                     'api_id' => $apiToken->id]);
-
+                    
                 $response = $socialFetcher->fetchPosts($sRequest);
 
-                $json = $decoder->instagramDecoder($response, 'week');
-
-                 // Lógica para capturar comments
-                if ($capture & 2 && $json->count > 0) {
-                    foreach($json->posts as $post) {
-                        $sRequest = Request::create('/',
-                            'POST',
-                            ['id' => $post->shortcode,
-                            'platform' => $platform->type,
-                            'comments_limit' => 50,
-                            'api_id' => $apiToken->id]);
-                        
-                        $response = $socialFetcher->fetchComments($sRequest);
-                    }
-                }
-
-                //$json = json_decode($response);
-
-                return $json;
+                $json = (object) $response;
+                $json = $json->data;
+                $posts = $decoder->instagramDecoder($json->edge_owner_to_timeline_media, 'posts', 'none');
             }
+
+            // Lógica para capturar comments
+            if ($posts->count > 0) {
+                foreach($posts->posts as $post) {
+                    $sRequest = Request::create('/',
+                        'POST',
+                        ['id' => $post->shortcode,
+                        'platform' => $platform->type,
+                        'comments_limit' => 50,
+                        'api_id' => $apiToken->id]);
+                    
+                    $response = $socialFetcher->fetchComments($sRequest);
+
+                    $json = (object) $response;
+                    $json = $json->data;
+                    $post->comments = $decoder->instagramCommentDecoder($json->edge_media_to_comment);
+                }
+            }
+
+            $deltaWeek->platforms[$i]->week_posts = $posts;
         }
 
-        // Aqui você pode adicionar a lógica de processamento do Delta após as capturas
-        // e salvar o Delta no banco de dados, se necessário.
+        $delta->update([
+            'json' => json_encode($deltaWeek)
+        ]);
+
+        $delta->save();
+
+        return $deltaWeek;
 
         return response()->json(['message' => 'Delta construído com sucesso!'], 200);
     }

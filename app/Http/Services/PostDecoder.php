@@ -6,11 +6,16 @@ use Carbon\Carbon;
 
 class PostDecoder
 {
-    public function instagramDecoder($json, $cutTimestamp)
+    public function instagramDecoder($json, $nodeName, $cutTimestamp)
     {
         // Verifica se os dados estão no formato esperado
-        if (!isset($json->edges)) {
-            return null; // Retorna nulo caso o JSON não esteja no formato esperado
+
+        if($nodeName == 'edges') {
+            if (!isset($json->edges))
+                return null; // Retorna nulo caso o JSON não esteja no formato esperado
+        } else {
+            if (!isset($json->posts))
+                return null; // Retorna nulo caso o JSON não esteja no formato esperado
         }
 
         $timestamp = 0;
