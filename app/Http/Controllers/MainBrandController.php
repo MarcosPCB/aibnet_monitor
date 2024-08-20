@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MainBrand;
 use App\Models\Brand;
 use Illuminate\Http\Request;
+use App\Http\Services\LLMComm;
 
 class MainBrandController extends Controller
 {
@@ -16,7 +17,8 @@ class MainBrandController extends Controller
             'name' => 'required|string|max:255',
             'main_brand_id' => 'required|exists:brand,id',
             'opponents' => 'array',
-            'opponents.*' => 'exists:brand,id'
+            'opponents.*' => 'exists:brand,id',
+            'chat_model' => 'string'
         ]);
 
         // Criação da MainBrand
@@ -26,6 +28,7 @@ class MainBrandController extends Controller
             'follow_tags' => $request->follow_tags,
             'mentions' => $request->mentions,
             'past_stamp' => $request->past_stamp,
+            'chat_model' => $request->chat_model,
         ]);
 
         // Associar a Brand principal
@@ -64,7 +67,7 @@ class MainBrandController extends Controller
             'brand_id' => $primary->id,
         ]);
 
-        $primaryJson = $delta->deltaBuilder($sRequest);
+        $primaryJson = $delta->deltaBuilder($sRequest)->getData();
 
         $opponentsJson = [];
 
@@ -74,13 +77,17 @@ class MainBrandController extends Controller
                     'brand_id' => $brand->id,
                 ]);
         
-                $opponentsJson[] = $delta->deltaBuilder($sRequest);
+                $opponentsJson[] = $delta->deltaBuilder($sRequest)->getData();
             }
         }
 
         $completeDelta = new \stdClass();
         $completeDelta->primary_brand = $primaryJson;
         $completeDelta->opponents = $opponentsJson;
+
+        $llm = new LLMComm($id);
+
+        $llm->generateReport($completeDelta->primary_brand);
 
         return response()->json($completeDelta, 200);
     }

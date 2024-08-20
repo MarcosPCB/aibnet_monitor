@@ -16,6 +16,7 @@ class MainBrand extends Model
         'follow_tags',
         'mentions',
         'past_stamp',
+        'chat_model',
         'account_id'
     ];
 

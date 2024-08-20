@@ -121,6 +121,7 @@ Route::middleware(['auth:sanctum', 'isOperatorOrAccountUser'])->group(function (
      Route::get('account/{account_id}', [AccountController::class, 'get'])->name('account.get');
      Route::get('user/{id}/{account_id}', [UserController::class, 'get'])->name('user.get');
      Route::get('mainbrand/{id}/{account_id}', [MainBrandController::class, 'get'])->name('main-brand.get');
+     Route::get('mainbrand/weekly/{id}/{account_id}', [MainBrandController::class, 'buildDelta'])->name('main-brand.weekly');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum'); // Middleware para autenticação com Sanctum ou outro guard

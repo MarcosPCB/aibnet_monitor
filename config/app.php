@@ -2,6 +2,8 @@
 
 return [
 
+    'LLM_TOKEN' => env('LLM_TOKEN', 'valor_padrao'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Name
