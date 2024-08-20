@@ -87,9 +87,15 @@ class MainBrandController extends Controller
 
         $llm = new LLMComm($id);
 
-        $llm->generateReport($completeDelta->primary_brand);
+        //$report = $llm->generateReport($completeDelta->primary_brand);
+        $report = "report_{$completeDelta->primary_brand->week}_{$completeDelta->primary_brand->year}_{$completeDelta->primary_brand->brand_name}.txt";
 
-        return response()->json($completeDelta, 200);
+        $result = $llm->storeReport($completeDelta->primary_brand->brand_name, $report);
+
+        if($result)
+            return response()->json('Success', 200);
+
+        return response()->json('Internal error', 500);
     }
 
     // Deleta uma MainBrand e suas associações
