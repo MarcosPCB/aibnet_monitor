@@ -49,6 +49,9 @@ class LLMComm {
                 ]]
             ]));
 
+        if(isset($thread->error))
+            return null;
+
         $run = (object) json_decode(Http::withoutVerifying()->withHeaders([
             'Authorization' => 'Bearer '.config('app.LLM_TOKEN'),
             'Accept' => 'application/json',
@@ -56,6 +59,9 @@ class LLMComm {
             ])->post($this->threads_url.'/'.$thread->id.'/runs', [
                 'assistant_id' => $this->model->id
             ]));
+
+        if(isset($runs->error))
+            return null;
 
         $status = false;
 
@@ -77,6 +83,9 @@ class LLMComm {
                     'OpenAI-Beta' => 'assistants=v2'
                     ])->get($this->threads_url.'/'.$thread->id.'/runs'.'/'.$run_id));
 
+                if(isset($run->error))
+                    return null;
+
                 if($run->status == 'completed')
                     $status = true;
             }
@@ -90,6 +99,9 @@ class LLMComm {
             'Accept' => 'application/json',
             'OpenAI-Beta' => 'assistants=v2'
             ])->get($this->threads_url.'/'.$thread->id.'/messages?order=desc&run_id='.$run_id));
+
+        if(isset($messages->error))
+            return null;
 
         $text = $messages->data[0]->content[0]->text->value;
 
@@ -172,6 +184,9 @@ class LLMComm {
 
         //$md5 = Storage::md5($location);
 
+        if(isset($upload->error))
+            return null;
+
         $stream = Storage::readStream($location);
 
         if ($stream === false)
@@ -182,12 +197,18 @@ class LLMComm {
             ])->asMultipart()->attach('data', Storage::get($location), $fileName)
             ->post($this->upload_url.'/'.$upload->id.'/parts'));
 
+         if(isset($part->error))
+            return null;
+
         $complete = (object) json_decode(Http::withoutVerifying()->withHeaders([
             'Authorization' => 'Bearer '.config('app.LLM_TOKEN')
             ])->post($this->upload_url.'/'.$upload->id.'/complete', [
                 'part_ids' => [ $part->id ]
                 //'md5' => $md5
             ]));
+
+        if(isset($complete->error))
+            return null;
 
         if($complete->status == 'completed')
             return $complete;
@@ -213,12 +234,18 @@ class LLMComm {
                     'Accept' => 'application/json',
                     'OpenAI-Beta' => 'assistants=v2'
                     ])->get($this->vector_url.'?limit=100&after='.$after));
+
+                if(isset($vectors->error))
+                    return null;
             } else {
                 $vectors = (object) json_decode(Http::withoutVerifying()->withHeaders([
                     'Authorization' => 'Bearer '.config('app.LLM_TOKEN'),
                     'Accept' => 'application/json',
                     'OpenAI-Beta' => 'assistants=v2'
                     ])->get($this->vector_url.'?limit=100'));
+
+                if(isset($vectors->error))
+                    return null;
             }
 
             for($i = 0; $i < count($vectors->data); $i++) {
@@ -255,6 +282,9 @@ class LLMComm {
             ])->post($this->vector_url.'/'.$vector->id.'/files', [
                 'file_id' => $file->file->id
             ]));
+
+        if(isset($vector_file->error))
+            return null;
 
         if($vector_file->status != 'cancelled' && $vector_file->status != 'failed')
             return true;

@@ -55,7 +55,7 @@ class MainBrandController extends Controller
         return response()->json($mainBrand, 200);
     }
 
-    public function buildDelta(Request $request, $id) {
+    public function buildDelta($id) {
         $mainBrand = MainBrand::findOrFail($id);
 
         $primary = $mainBrand->primaryBrand()->first();
@@ -87,15 +87,21 @@ class MainBrandController extends Controller
 
         $llm = new LLMComm($id);
 
-        //$report = $llm->generateReport($completeDelta->primary_brand);
-        $report = "report_{$completeDelta->primary_brand->week}_{$completeDelta->primary_brand->year}_{$completeDelta->primary_brand->brand_name}.txt";
+        $report = $llm->generateReport($completeDelta->primary_brand);
+
+        if(!$report)
+            return response()->json([
+                'error' => 'report-generation'
+                ], 500);
 
         $result = $llm->storeReport($completeDelta->primary_brand->brand_name, $report);
 
-        if($result)
-            return response()->json('Success', 200);
+        if(!$result)
+            return response()->json([
+                'error' => 'report-store'
+                ], 500);
 
-        return response()->json('Internal error', 500);
+        return response()->json('Success', 200);
     }
 
     // Deleta uma MainBrand e suas associações

@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MainBrand extends Model
 {
@@ -24,7 +26,7 @@ class MainBrand extends Model
         return $this->belongsTo(Account::class);
     }
 
-    public function brands() {
+    public function brands(): BelongsToMany {
         return $this->belongsToMany(Brand::class, 'main_brand_brand')
                     ->withPivot('is_opponent')
                     ->withTimestamps();
