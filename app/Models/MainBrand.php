@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MainBrand extends Model
 {
@@ -38,5 +39,9 @@ class MainBrand extends Model
 
     public function primaryBrand() {
         return $this->brands()->wherePivot('is_opponent', false);
+    }
+
+    public function chats(): HasMany {
+        return $this->hasMany(Chat::class);
     }
 }

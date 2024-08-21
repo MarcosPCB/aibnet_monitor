@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ChatController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -15,6 +16,7 @@ use App\Http\Controllers\OperatorController;
 use App\Http\Controllers\DeltaController;
 use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\SocialFetcherController;
+use App\Http\Controllers\ChatLLMController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -122,6 +124,17 @@ Route::middleware(['auth:sanctum', 'isOperatorOrAccountUser'])->group(function (
      Route::get('user/{id}/{account_id}', [UserController::class, 'get'])->name('user.get');
      Route::get('mainbrand/{id}/{account_id}', [MainBrandController::class, 'get'])->name('main-brand.get');
      Route::get('mainbrand/weekly/{id}/{account_id}', [MainBrandController::class, 'buildDelta'])->name('main-brand.weekly');
+
+     // Chat
+     Route::prefix('chat')->group(function () {
+        Route::post('/create/{account_id}', [ChatLLMController::class,'create'])->name('chat.create');
+        Route::post('/create-run/{account_id}', [ChatLLMController::class,'createAndRun'])->name('chat.create-run');
+        Route::post('/add/text/{id}/{account_id}',[ChatLLMController::class,'addTextToThread'])->name('chat.add.text');
+        Route::patch('/add/{id}/{account_id}', [ChatLLMController::class,'addText'])->name('chat.add');
+        Route::patch('/add/thread/{id}/{account_id}', [ChatLLMController::class,'attachThread'])->name('chat.add.thread');
+        Route::get('/{id}/{account_id}', [ChatLLMController::class,'getText'])->name('chat.get');
+        Route::delete('/delete/{id}/{account_id}', [ChatLLMController::class, 'delete'])->name('chat.delete');
+     });
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum'); // Middleware para autenticação com Sanctum ou outro guard

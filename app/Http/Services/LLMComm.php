@@ -291,4 +291,79 @@ class LLMComm {
 
         return null;
     }
+
+    public function createThread($text) {
+        $thread = (object) json_decode(Http::withoutVerifying()->withHeaders([
+            'Authorization' => 'Bearer '.config('app.LLM_TOKEN'),
+            'Accept' => 'application/json',
+            'OpenAI-Beta' => 'assistants=v2'
+            ])->post($this->threads_url, [
+                'messages' => [[
+                    'role' => 'user',
+                    'content' => $text
+                ]]
+            ]));
+
+        if(isset($thread->error))
+            return null;
+
+        $data = new \stdClass();
+        $data->url = $this->threads_url;
+        $data->model = $this->model;
+        $data->thread = $thread;
+
+        return $data;
+    }
+
+    public function addMessage($text, $thread_id) {
+        $thread = (object) json_decode(Http::withoutVerifying()->withHeaders([
+            'Authorization' => 'Bearer '.config('app.LLM_TOKEN'),
+            'Accept' => 'application/json',
+            'OpenAI-Beta' => 'assistants=v2'
+            ])->post($this->threads_url.'/'.$thread_id.'/messages', [
+                'role' => 'user',
+                'content' => $text
+            ]));
+
+        print_r($thread);
+
+        if(isset($thread->error))
+            return null;
+
+        return true;
+    }
+
+    public function processString($input) {
+        // Separando os eventos e dados por linhas
+        $lines = explode("\n", $input);
+        $events = [];
+        $currentEvent = null;
+    
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line)) {
+                continue;
+            }
+    
+            // Identificando eventos
+            if (strpos($line, 'event:') === 0) {
+                $currentEvent = trim(substr($line, 6));
+            }
+    
+            // Identificando dados
+            if (strpos($line, 'data:') === 0) {
+                $data = trim(substr($line, 5));
+                if ($currentEvent) {
+                    // Convertendo o JSON em objeto
+                    $events[] = (object) [
+                        'event' => $currentEvent,
+                        'data' => (object) json_decode($data, true)
+                    ];
+                }
+                $currentEvent = null;
+            }
+        }
+    
+        return $events;
+    }
 }
