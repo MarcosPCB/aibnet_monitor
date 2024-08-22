@@ -19718,8 +19718,9 @@ function _addThread() {
           first_message = $('#add_thread_msg_id')[0].value;
           $('#add_thread_msg_id')[0].value = '';
           $('#add_thread_modal_id').modal('hide');
-          _context2.prev = 4;
-          _context2.next = 7;
+          disableButtons();
+          _context2.prev = 5;
+          _context2.next = 8;
           return fetch(api_url + 'chat/create-run/1', {
             method: 'POST',
             headers: {
@@ -19732,14 +19733,14 @@ function _addThread() {
               main_brand_id: 1
             })
           });
-        case 7:
+        case 8:
           response = _context2.sent;
           if (response.body) {
-            _context2.next = 10;
+            _context2.next = 11;
             break;
           }
           throw new Error('A resposta não contém um stream legível.');
-        case 10:
+        case 11:
           cleanDOM(msg_body);
           attachDOM(msg_body, bubble_user);
           addTextLastBubble(first_message);
@@ -19755,6 +19756,20 @@ function _addThread() {
             messageTemp += '...';
           } else messageTemp = first_message;
           chat_cards.children[1].children[0].children[0].children[0].innerHTML = messageTemp;
+          chat_cards.children[1].setAttribute('data-api-index', chat_cards.children.length - 2);
+          chat_cards.children[1].addEventListener('click', function (event) {
+            var btn = event.currentTarget;
+            var index = parseInt(btn.getAttribute('data-api-index'));
+            var thread = parseInt(btn.getAttribute('data-api-thread'));
+            btn.classList.add('active');
+            if (selected_thread != -1) {
+              var _len = chat_cards.children.length - 1;
+              chat_cards.children[_len - selected_thread].classList.remove('active');
+            }
+            selected_thread = index;
+            current_thread = thread;
+            buildChat();
+          });
           reader = response.body.getReader();
           decoder = new TextDecoder();
           processChunk = /*#__PURE__*/function () {
@@ -19792,6 +19807,7 @@ function _addThread() {
                     break;
                   case 16:
                     chat_cards.children[1].children[0].children[0].children[1].innerHTML = "chat: ".concat(current_thread);
+                    chat_cards.children[1].setAttribute('data-api-thread', current_thread);
                     thread_ids.push(current_thread);
                     json = [];
                     msg00 = new Object();
@@ -19805,7 +19821,8 @@ function _addThread() {
                     json.push(msg00);
                     json.push(msg01);
                     thread_text.push(JSON.stringify(json));
-                  case 30:
+                    enableButtons();
+                  case 32:
                   case "end":
                     return _context.stop();
                 }
@@ -19816,17 +19833,17 @@ function _addThread() {
             };
           }();
           processChunk();
-          _context2.next = 28;
+          _context2.next = 31;
           break;
-        case 25:
-          _context2.prev = 25;
-          _context2.t0 = _context2["catch"](4);
-          console.error('Erro ao processar o stream:', _context2.t0);
         case 28:
+          _context2.prev = 28;
+          _context2.t0 = _context2["catch"](5);
+          console.error('Erro ao processar o stream:', _context2.t0);
+        case 31:
         case "end":
           return _context2.stop();
       }
-    }, _callee2, null, [[4, 25]]);
+    }, _callee2, null, [[5, 28]]);
   }));
   return _addThread.apply(this, arguments);
 }
@@ -19840,10 +19857,11 @@ function _sendMsgThread() {
       while (1) switch (_context4.prev = _context4.next) {
         case 0:
           token = readCookie('token');
+          disableButtons();
           message = msg_area.value;
           msg_area.value = '';
-          _context4.prev = 3;
-          _context4.next = 6;
+          _context4.prev = 4;
+          _context4.next = 7;
           return fetch(api_url + "chat/add/text/".concat(current_thread, "/1"), {
             method: 'POST',
             headers: {
@@ -19855,14 +19873,14 @@ function _sendMsgThread() {
               text: message
             })
           });
-        case 6:
+        case 7:
           response = _context4.sent;
           if (response.body) {
-            _context4.next = 9;
+            _context4.next = 10;
             break;
           }
           throw new Error('A resposta não contém um stream legível.');
-        case 9:
+        case 10:
           attachDOM(msg_body, bubble_user);
           addTextLastBubble(message);
           reader = response.body.getReader();
@@ -19901,6 +19919,8 @@ function _sendMsgThread() {
                     _context3.next = 3;
                     break;
                   case 16:
+                    enableButtons();
+                  case 17:
                   case "end":
                     return _context3.stop();
                 }
@@ -19911,17 +19931,17 @@ function _sendMsgThread() {
             };
           }();
           processChunk();
-          _context4.next = 20;
+          _context4.next = 21;
           break;
-        case 17:
-          _context4.prev = 17;
-          _context4.t0 = _context4["catch"](3);
+        case 18:
+          _context4.prev = 18;
+          _context4.t0 = _context4["catch"](4);
           console.error('Erro ao processar o stream:', _context4.t0);
-        case 20:
+        case 21:
         case "end":
           return _context4.stop();
       }
-    }, _callee4, null, [[3, 17]]);
+    }, _callee4, null, [[4, 18]]);
   }));
   return _sendMsgThread.apply(this, arguments);
 }
@@ -19982,8 +20002,8 @@ function _listChats() {
               var thread = parseInt(btn.getAttribute('data-api-thread'));
               btn.classList.add('active');
               if (selected_thread != -1) {
-                var _len = chat_cards.children.length - 1;
-                chat_cards.children[_len - selected_thread].classList.remove('active');
+                var _len2 = chat_cards.children.length - 1;
+                chat_cards.children[_len2 - selected_thread].classList.remove('active');
               }
               selected_thread = index;
               current_thread = thread;
@@ -20048,6 +20068,16 @@ function addTextLastBubble(text) {
   var s = msg_body.children[len].children[0].children[0];
   s.innerHTML += text;
 }
+function disableButtons() {
+  $('#send_btn_id')[0].classList.add('disabled_btn');
+  $('#add_thread_btn_id')[0].classList.add('disabled_btn');
+  chat_cards.classList.add('disabled_btn');
+}
+function enableButtons() {
+  //$('#send_btn_id')[0].classList.remove('disabled_btn');
+  $('#add_thread_btn_id')[0].classList.remove('disabled_btn');
+  chat_cards.classList.remove('disabled_btn');
+}
 $(document).ready(function () {
   $('#action_menu_btn').click(function () {
     $('.action_menu').toggle();
@@ -20057,6 +20087,10 @@ $(document).ready(function () {
   msg_body = $('#msg_card_body_id')[0];
   msg_area = $('#msg_area_id')[0];
   chat_cards = $('#chat_cards_id')[0];
+  msg_area.addEventListener('input', function (event) {
+    var dom = event.target;
+    if (dom.value.length > 0) $('#send_btn_id')[0].classList.remove('disabled_btn');else $('#send_btn_id')[0].classList.add('disabled_btn');
+  });
   listChats();
 });
 /******/ })()

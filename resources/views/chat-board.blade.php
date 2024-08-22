@@ -28,7 +28,6 @@
 					</div>
 					<div class="card-body contacts_body">
                         <ui class="contacts d-flex justify-content-center align-items-center flex-column" id="chat_cards_id">
-                        
 						</ui>
 					</div>
 					<div class="card-footer"></div>
@@ -65,7 +64,7 @@
 								</div>
 								<textarea name="" class="form-control type_msg" placeholder="Type your message..." id="msg_area_id"></textarea>
 								<div class="input-group-append">
-									<span class="input-group-text send_btn" id="send_btn_id"><i class="fas fa-location-arrow"></i></span>
+									<span class="input-group-text send_btn disabled_btn" id="send_btn_id"><i class="fas fa-location-arrow"></i></span>
 								</div>
 							</div>
 						</div>

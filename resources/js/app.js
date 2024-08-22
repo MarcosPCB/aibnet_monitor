@@ -116,6 +116,7 @@ async function addThread() {
     let first_message = $('#add_thread_msg_id')[0].value;
     $('#add_thread_msg_id')[0].value = '';
     $('#add_thread_modal_id').modal('hide');
+    disableButtons();
 
     try {
         const response = await fetch(api_url + 'chat/create-run/1', {
@@ -157,6 +158,22 @@ async function addThread() {
             messageTemp = first_message; 
 
         chat_cards.children[1].children[0].children[0].children[0].innerHTML = messageTemp;
+        chat_cards.children[1].setAttribute('data-api-index', chat_cards.children.length - 2);
+        chat_cards.children[1].addEventListener('click', event => {
+            let btn = event.currentTarget;
+            let index = parseInt(btn.getAttribute('data-api-index'));
+            let thread = parseInt(btn.getAttribute('data-api-thread'));
+            btn.classList.add('active');
+
+            if(selected_thread != -1) {
+                let len = chat_cards.children.length - 1;
+                chat_cards.children[len - selected_thread].classList.remove('active');
+            }
+
+            selected_thread = index;
+            current_thread = thread;
+            buildChat();
+        });
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -183,6 +200,7 @@ async function addThread() {
             }
 
             chat_cards.children[1].children[0].children[0].children[1].innerHTML = `chat: ${current_thread}`;
+            chat_cards.children[1].setAttribute('data-api-thread', current_thread);
             thread_ids.push(current_thread);
 
             let json = [];
@@ -202,6 +220,7 @@ async function addThread() {
             json.push(msg01);
 
             thread_text.push(JSON.stringify(json));
+            enableButtons();
         }
 
         processChunk();
@@ -212,7 +231,9 @@ async function addThread() {
 
 async function sendMsgThread() {
     const token = readCookie('token');
-    
+
+    disableButtons();
+
     let message = msg_area.value;
     msg_area.value = '';
 
@@ -258,6 +279,8 @@ async function sendMsgThread() {
                 });
                 
             }
+
+            enableButtons();
         }
 
         processChunk();
@@ -403,6 +426,18 @@ function addTextLastBubble(text) {
     s.innerHTML += text; 
 }
 
+function disableButtons() {
+    $('#send_btn_id')[0].classList.add('disabled_btn');
+    $('#add_thread_btn_id')[0].classList.add('disabled_btn');
+    chat_cards.classList.add('disabled_btn');
+}
+
+function enableButtons() {
+    //$('#send_btn_id')[0].classList.remove('disabled_btn');
+    $('#add_thread_btn_id')[0].classList.remove('disabled_btn');
+    chat_cards.classList.remove('disabled_btn');
+}
+
 $(document).ready(function(){
     $('#action_menu_btn').click(function(){
         $('.action_menu').toggle();
@@ -414,6 +449,15 @@ $(document).ready(function(){
     msg_body = $('#msg_card_body_id')[0];
     msg_area = $('#msg_area_id')[0];
     chat_cards = $('#chat_cards_id')[0];
+
+    msg_area.addEventListener('input', event => {
+        let dom = event.target;
+
+        if(dom.value.length > 0)
+            $('#send_btn_id')[0].classList.remove('disabled_btn');
+        else
+            $('#send_btn_id')[0].classList.add('disabled_btn');
+    });
 
     listChats();
 });
