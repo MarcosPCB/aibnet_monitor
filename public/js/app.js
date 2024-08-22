@@ -19590,6 +19590,7 @@ function readCookie(name) {
 }
 var incompleteData = '';
 var currentEvent = null;
+var current_thread = -1;
 function processString(chunk) {
   var lines = chunk.split('\n');
   var events = [];
@@ -19633,6 +19634,13 @@ function processString(chunk) {
         }
       }
 
+      // Identifica a ID da thread
+      if (line.startsWith('API_THREAD_ID:')) {
+        var data = line.slice(14).trim();
+        current_thread = parseInt(data.slice(0, data.indexOf(';')));
+        continue;
+      }
+
       // Identifica eventos
       if (line.startsWith('event:')) {
         currentEvent = line.slice(6).trim();
@@ -19644,17 +19652,17 @@ function processString(chunk) {
 
       // Identifica dados
       if (line.startsWith('data:')) {
-        var data = line.slice(5).trim();
+        var _data = line.slice(5).trim();
 
         // Se há dados incompletos, concatena com os novos dados
         if (incompleteData) {
-          data = incompleteData + data;
+          _data = incompleteData + _data;
           incompleteData = '';
         }
 
         // Verifica se o JSON está completo
         try {
-          var _jsonData = JSON.parse(data);
+          var _jsonData = JSON.parse(_data);
           if (currentEvent) {
             var _jsonData$delta2;
             var _contentArray = ((_jsonData$delta2 = _jsonData.delta) === null || _jsonData$delta2 === void 0 ? void 0 : _jsonData$delta2.content) || [];
@@ -19677,7 +19685,7 @@ function processString(chunk) {
           currentEvent = null; // Reseta o evento após processar
         } catch (error) {
           // Se o JSON está incompleto, armazena o fragmento
-          incompleteData = data;
+          incompleteData = _data;
         }
       }
     }
@@ -19689,37 +19697,49 @@ function processString(chunk) {
   return events;
 }
 var api_url = 'http://localhost:8000/api/';
+var msg_body;
+var msg_area;
+function cleanMsgArea() {
+  msg_area.value = '';
+}
 function addThread() {
   return _addThread.apply(this, arguments);
 }
 function _addThread() {
   _addThread = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
-    var token, response, reader, decoder, processChunk;
+    var token, first_message, response, reader, decoder, processChunk;
     return _regeneratorRuntime().wrap(function _callee2$(_context2) {
       while (1) switch (_context2.prev = _context2.next) {
         case 0:
           token = readCookie('token');
-          _context2.prev = 1;
-          _context2.next = 4;
+          first_message = $('#add_thread_msg_id')[0].value;
+          $('#add_thread_msg_id')[0].value = '';
+          $('#add_thread_modal_id').modal('hide');
+          _context2.prev = 4;
+          _context2.next = 7;
           return fetch(api_url + 'chat/create-run/1', {
             method: 'POST',
             headers: {
               'Authorization': 'Bearer ' + token,
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
             },
             body: JSON.stringify({
-              text: 'Olá',
+              text: first_message,
               main_brand_id: 1
             })
           });
-        case 4:
+        case 7:
           response = _context2.sent;
           if (response.body) {
-            _context2.next = 7;
+            _context2.next = 10;
             break;
           }
           throw new Error('A resposta não contém um stream legível.');
-        case 7:
+        case 10:
+          cleanDOM(msg_body);
+          attachDOM(msg_body, bubble_user);
+          addTextLastBubble(first_message);
           reader = response.body.getReader();
           decoder = new TextDecoder();
           processChunk = /*#__PURE__*/function () {
@@ -19728,31 +19748,34 @@ function _addThread() {
               return _regeneratorRuntime().wrap(function _callee$(_context) {
                 while (1) switch (_context.prev = _context.next) {
                   case 0:
-                    if (false) {}
-                    _context.next = 3;
-                    return reader.read();
+                    attachDOM(msg_body, bubble_sys);
+                    incompleteData = '';
+                    currentEvent = null;
                   case 3:
+                    if (false) {}
+                    _context.next = 6;
+                    return reader.read();
+                  case 6:
                     _yield$reader$read = _context.sent;
                     done = _yield$reader$read.done;
                     value = _yield$reader$read.value;
                     if (!done) {
-                      _context.next = 8;
+                      _context.next = 11;
                       break;
                     }
-                    return _context.abrupt("break", 14);
-                  case 8:
+                    return _context.abrupt("break", 16);
+                  case 11:
                     // Decodificar o chunk e atualizar o DOM
                     chunk = decoder.decode(value, {
                       stream: true
                     });
-                    console.log(chunk);
                     arr = processString(chunk);
                     arr.forEach(function (e) {
-                      $('#chat_bubble_id')[0].innerHTML += e;
+                      addTextLastBubble(e);
                     });
-                    _context.next = 0;
+                    _context.next = 3;
                     break;
-                  case 14:
+                  case 16:
                   case "end":
                     return _context.stop();
                 }
@@ -19763,25 +19786,137 @@ function _addThread() {
             };
           }();
           processChunk();
-          _context2.next = 16;
+          _context2.next = 22;
           break;
-        case 13:
-          _context2.prev = 13;
-          _context2.t0 = _context2["catch"](1);
+        case 19:
+          _context2.prev = 19;
+          _context2.t0 = _context2["catch"](4);
           console.error('Erro ao processar o stream:', _context2.t0);
-        case 16:
+        case 22:
         case "end":
           return _context2.stop();
       }
-    }, _callee2, null, [[1, 13]]);
+    }, _callee2, null, [[4, 19]]);
   }));
   return _addThread.apply(this, arguments);
+}
+function sendMsgThread() {
+  return _sendMsgThread.apply(this, arguments);
+}
+function _sendMsgThread() {
+  _sendMsgThread = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee4() {
+    var token, message, response, reader, decoder, processChunk;
+    return _regeneratorRuntime().wrap(function _callee4$(_context4) {
+      while (1) switch (_context4.prev = _context4.next) {
+        case 0:
+          token = readCookie('token');
+          message = msg_area.value;
+          msg_area.value = '';
+          _context4.prev = 3;
+          _context4.next = 6;
+          return fetch(api_url + "chat/add/text/".concat(current_thread, "/1"), {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + token,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              text: message
+            })
+          });
+        case 6:
+          response = _context4.sent;
+          if (response.body) {
+            _context4.next = 9;
+            break;
+          }
+          throw new Error('A resposta não contém um stream legível.');
+        case 9:
+          attachDOM(msg_body, bubble_user);
+          addTextLastBubble(message);
+          reader = response.body.getReader();
+          decoder = new TextDecoder();
+          processChunk = /*#__PURE__*/function () {
+            var _ref2 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
+              var _yield$reader$read2, done, value, chunk, arr;
+              return _regeneratorRuntime().wrap(function _callee3$(_context3) {
+                while (1) switch (_context3.prev = _context3.next) {
+                  case 0:
+                    attachDOM(msg_body, bubble_sys);
+                    incompleteData = '';
+                    currentEvent = null;
+                  case 3:
+                    if (false) {}
+                    _context3.next = 6;
+                    return reader.read();
+                  case 6:
+                    _yield$reader$read2 = _context3.sent;
+                    done = _yield$reader$read2.done;
+                    value = _yield$reader$read2.value;
+                    if (!done) {
+                      _context3.next = 11;
+                      break;
+                    }
+                    return _context3.abrupt("break", 16);
+                  case 11:
+                    // Decodificar o chunk e atualizar o DOM
+                    chunk = decoder.decode(value, {
+                      stream: true
+                    });
+                    arr = processString(chunk);
+                    arr.forEach(function (e) {
+                      addTextLastBubble(e);
+                    });
+                    _context3.next = 3;
+                    break;
+                  case 16:
+                  case "end":
+                    return _context3.stop();
+                }
+              }, _callee3);
+            }));
+            return function processChunk() {
+              return _ref2.apply(this, arguments);
+            };
+          }();
+          processChunk();
+          _context4.next = 20;
+          break;
+        case 17:
+          _context4.prev = 17;
+          _context4.t0 = _context4["catch"](3);
+          console.error('Erro ao processar o stream:', _context4.t0);
+        case 20:
+        case "end":
+          return _context4.stop();
+      }
+    }, _callee4, null, [[3, 17]]);
+  }));
+  return _sendMsgThread.apply(this, arguments);
+}
+var bubble_sys = "<div class=\"d-flex justify-content-start mb-4\">\n        <div class=\"msg_cotainer msg_bubble_sys\">\n            <span></span>\n        </div>\n    </div>";
+var bubble_user = "<div class=\"d-flex justify-content-end mb-4\">\n        <div class=\"msg_cotainer_send msg_bubble_user\">\n            <span></span>\n        </div>\n    </div>";
+var chats_card = "li class=\"active\">\n        <div class=\"d-flex bd-highlight\">\n            <div class=\"user_info\">\n                <span></span>\n            </div>\n        </div>\n    </li>";
+function cleanDOM(dom) {
+  dom.innerHTML = '';
+}
+function attachDOM(dom, content) {
+  dom.innerHTML += content;
+}
+function addTextLastBubble(text) {
+  var len = msg_body.children.length - 1;
+  var s = msg_body.children[len].children[0].children[0];
+  s.innerHTML += text;
 }
 $(document).ready(function () {
   $('#action_menu_btn').click(function () {
     $('.action_menu').toggle();
   });
   $('#add_thread_btn_id').click(addThread);
+  $('#send_btn_id').click(sendMsgThread);
+  msg_body = $('#msg_card_body_id')[0];
+  msg_area = $('#msg_area_id')[0];
 });
 /******/ })()
 ;

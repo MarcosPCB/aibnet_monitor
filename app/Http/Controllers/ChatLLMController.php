@@ -81,31 +81,33 @@ class ChatLLMController extends Controller
                 ];
     
                 $stream = '';
+
+                echo 'API_THREAD_ID:'.$chat->id.';\n';
+                ob_flush();
+                flush();
     
-                if ($response->successful()) {
-                    // Lendo o stream em chunks
-                    $body = $response->getBody();
-                    while (!$body->eof()) {  // Usando eof() no lugar de feof()
-                        $chunk = $body->read(1024);  // Lendo o stream em pedaços de 1024 bytes
-                        echo $chunk;  // Enviando o chunk para o cliente
-                        $stream .= $chunk;
-                        ob_flush();   // Despejando o buffer para o cliente
-                        flush();      // Garantindo que o conteúdo seja enviado imediatamente
-                    }
-    
-                    $streamObj = $llm->processString($stream);
-    
-                    foreach($streamObj as $e) {
-                        if($e->event == "thread.message.delta") {
-                            $text['text'] .= $e->data->delta['content'][0]['text']['value'];
-                        }
-                    }
-    
-                    $json[] = $text;
-    
-                    $chat->text = json_encode($json);
-                    $chat->save();
+                // Lendo o stream em chunks
+                $body = $response->getBody();
+                while (!$body->eof()) {  // Usando eof() no lugar de feof()
+                    $chunk = $body->read(1024);  // Lendo o stream em pedaços de 1024 bytes
+                    echo $chunk;  // Enviando o chunk para o cliente
+                    $stream .= $chunk;
+                    ob_flush();   // Despejando o buffer para o cliente
+                    flush();      // Garantindo que o conteúdo seja enviado imediatamente
                 }
+
+                $streamObj = $llm->processString($stream);
+
+                foreach($streamObj as $e) {
+                    if($e->event == "thread.message.delta") {
+                        $text['text'] .= $e->data->delta['content'][0]['text']['value'];
+                    }
+                }
+
+                $json[] = $text;
+
+                $chat->text = json_encode($json);
+                $chat->save();
             } else {
                 // Em caso de erro na resposta
                 echo "Erro ao conectar com a API OpenAI";

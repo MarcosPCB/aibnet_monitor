@@ -29,7 +29,7 @@
 					<div class="card-body contacts_body">
                         <ui class="contacts d-flex justify-content-center align-items-center flex-column">
                         <li class=" d-flex flex-column justify-content-center align-items-center">
-							<button class="d-flex justify-content-center text-black bd-highlight rounded-pill bg-white" id="add_thread_btn_id" style="width: 90% !important;">
+							<button class="d-flex justify-content-center text-black bd-highlight rounded-pill bg-white" style="width: 90% !important;" data-bs-toggle="modal" data-bs-target="#add_thread_modal_id">
                                 <span style="padding: 5px; border-radius: 10px;">
                                     <i class="fa-solid fa-plus"></i>
                                 </span>
@@ -69,7 +69,7 @@
 								<div class="input-group-append">
 									<span class="input-group-text attach_btn"><i class="fas fa-paperclip"></i></span>
 								</div>
-								<textarea name="" class="form-control type_msg" placeholder="Type your message..."></textarea>
+								<textarea name="" class="form-control type_msg" placeholder="Type your message..." id="msg_area_id"></textarea>
 								<div class="input-group-append">
 									<span class="input-group-text send_btn" id="send_btn_id"><i class="fas fa-location-arrow"></i></span>
 								</div>
@@ -79,6 +79,26 @@
 				</div>
 			</div>
 		</div>
+
+        <!-- Modal -->
+        <div class="modal fade" id="add_thread_modal_id" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="staticBackdropLabel">Novo chat</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <textarea class="form-control" id="add_thread_msg_id"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="add_thread_btn_id">Enviar</button>
+            </div>
+            </div>
+        </div>
+    </div>
+
 	</body>
 </html>
 

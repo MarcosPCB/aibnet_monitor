@@ -18,8 +18,9 @@ function readCookie(name) {
     return null;
 }
 
-let incompleteData = '';
-let currentEvent = null;
+var incompleteData = '';
+var currentEvent = null;
+var current_thread = -1;
 
 function processString(chunk) {
     const lines = chunk.split('\n');
@@ -48,6 +49,13 @@ function processString(chunk) {
                 // Continua acumulando dados se o JSON ainda estiver incompleto
                 continue;
             }
+        }
+
+        // Identifica a ID da thread
+        if (line.startsWith('API_THREAD_ID:')) {
+            let data = line.slice(14).trim();
+            current_thread = parseInt(data.slice(0, data.indexOf(';')));
+            continue;
         }
 
         // Identifica eventos
@@ -92,16 +100,27 @@ function processString(chunk) {
 }
 
 var api_url = 'http://localhost:8000/api/';
+var msg_body;
+var msg_area;
 
-async function addThread(first_message) {
+function cleanMsgArea() {
+    msg_area.value = '';
+}
+
+async function addThread() {
     const token = readCookie('token');
     
+    let first_message = $('#add_thread_msg_id')[0].value;
+    $('#add_thread_msg_id')[0].value = '';
+    $('#add_thread_modal_id').modal('hide');
+
     try {
         const response = await fetch(api_url + 'chat/create-run/1', {
             method: 'POST',
             headers: {
                 'Authorization': 'Bearer ' + token,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify({
                 text: first_message,
@@ -113,10 +132,18 @@ async function addThread(first_message) {
             throw new Error('A resposta não contém um stream legível.');
         }
 
+        cleanDOM(msg_body);
+        attachDOM(msg_body, bubble_user);
+        addTextLastBubble(first_message);
+
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
 
         const processChunk = async () => {
+            attachDOM(msg_body, bubble_sys);
+            incompleteData = '';
+            currentEvent = null;
+            
             while (true) {
                 
                 const { done, value } = await reader.read();
@@ -126,9 +153,65 @@ async function addThread(first_message) {
 
                 // Decodificar o chunk e atualizar o DOM
                 const chunk = decoder.decode(value, { stream: true });
-                console.log(chunk);
+                let arr = processString(chunk);
                 arr.forEach((e) => {
-                    $('#chat_bubble_id')[0].innerHTML += e;
+                    addTextLastBubble(e);
+                });
+                
+            }
+        }
+
+        processChunk();
+    } catch(e) {
+        console.error('Erro ao processar o stream:', e);
+    }
+}
+
+async function sendMsgThread() {
+    const token = readCookie('token');
+    
+    let message = msg_area.value;
+    msg_area.value = '';
+
+    try {
+        const response = await fetch(api_url + `chat/add/text/${current_thread}/1`, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                text: message,
+            })
+        });
+
+        if (!response.body) {
+            throw new Error('A resposta não contém um stream legível.');
+        }
+
+        attachDOM(msg_body, bubble_user);
+        addTextLastBubble(message);
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        const processChunk = async () => {
+            attachDOM(msg_body, bubble_sys);
+            incompleteData = '';
+            currentEvent = null;
+            
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) {
+                    break;
+                }
+
+                // Decodificar o chunk e atualizar o DOM
+                const chunk = decoder.decode(value, { stream: true });
+                let arr = processString(chunk);
+                arr.forEach((e) => {
+                    addTextLastBubble(e);
                 });
                 
             }
@@ -142,19 +225,19 @@ async function addThread(first_message) {
 
 const bubble_sys = 
     `<div class="d-flex justify-content-start mb-4">
-        <div class="msg_cotainer">
+        <div class="msg_cotainer msg_bubble_sys">
             <span></span>
         </div>
     </div>`;
 
 const bubble_user =
     `<div class="d-flex justify-content-end mb-4">
-        <div class="msg_cotainer_send">
+        <div class="msg_cotainer_send msg_bubble_user">
             <span></span>
         </div>
     </div>`;
 
-const chat_card = 
+const chats_card = 
     `li class="active">
         <div class="d-flex bd-highlight">
             <div class="user_info">
@@ -163,12 +246,30 @@ const chat_card =
         </div>
     </li>`;
 
+function cleanDOM(dom) {
+    dom.innerHTML = '';
+}
+
+function attachDOM(dom, content) {
+    dom.innerHTML += content;
+}
+
+function addTextLastBubble(text) {
+    let len = msg_body.children.length - 1;
+    let s = msg_body.children[len].children[0].children[0];
+    s.innerHTML += text; 
+}
+
 $(document).ready(function(){
     $('#action_menu_btn').click(function(){
         $('.action_menu').toggle();
     });
 
     $('#add_thread_btn_id').click(addThread);
+    $('#send_btn_id').click(sendMsgThread);
+
+    msg_body = $('#msg_card_body_id')[0];
+    msg_area = $('#msg_area_id')[0];
 });
 
 

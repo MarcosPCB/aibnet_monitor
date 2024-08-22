@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('chat');
+    return view('chat-board');
 })->name('home');
 
 Route::get('/login', function () {
