@@ -27,14 +27,8 @@
 						</div>
 					</div>
 					<div class="card-body contacts_body">
-                        <ui class="contacts d-flex justify-content-center align-items-center flex-column">
-                        <li class=" d-flex flex-column justify-content-center align-items-center">
-							<button class="d-flex justify-content-center text-black bd-highlight rounded-pill bg-white" style="width: 90% !important;" data-bs-toggle="modal" data-bs-target="#add_thread_modal_id">
-                                <span style="padding: 5px; border-radius: 10px;">
-                                    <i class="fa-solid fa-plus"></i>
-                                </span>
-                            </button>
-						</li>
+                        <ui class="contacts d-flex justify-content-center align-items-center flex-column" id="chat_cards_id">
+                        
 						</ui>
 					</div>
 					<div class="card-footer"></div>

@@ -132,7 +132,8 @@ Route::middleware(['auth:sanctum', 'isOperatorOrAccountUser'])->group(function (
         Route::post('/add/text/{id}/{account_id}',[ChatLLMController::class,'addTextToThread'])->name('chat.add.text');
         Route::patch('/add/{id}/{account_id}', [ChatLLMController::class,'addText'])->name('chat.add');
         Route::patch('/add/thread/{id}/{account_id}', [ChatLLMController::class,'attachThread'])->name('chat.add.thread');
-        Route::get('/{id}/{account_id}', [ChatLLMController::class,'getText'])->name('chat.get');
+        Route::get('/get/{id}/{account_id}', [ChatLLMController::class,'getChat'])->name('chat.get');
+        Route::get('/list/{main_brand_id}/{account_id}', [ChatLLMController::class,'listAll'])->name('chat.list');
         Route::delete('/delete/{id}/{account_id}', [ChatLLMController::class, 'delete'])->name('chat.delete');
      });
 });

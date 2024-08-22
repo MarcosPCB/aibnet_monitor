@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Http;
 use App\Models\Chat;
 use App\Http\Services\LLMComm;
 use Log;
-use MainBrand;
 
 class ChatLLMController extends Controller
 {
@@ -242,9 +241,14 @@ class ChatLLMController extends Controller
         return response()->json($chat, 200);
     }
 
-    public function getText($id) {
+    public function getChat($id) {
         $chat = Chat::findOrFail($id);
-        return response()->json(json_decode($chat->text), 200);
+        return response()->json(json_decode($chat), 200);
+    }
+
+    public function listAll($mainBrandId) {
+        $chats = Chat::where('main_brand_id', $mainBrandId)->get();
+        return response()->json($chats, 200);
     }
 
     public function delete(Request $request) {
