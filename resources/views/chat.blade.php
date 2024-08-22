@@ -27,22 +27,13 @@
 						</div>
 					</div>
 					<div class="card-body contacts_body">
-						<ui class="contacts">
                         <ui class="contacts d-flex justify-content-center align-items-center flex-column">
-                        <li class="rounded-pill bg-white d-flex flex-column justify-content-center align-items-center" style="width: 90% !important;">
-							<button class="d-flex justify-content-center text-black bd-highlight w-100" id="add_thread_btn_id">
+                        <li class=" d-flex flex-column justify-content-center align-items-center">
+							<button class="d-flex justify-content-center text-black bd-highlight rounded-pill bg-white" id="add_thread_btn_id" style="width: 90% !important;">
                                 <span style="padding: 5px; border-radius: 10px;">
                                     <i class="fa-solid fa-plus"></i>
                                 </span>
                             </button>
-						</li>
-						<li class="active">
-							<div class="d-flex bd-highlight">
-								<div class="user_info">
-									<span>Khalid</span>
-									<p>Kalid is online</p>
-								</div>
-							</div>
 						</li>
 						</ui>
 					</div>
@@ -71,19 +62,7 @@
 								</ul>
 							</div>
 						</div>
-						<div class="card-body msg_card_body">
-							<div class="d-flex justify-content-start mb-4">
-								<div class="msg_cotainer">
-									Hi, how are you samim?
-									<span class="msg_time">8:40 AM, Today</span>
-								</div>
-							</div>
-							<div class="d-flex justify-content-end mb-4">
-								<div class="msg_cotainer_send">
-									<span id="chat_bubble_id"></span>
-									<span class="msg_time_send">8:55 AM, Today</span>
-								</div>
-							</div>
+						<div class="card-body msg_card_body" id="msg_card_body_id">
 						</div>
 						<div class="card-footer">
 							<div class="input-group">

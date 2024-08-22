@@ -93,7 +93,7 @@ function processString(chunk) {
 
 var api_url = 'http://localhost:8000/api/';
 
-async function addThread() {
+async function addThread(first_message) {
     const token = readCookie('token');
     
     try {
@@ -104,7 +104,7 @@ async function addThread() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                text: 'Olá',
+                text: first_message,
                 main_brand_id: 1
             })
         });
@@ -127,7 +127,6 @@ async function addThread() {
                 // Decodificar o chunk e atualizar o DOM
                 const chunk = decoder.decode(value, { stream: true });
                 console.log(chunk);
-                const arr = processString(chunk);
                 arr.forEach((e) => {
                     $('#chat_bubble_id')[0].innerHTML += e;
                 });
@@ -140,6 +139,29 @@ async function addThread() {
         console.error('Erro ao processar o stream:', e);
     }
 }
+
+const bubble_sys = 
+    `<div class="d-flex justify-content-start mb-4">
+        <div class="msg_cotainer">
+            <span></span>
+        </div>
+    </div>`;
+
+const bubble_user =
+    `<div class="d-flex justify-content-end mb-4">
+        <div class="msg_cotainer_send">
+            <span></span>
+        </div>
+    </div>`;
+
+const chat_card = 
+    `li class="active">
+        <div class="d-flex bd-highlight">
+            <div class="user_info">
+                <span></span>
+            </div>
+        </div>
+    </li>`;
 
 $(document).ready(function(){
     $('#action_menu_btn').click(function(){
