@@ -15,6 +15,7 @@ class Chat extends Migration
     {
         Schema::create('chat', function (Blueprint $table) {
             $table->id(); // Chave primária
+            $table->string('name')->nullable();
             $table->json('text')->nullable();
             $table->string('thread_id')->nullable();
 

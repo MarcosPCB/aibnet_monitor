@@ -3,13 +3,17 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Chat</title>
+		<title>AIBNet Monitor - Chat</title>
+
 		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
         <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.6.0/css/all.css" crossorigin="anonymous">
+
+		<link rel="stylesheet" href="css/fonts/all.css">
+
 		<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.css">
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
         
         <script src="{{asset('js/app.js')}}"></script>
         <link rel="stylesheet" href="{{ asset('css/app.css') }}">
@@ -35,24 +39,11 @@
 				<div class="col-md-8 col-xl-6 chat">
 					<div class="card">
 						<div class="card-header msg_head">
-							<div class="d-flex bd-highlight">
+							<div class="d-flex bd-highlight justify-content-between">
 								<div class="user_info">
-									<span>Chat with Khalid</span>
-									<p>1767 Messages</p>
+									<span id="chat_name_id"></span>
+									<p id="chat_num_msgs_id"></p>
 								</div>
-								<div class="video_cam">
-									<span><i class="fas fa-video"></i></span>
-									<span><i class="fas fa-phone"></i></span>
-								</div>
-							</div>
-							<span id="action_menu_btn"><i class="fas fa-ellipsis-v"></i></span>
-							<div class="action_menu">
-								<ul>
-									<li><i class="fas fa-user-circle"></i> View profile</li>
-									<li><i class="fas fa-users"></i> Add to close friends</li>
-									<li><i class="fas fa-plus"></i> Add to group</li>
-									<li><i class="fas fa-ban"></i> Block</li>
-								</ul>
 							</div>
 						</div>
 						<div class="card-body msg_card_body" id="msg_card_body_id">
@@ -62,7 +53,7 @@
 								<div class="input-group-append">
 									<span class="input-group-text attach_btn"><i class="fas fa-paperclip"></i></span>
 								</div>
-								<textarea name="" class="form-control type_msg" placeholder="Type your message..." id="msg_area_id"></textarea>
+								<textarea name="" class="form-control type_msg" placeholder="Digite a sua mensagem..." id="msg_area_id"></textarea>
 								<div class="input-group-append">
 									<span class="input-group-text send_btn disabled_btn" id="send_btn_id"><i class="fas fa-location-arrow"></i></span>
 								</div>
@@ -78,15 +69,21 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="staticBackdropLabel">Novo chat</h5>
+                <h5 class="modal-title text-white" id="staticBackdropLabel">Novo chat</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <textarea class="form-control" id="add_thread_msg_id"></textarea>
+				<input type="text" class="form-control type_msg" id="add_thread_name_id" placeholder="Nome do chat..." style="border-radius: 15px"></input>
+				<br>
+                <textarea class="form-control type_msg" id="add_thread_msg_id" placeholder="Primeira mensagem..." style="border-radius: 15px"></textarea>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="add_thread_btn_id">Enviar</button>
+                <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="add_thread_btn_id">
+					<span>
+						<i class="fa-solid fa-paper-plane-top"></i>
+					</span>
+				</button>
             </div>
             </div>
         </div>

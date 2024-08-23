@@ -19591,8 +19591,23 @@ function readCookie(name) {
   return null;
 }
 var incompleteData = '';
+var incompleteEvent = '';
 var currentEvent = null;
 var current_thread = -1;
+function identifyEvent(inputString) {
+  var events = ["thread.created", "thread.run.created", "thread.run.queued", "thread.run.in_progress", "thread.run.requires_action", "thread.run.completed", "thread.run.incomplete", "thread.run.failed", "thread.run.cancelling", "thread.run.cancelled", "thread.run.expired", "thread.run.step.created", "thread.run.step.in_progress", "thread.run.step.delta", "thread.run.step.completed", "thread.run.step.failed", "thread.run.step.cancelled", "thread.run.step.expired", "thread.message.created", "thread.message.in_progress", "thread.message.delta", "thread.message.completed", "thread.message.incomplete", "error", "done"];
+
+  // Verifica se algum dos eventos está na string
+  for (var _i = 0, _events = events; _i < _events.length; _i++) {
+    var event = _events[_i];
+    if (inputString.includes(event)) {
+      return event;
+    }
+  }
+
+  // Se nenhum evento foi identificado, retorna "incomplete"
+  return "incomplete";
+}
 function processString(chunk) {
   var lines = chunk.split('\n');
   var events = [];
@@ -19630,8 +19645,22 @@ function processString(chunk) {
           }
           incompleteData = ''; // Limpa o estado após processar o dado completo
           currentEvent = null;
+          continue;
         } catch (error) {
           // Continua acumulando dados se o JSON ainda estiver incompleto
+          continue;
+        }
+      }
+      if (incompleteEvent) {
+        incompleteEvent += line;
+        if (incompleteEvent.startsWith('event:')) {
+          currentEvent = incompleteEvent.slice(6).trim();
+          if (currentEvent !== "thread.message.delta") {
+            currentEvent = null;
+            incompleteEvent = '';
+            continue;
+          }
+          incompleteEvent = '';
           continue;
         }
       }
@@ -19646,10 +19675,13 @@ function processString(chunk) {
       // Identifica eventos
       if (line.startsWith('event:')) {
         currentEvent = line.slice(6).trim();
-        if (currentEvent !== "thread.message.delta") {
+        var event = identifyEvent(currentEvent);
+        if (event != "thread.message.delta") {
+          if (event == 'incomplete') incompleteEvent = line;
           currentEvent = null;
           continue;
         }
+        continue;
       }
 
       // Identifica dados
@@ -19685,11 +19717,16 @@ function processString(chunk) {
             }
           }
           currentEvent = null; // Reseta o evento após processar
+          continue;
         } catch (error) {
           // Se o JSON está incompleto, armazena o fragmento
           incompleteData = _data;
+          continue;
         }
       }
+
+      // if got here, probably it's an incomplete event, but check it anyway
+      incompleteEvent = line;
     }
   } catch (err) {
     _iterator.e(err);
@@ -19702,6 +19739,9 @@ var api_url = 'http://localhost:8000/api/';
 var msg_body;
 var msg_area;
 var chat_cards;
+var chat_name;
+var chat_num_msgs;
+var loading_text = false;
 function cleanMsgArea() {
   msg_area.value = '';
 }
@@ -19710,38 +19750,19 @@ function addThread() {
 }
 function _addThread() {
   _addThread = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
-    var token, first_message, response, len, messageTemp, reader, decoder, processChunk;
+    var token, first_message, new_chat_name, len, messageTemp, response, reader, decoder, processChunk;
     return _regeneratorRuntime().wrap(function _callee2$(_context2) {
       while (1) switch (_context2.prev = _context2.next) {
         case 0:
           token = readCookie('token');
           first_message = $('#add_thread_msg_id')[0].value;
-          $('#add_thread_msg_id')[0].value = '';
+          new_chat_name = $('#add_thread_name_id')[0].value;
+          $('#add_thread_msg_id')[0].value = $('#add_thread_name_id')[0].value = '';
           $('#add_thread_modal_id').modal('hide');
           disableButtons();
-          _context2.prev = 5;
-          _context2.next = 8;
-          return fetch(api_url + 'chat/create-run/1', {
-            method: 'POST',
-            headers: {
-              'Authorization': 'Bearer ' + token,
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-              text: first_message,
-              main_brand_id: 1
-            })
-          });
-        case 8:
-          response = _context2.sent;
-          if (response.body) {
-            _context2.next = 11;
-            break;
-          }
-          throw new Error('A resposta não contém um stream legível.');
-        case 11:
           cleanDOM(msg_body);
+          chat_name.innerHTML = new_chat_name;
+          chat_num_msgs.innerHTML = '1 mensagem';
           attachDOM(msg_body, bubble_user);
           addTextLastBubble(first_message);
           chat_cards.insertBefore($(chat_card)[0], chat_cards.children[1]);
@@ -19751,13 +19772,17 @@ function _addThread() {
           }
           selected_thread = chat_cards.children.length - 2;
           messageTemp = '';
-          if (first_message.length > 25) {
-            messageTemp = first_message.slice(0, 22).trim();
-            messageTemp += '...';
-          } else messageTemp = first_message;
-          chat_cards.children[1].children[0].children[0].children[0].innerHTML = messageTemp;
+          if (new_chat_name.length == 0) {
+            if (first_message.length > 25) {
+              messageTemp = first_message.slice(0, 22).trim();
+              messageTemp += '...';
+            } else messageTemp = first_message;
+            chat_name.innerHTML = messageTemp;
+            chat_cards.children[1].children[0].children[0].children[0].innerHTML = messageTemp;
+          } else chat_cards.children[1].children[0].children[0].children[0].innerHTML = new_chat_name;
           chat_cards.children[1].setAttribute('data-api-index', chat_cards.children.length - 2);
           chat_cards.children[1].addEventListener('click', function (event) {
+            if (event.target == event.currentTarget.children[0].children[1].children[0] || event.target == event.currentTarget.children[0].children[1]) return;
             var btn = event.currentTarget;
             var index = parseInt(btn.getAttribute('data-api-index'));
             var thread = parseInt(btn.getAttribute('data-api-thread'));
@@ -19770,59 +19795,95 @@ function _addThread() {
             current_thread = thread;
             buildChat();
           });
+          attachDOM(msg_body, bubble_sys);
+          loading_text = true;
+          loadingTextLastBubble();
+          _context2.prev = 21;
+          _context2.next = 24;
+          return fetch(api_url + 'chat/create-run/1', {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + token,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              text: first_message,
+              main_brand_id: 1,
+              name: new_chat_name
+            })
+          });
+        case 24:
+          response = _context2.sent;
+          if (response.body) {
+            _context2.next = 27;
+            break;
+          }
+          throw new Error('A resposta não contém uma stream legível.');
+        case 27:
+          if (!(response.status != 200)) {
+            _context2.next = 29;
+            break;
+          }
+          throw new Error('ERRO: não foi possível receber uma responsta do servidor');
+        case 29:
           reader = response.body.getReader();
           decoder = new TextDecoder();
+          chat_num_msgs.innerHTML = '2 mensagens';
           processChunk = /*#__PURE__*/function () {
             var _ref = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
-              var _yield$reader$read, done, value, chunk, arr, json, msg00, msg01, len, s;
+              var text, _yield$reader$read, done, value, chunk, arr, json, msg00, msg01;
               return _regeneratorRuntime().wrap(function _callee$(_context) {
                 while (1) switch (_context.prev = _context.next) {
                   case 0:
-                    attachDOM(msg_body, bubble_sys);
                     incompleteData = '';
                     currentEvent = null;
-                  case 3:
+                    loading_text = false;
+                    text = '';
+                  case 4:
                     if (false) {}
-                    _context.next = 6;
+                    _context.next = 7;
                     return reader.read();
-                  case 6:
+                  case 7:
                     _yield$reader$read = _context.sent;
                     done = _yield$reader$read.done;
                     value = _yield$reader$read.value;
                     if (!done) {
-                      _context.next = 11;
+                      _context.next = 12;
                       break;
                     }
-                    return _context.abrupt("break", 16);
-                  case 11:
+                    return _context.abrupt("break", 19);
+                  case 12:
                     // Decodificar o chunk e atualizar o DOM
                     chunk = decoder.decode(value, {
                       stream: true
                     });
+                    console.log(chunk);
                     arr = processString(chunk);
+                    if (arr.length > 0) loading_text = false;
                     arr.forEach(function (e) {
-                      addTextLastBubble(e);
+                      text += e;
+                      setTextLastBubble(text);
                     });
-                    _context.next = 3;
+                    _context.next = 4;
                     break;
-                  case 16:
-                    chat_cards.children[1].children[0].children[0].children[1].innerHTML = "chat: ".concat(current_thread);
+                  case 19:
+                    chat_cards.children[1].children[0].children[0].children[1].innerHTML = "chat: ".concat(current_thread, " - 2 mensagens");
                     chat_cards.children[1].setAttribute('data-api-thread', current_thread);
                     thread_ids.push(current_thread);
+                    thread_names.push(new_chat_name);
                     json = [];
                     msg00 = new Object();
                     msg00.who = 'user';
                     msg00.text = first_message;
                     msg01 = new Object();
                     msg01.who = 'assistant';
-                    len = msg_body.children.length - 1;
-                    s = msg_body.children[len].children[0].children[0];
-                    msg01.text = s.innerHTML;
+                    msg01.text = text;
                     json.push(msg00);
                     json.push(msg01);
                     thread_text.push(JSON.stringify(json));
                     enableButtons();
-                  case 32:
+                  case 34:
                   case "end":
                     return _context.stop();
                 }
@@ -19833,17 +19894,17 @@ function _addThread() {
             };
           }();
           processChunk();
-          _context2.next = 31;
+          _context2.next = 39;
           break;
-        case 28:
-          _context2.prev = 28;
-          _context2.t0 = _context2["catch"](5);
+        case 36:
+          _context2.prev = 36;
+          _context2.t0 = _context2["catch"](21);
           console.error('Erro ao processar o stream:', _context2.t0);
-        case 31:
+        case 39:
         case "end":
           return _context2.stop();
       }
-    }, _callee2, null, [[5, 28]]);
+    }, _callee2, null, [[21, 36]]);
   }));
   return _addThread.apply(this, arguments);
 }
@@ -19860,8 +19921,13 @@ function _sendMsgThread() {
           disableButtons();
           message = msg_area.value;
           msg_area.value = '';
-          _context4.prev = 4;
-          _context4.next = 7;
+          attachDOM(msg_body, bubble_user);
+          addTextLastBubble(message);
+          attachDOM(msg_body, bubble_sys);
+          loading_text = true;
+          loadingTextLastBubble();
+          _context4.prev = 9;
+          _context4.next = 12;
           return fetch(api_url + "chat/add/text/".concat(current_thread, "/1"), {
             method: 'POST',
             headers: {
@@ -19873,27 +19939,31 @@ function _sendMsgThread() {
               text: message
             })
           });
-        case 7:
+        case 12:
           response = _context4.sent;
           if (response.body) {
-            _context4.next = 10;
+            _context4.next = 15;
             break;
           }
           throw new Error('A resposta não contém um stream legível.');
-        case 10:
-          attachDOM(msg_body, bubble_user);
-          addTextLastBubble(message);
+        case 15:
+          if (!(response.status != 200)) {
+            _context4.next = 17;
+            break;
+          }
+          throw new Error('ERRO: não foi possível receber uma resposta do servidor');
+        case 17:
           reader = response.body.getReader();
           decoder = new TextDecoder();
           processChunk = /*#__PURE__*/function () {
             var _ref2 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
-              var _yield$reader$read2, done, value, chunk, arr;
+              var text, _yield$reader$read2, done, value, chunk, arr, json, msg00, msg01, len;
               return _regeneratorRuntime().wrap(function _callee3$(_context3) {
                 while (1) switch (_context3.prev = _context3.next) {
                   case 0:
-                    attachDOM(msg_body, bubble_sys);
                     incompleteData = '';
                     currentEvent = null;
+                    text = '';
                   case 3:
                     if (false) {}
                     _context3.next = 6;
@@ -19906,21 +19976,39 @@ function _sendMsgThread() {
                       _context3.next = 11;
                       break;
                     }
-                    return _context3.abrupt("break", 16);
+                    return _context3.abrupt("break", 18);
                   case 11:
                     // Decodificar o chunk e atualizar o DOM
                     chunk = decoder.decode(value, {
                       stream: true
                     });
                     arr = processString(chunk);
+                    if (arr.length > 0) loading_text = false;
+                    console.log(chunk);
                     arr.forEach(function (e) {
-                      addTextLastBubble(e);
+                      text += e;
+                      setTextLastBubble(text);
                     });
                     _context3.next = 3;
                     break;
-                  case 16:
+                  case 18:
+                    json = JSON.parse(thread_text[selected_thread]);
+                    msg00 = new Object();
+                    msg00.who = 'user';
+                    msg00.text = message;
+                    msg01 = new Object();
+                    msg01.who = 'assistant';
+                    msg01.text = text;
+                    json.push(msg00);
+                    json.push(msg01);
+                    chat_num_msgs.innerHTML = "".concat(json.length, " mensagens");
+                    if (selected_thread != -1) {
+                      len = chat_cards.children.length - 2;
+                      chat_cards.children[len - selected_thread].children[0].children[0].children[1].innerHTML = "chat: ".concat(thread_ids[selected_thread].id, " - ").concat(json.length, " mensagens");
+                    }
+                    thread_text[selected_thread] = JSON.stringify(json);
                     enableButtons();
-                  case 17:
+                  case 31:
                   case "end":
                     return _context3.stop();
                 }
@@ -19931,22 +20019,23 @@ function _sendMsgThread() {
             };
           }();
           processChunk();
-          _context4.next = 21;
+          _context4.next = 26;
           break;
-        case 18:
-          _context4.prev = 18;
-          _context4.t0 = _context4["catch"](4);
+        case 23:
+          _context4.prev = 23;
+          _context4.t0 = _context4["catch"](9);
           console.error('Erro ao processar o stream:', _context4.t0);
-        case 21:
+        case 26:
         case "end":
           return _context4.stop();
       }
-    }, _callee4, null, [[4, 18]]);
+    }, _callee4, null, [[9, 23]]);
   }));
   return _sendMsgThread.apply(this, arguments);
 }
 var thread_ids = [];
 var thread_text = [];
+var thread_names = [];
 var selected_thread = -1;
 function listChats() {
   return _listChats.apply(this, arguments);
@@ -19981,22 +20070,26 @@ function _listChats() {
           data.forEach(function (e, i) {
             thread_ids.push(e.thread_id);
             thread_text.push(e.text);
+            thread_names.push(e.name);
             var text = JSON.parse(e.text);
             var len = chat_cards.children.length - 1;
             if (len > 1) {
               chat_cards.insertBefore($(chat_card)[0], chat_cards.children[1]);
             } else chat_cards.innerHTML += chat_card;
             var messageTemp = '';
-            if (text[0].text.length > 25) {
-              messageTemp = text[0].text.slice(0, 22).trim();
-              messageTemp += '...';
-            } else messageTemp = text[0].text;
-            chat_cards.children[1].children[0].children[0].children[0].innerHTML = messageTemp;
-            chat_cards.children[1].children[0].children[0].children[1].innerHTML = "chat: ".concat(e.id);
+            if (e.name == null || e.name != null && e.name.length == 0) {
+              if (text[0].text.length > 25) {
+                messageTemp = text[0].text.slice(0, 22).trim();
+                messageTemp += '...';
+              } else messageTemp = text[0].text;
+              chat_cards.children[1].children[0].children[0].children[0].innerHTML = messageTemp;
+            } else chat_cards.children[1].children[0].children[0].children[0].innerHTML = e.name;
+            chat_cards.children[1].children[0].children[0].children[1].innerHTML = "chat: ".concat(e.id, " - ").concat(JSON.parse(e.text).length, " mensagens");
             chat_cards.children[1].classList.remove('active');
             chat_cards.children[1].setAttribute('data-api-index', i);
             chat_cards.children[1].setAttribute('data-api-thread', e.id);
             chat_cards.children[1].addEventListener('click', function (event) {
+              if (event.target == event.currentTarget.children[0].children[1].children[0] || event.target == event.currentTarget.children[0].children[1]) return;
               var btn = event.currentTarget;
               var index = parseInt(btn.getAttribute('data-api-index'));
               var thread = parseInt(btn.getAttribute('data-api-thread'));
@@ -20029,7 +20122,7 @@ function buildChat() {
 }
 function _buildChat() {
   _buildChat = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee6() {
-    var json;
+    var len, json;
     return _regeneratorRuntime().wrap(function _callee6$(_context6) {
       while (1) switch (_context6.prev = _context6.next) {
         case 0:
@@ -20040,12 +20133,17 @@ function _buildChat() {
           throw new Error('ERRO: nenhuma thread ativa');
         case 2:
           cleanDOM(msg_body);
+          if (thread_names[selected_thread] == null || thread_names[selected_thread] != null && thread_names[selected_thread].length == 0) {
+            len = chat_cards.children.length - 1;
+            chat_name.innerHTML = chat_cards.children[len - selected_thread].children[0].children[0].children[0].innerHTML;
+          } else chat_name.innerHTML = thread_names[selected_thread];
           json = JSON.parse(thread_text[selected_thread]);
+          chat_num_msgs.innerHTML = "".concat(json.length, " mensagens");
           json.forEach(function (e) {
             if (e.who == 'user') attachDOM(msg_body, bubble_user);else attachDOM(msg_body, bubble_sys);
             addTextLastBubble(e.text);
           });
-        case 5:
+        case 7:
         case "end":
           return _context6.stop();
       }
@@ -20055,8 +20153,13 @@ function _buildChat() {
 }
 var bubble_sys = "<div class=\"d-flex justify-content-start mb-4\">\n        <div class=\"msg_cotainer msg_bubble_sys\">\n            <span></span>\n        </div>\n    </div>";
 var bubble_user = "<div class=\"d-flex justify-content-end mb-4\">\n        <div class=\"msg_cotainer_send msg_bubble_user\">\n            <span></span>\n        </div>\n    </div>";
-var chat_card = "<li class=\"border-top border-bottom border-dark active\">\n        <button class=\"d-flex bd-highlight btn w-100 text-start\">\n            <div class=\"user_info\">\n                <span></span>\n                <p></p>\n            </div>\n        </button>\n    </li>";
-var add_chat = "<li class=\" d-flex flex-column justify-content-center align-items-center\">\n        <button class=\"d-flex justify-content-center text-black bd-highlight rounded-pill bg-white\" style=\"width: 90% !important;\" data-bs-toggle=\"modal\" data-bs-target=\"#add_thread_modal_id\">\n            <span style=\"padding: 5px; border-radius: 10px;\">\n                <i class=\"fa-solid fa-plus\"></i>\n            </span>\n        </button>\n    </li>";
+var chat_card = "<li class=\"chat_btn active\">\n        <div class=\"d-flex justify-content-between bd-highlight btn w-100 text-start\">\n            <div class=\"user_info\">\n                <span></span>\n                <p></p>\n            </div>\n            <span id=\"btn-group dropend\">\n                <i class=\"fas fa-ellipsis-v btn btn-dots\" data-bs-toggle=\"dropdown\"></i>\n                <ul class=\"dropdown-menu\">\n                    <li><i class=\"fas fa-pen\"></i> Renomear</li>\n                    <li><i class=\"fas fa-trash-can-xmark\"></i> Deletar</li>\n                </ul>\n            </span>\n        </div>\n    </li>";
+var add_chat = "<li class=\" d-flex flex-column justify-content-center align-items-center\" style=\"margin-bottom: 15px !important\">\n        <button class=\"d-flex justify-content-center text-black rounded-pill btn-tertiary\" style=\"width: 90% !important; border: 0px;\" data-bs-toggle=\"modal\" data-bs-target=\"#add_thread_modal_id\">\n            <span style=\"padding: 5px; border-radius: 10px;\">\n                <i class=\"fa-solid fa-plus\"></i>\n            </span>\n        </button>\n    </li>";
+function sleep(ms) {
+  return new Promise(function (resolve) {
+    return setTimeout(resolve, ms);
+  });
+}
 function cleanDOM(dom) {
   dom.innerHTML = '';
 }
@@ -20066,16 +20169,65 @@ function attachDOM(dom, content) {
 function addTextLastBubble(text) {
   var len = msg_body.children.length - 1;
   var s = msg_body.children[len].children[0].children[0];
-  s.innerHTML += text;
+  s.innerHTML += marked.parse(text);
+  msg_body.scrollTop = msg_body.scrollHeight;
+}
+function setTextLastBubble(text) {
+  var len = msg_body.children.length - 1;
+  var s = msg_body.children[len].children[0].children[0];
+  s.innerHTML = marked.parse(text);
+  msg_body.scrollTop = msg_body.scrollHeight;
+}
+function loadingTextLastBubble() {
+  return _loadingTextLastBubble.apply(this, arguments);
+}
+function _loadingTextLastBubble() {
+  _loadingTextLastBubble = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee7() {
+    var len, s;
+    return _regeneratorRuntime().wrap(function _callee7$(_context7) {
+      while (1) switch (_context7.prev = _context7.next) {
+        case 0:
+          len = msg_body.children.length - 1;
+          s = msg_body.children[len].children[0].children[0];
+          s.innerHTML = "<div class=\"spinner-border text-white\" role=\"status\"></div>";
+          /*
+          let num_dots = 1;
+          msg_body.scrollTop = msg_body.scrollHeight
+           while(loading_text) {
+              s.innerHTML = '';
+              for(let i = 0; i < num_dots; i++)
+                  s.innerHTML += '.';
+               if(!loading_text)
+                  break;
+               await sleep(250);
+               if(!loading_text)
+                  break;
+               if(num_dots == 3)
+                  num_dots = 1;
+              else 
+                  num_dots++;
+          }
+          
+          s.innerHTML = '';
+          */
+        case 3:
+        case "end":
+          return _context7.stop();
+      }
+    }, _callee7);
+  }));
+  return _loadingTextLastBubble.apply(this, arguments);
 }
 function disableButtons() {
   $('#send_btn_id')[0].classList.add('disabled_btn');
   $('#add_thread_btn_id')[0].classList.add('disabled_btn');
+  msg_area.classList.add('disabled_btn');
   chat_cards.classList.add('disabled_btn');
 }
 function enableButtons() {
   //$('#send_btn_id')[0].classList.remove('disabled_btn');
   $('#add_thread_btn_id')[0].classList.remove('disabled_btn');
+  msg_area.classList.remove('disabled_btn');
   chat_cards.classList.remove('disabled_btn');
 }
 $(document).ready(function () {
@@ -20087,6 +20239,8 @@ $(document).ready(function () {
   msg_body = $('#msg_card_body_id')[0];
   msg_area = $('#msg_area_id')[0];
   chat_cards = $('#chat_cards_id')[0];
+  chat_name = $('#chat_name_id')[0];
+  chat_num_msgs = $('#chat_num_msgs_id')[0];
   msg_area.addEventListener('input', function (event) {
     var dom = event.target;
     if (dom.value.length > 0) $('#send_btn_id')[0].classList.remove('disabled_btn');else $('#send_btn_id')[0].classList.add('disabled_btn');

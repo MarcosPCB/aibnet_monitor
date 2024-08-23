@@ -21,8 +21,49 @@ function readCookie(name) {
 }
 
 var incompleteData = '';
+var incompleteEvent = '';
 var currentEvent = null;
 var current_thread = -1;
+
+function identifyEvent(inputString) {
+    const events = [
+      "thread.created",
+      "thread.run.created",
+      "thread.run.queued",
+      "thread.run.in_progress",
+      "thread.run.requires_action",
+      "thread.run.completed",
+      "thread.run.incomplete",
+      "thread.run.failed",
+      "thread.run.cancelling",
+      "thread.run.cancelled",
+      "thread.run.expired",
+      "thread.run.step.created",
+      "thread.run.step.in_progress",
+      "thread.run.step.delta",
+      "thread.run.step.completed",
+      "thread.run.step.failed",
+      "thread.run.step.cancelled",
+      "thread.run.step.expired",
+      "thread.message.created",
+      "thread.message.in_progress",
+      "thread.message.delta",
+      "thread.message.completed",
+      "thread.message.incomplete",
+      "error",
+      "done"
+    ];
+  
+    // Verifica se algum dos eventos está na string
+    for (const event of events) {
+      if (inputString.includes(event)) {
+        return event;
+      }
+    }
+  
+    // Se nenhum evento foi identificado, retorna "incomplete"
+    return "incomplete";
+  }
 
 function processString(chunk) {
     const lines = chunk.split('\n');
@@ -47,8 +88,23 @@ function processString(chunk) {
                 }
                 incompleteData = ''; // Limpa o estado após processar o dado completo
                 currentEvent = null;
+                continue;
             } catch (error) {
                 // Continua acumulando dados se o JSON ainda estiver incompleto
+                continue;
+            }
+        }
+
+        if(incompleteEvent) {
+            incompleteEvent += line;
+            if (incompleteEvent.startsWith('event:')) {
+                currentEvent = incompleteEvent.slice(6).trim();
+                if (currentEvent !== "thread.message.delta") {
+                    currentEvent = null;
+                    incompleteEvent = '';
+                    continue;
+                }
+                incompleteEvent = '';
                 continue;
             }
         }
@@ -63,10 +119,16 @@ function processString(chunk) {
         // Identifica eventos
         if (line.startsWith('event:')) {
             currentEvent = line.slice(6).trim();
-            if (currentEvent !== "thread.message.delta") {
+
+            let event = identifyEvent(currentEvent);
+            if (event != "thread.message.delta") {
+                if(event == 'incomplete')
+                    incompleteEvent = line;
+
                 currentEvent = null;
                 continue;
             }
+            continue;
         }
 
         // Identifica dados
@@ -91,11 +153,16 @@ function processString(chunk) {
                     }
                 }
                 currentEvent = null; // Reseta o evento após processar
+                continue;
             } catch (error) {
                 // Se o JSON está incompleto, armazena o fragmento
                 incompleteData = data;
+                continue;
             }
         }
+
+        // if got here, probably it's an incomplete event, but check it anyway
+        incompleteEvent = line;
     }
 
     return events;
@@ -105,6 +172,9 @@ var api_url = 'http://localhost:8000/api/';
 var msg_body;
 var msg_area;
 var chat_cards;
+var chat_name;
+var chat_num_msgs;
+var loading_text = false;
 
 function cleanMsgArea() {
     msg_area.value = '';
@@ -114,9 +184,65 @@ async function addThread() {
     const token = readCookie('token');
     
     let first_message = $('#add_thread_msg_id')[0].value;
-    $('#add_thread_msg_id')[0].value = '';
+    let new_chat_name = $('#add_thread_name_id')[0].value;
+    $('#add_thread_msg_id')[0].value = $('#add_thread_name_id')[0].value = '';
     $('#add_thread_modal_id').modal('hide');
     disableButtons();
+
+    cleanDOM(msg_body);
+    chat_name.innerHTML = new_chat_name;
+    chat_num_msgs.innerHTML = '1 mensagem';
+    attachDOM(msg_body, bubble_user);
+    addTextLastBubble(first_message);
+
+    chat_cards.insertBefore($(chat_card)[0], chat_cards.children[1]);
+
+    if(selected_thread != -1) {
+        let len = chat_cards.children.length - 1;
+        chat_cards.children[len - selected_thread].classList.remove('active');
+    }
+
+    selected_thread = chat_cards.children.length - 2;
+    
+    let messageTemp = '';
+
+    if(new_chat_name.length == 0) {
+        if(first_message.length > 25) {
+            messageTemp = first_message.slice(0, 22).trim();
+            messageTemp += '...';
+        } else 
+            messageTemp = first_message; 
+
+        chat_name.innerHTML = messageTemp;
+        chat_cards.children[1].children[0].children[0].children[0].innerHTML = messageTemp;
+    } else
+        chat_cards.children[1].children[0].children[0].children[0].innerHTML = new_chat_name
+
+    chat_cards.children[1].setAttribute('data-api-index', chat_cards.children.length - 2);
+    chat_cards.children[1].addEventListener('click', event => {
+
+        if(event.target == event.currentTarget.children[0].children[1].children[0]
+            || event.target == event.currentTarget.children[0].children[1])
+            return;
+
+        let btn = event.currentTarget;
+        let index = parseInt(btn.getAttribute('data-api-index'));
+        let thread = parseInt(btn.getAttribute('data-api-thread'));
+        btn.classList.add('active');
+
+        if(selected_thread != -1) {
+            let len = chat_cards.children.length - 1;
+            chat_cards.children[len - selected_thread].classList.remove('active');
+        }
+
+        selected_thread = index;
+        current_thread = thread;
+        buildChat();
+    });
+
+    attachDOM(msg_body, bubble_sys);
+    loading_text = true;
+    loadingTextLastBubble();
 
     try {
         const response = await fetch(api_url + 'chat/create-run/1', {
@@ -128,60 +254,29 @@ async function addThread() {
             },
             body: JSON.stringify({
                 text: first_message,
-                main_brand_id: 1
+                main_brand_id: 1,
+                name: new_chat_name
             })
         });
 
         if (!response.body) {
-            throw new Error('A resposta não contém um stream legível.');
+            throw new Error('A resposta não contém uma stream legível.');
         }
-
-        cleanDOM(msg_body);
-        attachDOM(msg_body, bubble_user);
-        addTextLastBubble(first_message);
-
-        chat_cards.insertBefore($(chat_card)[0], chat_cards.children[1]);
-
-        if(selected_thread != -1) {
-            let len = chat_cards.children.length - 1;
-            chat_cards.children[len - selected_thread].classList.remove('active');
-        }
-
-        selected_thread = chat_cards.children.length - 2;
         
-        let messageTemp = '';
-
-        if(first_message.length > 25) {
-            messageTemp = first_message.slice(0, 22).trim();
-            messageTemp += '...';
-        } else 
-            messageTemp = first_message; 
-
-        chat_cards.children[1].children[0].children[0].children[0].innerHTML = messageTemp;
-        chat_cards.children[1].setAttribute('data-api-index', chat_cards.children.length - 2);
-        chat_cards.children[1].addEventListener('click', event => {
-            let btn = event.currentTarget;
-            let index = parseInt(btn.getAttribute('data-api-index'));
-            let thread = parseInt(btn.getAttribute('data-api-thread'));
-            btn.classList.add('active');
-
-            if(selected_thread != -1) {
-                let len = chat_cards.children.length - 1;
-                chat_cards.children[len - selected_thread].classList.remove('active');
-            }
-
-            selected_thread = index;
-            current_thread = thread;
-            buildChat();
-        });
+        if (response.status != 200) {
+            throw new Error('ERRO: não foi possível receber uma responsta do servidor');
+        }
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
 
+        chat_num_msgs.innerHTML = '2 mensagens';
+
         const processChunk = async () => {
-            attachDOM(msg_body, bubble_sys);
             incompleteData = '';
             currentEvent = null;
+            loading_text = false;
+            let text = '';
             
             while (true) {
                 
@@ -192,16 +287,22 @@ async function addThread() {
 
                 // Decodificar o chunk e atualizar o DOM
                 const chunk = decoder.decode(value, { stream: true });
+                console.log(chunk);
                 let arr = processString(chunk);
+                if(arr.length > 0)
+                    loading_text = false;
+
                 arr.forEach((e) => {
-                    addTextLastBubble(e);
+                    text += e;
+                    setTextLastBubble(text);
                 });
                 
             }
 
-            chat_cards.children[1].children[0].children[0].children[1].innerHTML = `chat: ${current_thread}`;
+            chat_cards.children[1].children[0].children[0].children[1].innerHTML = `chat: ${current_thread} - 2 mensagens`;
             chat_cards.children[1].setAttribute('data-api-thread', current_thread);
             thread_ids.push(current_thread);
+            thread_names.push(new_chat_name);
 
             let json = [];
 
@@ -211,10 +312,7 @@ async function addThread() {
             
             let msg01 = new Object();
             msg01.who = 'assistant';
-            let len = msg_body.children.length - 1;
-            let s = msg_body.children[len].children[0].children[0];
-
-            msg01.text = s.innerHTML;
+            msg01.text = text;
 
             json.push(msg00);
             json.push(msg01);
@@ -237,6 +335,13 @@ async function sendMsgThread() {
     let message = msg_area.value;
     msg_area.value = '';
 
+    attachDOM(msg_body, bubble_user);
+    addTextLastBubble(message);
+    attachDOM(msg_body, bubble_sys);
+
+    loading_text = true;
+    loadingTextLastBubble();
+
     try {
         const response = await fetch(api_url + `chat/add/text/${current_thread}/1`, {
             method: 'POST',
@@ -254,16 +359,17 @@ async function sendMsgThread() {
             throw new Error('A resposta não contém um stream legível.');
         }
 
-        attachDOM(msg_body, bubble_user);
-        addTextLastBubble(message);
+        if (response.status != 200) {
+            throw new Error('ERRO: não foi possível receber uma resposta do servidor');
+        }
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
 
         const processChunk = async () => {
-            attachDOM(msg_body, bubble_sys);
             incompleteData = '';
             currentEvent = null;
+            let text = '';
             
             while (true) {
                 const { done, value } = await reader.read();
@@ -274,11 +380,37 @@ async function sendMsgThread() {
                 // Decodificar o chunk e atualizar o DOM
                 const chunk = decoder.decode(value, { stream: true });
                 let arr = processString(chunk);
+                if(arr.length > 0)
+                    loading_text = false;
+
+                console.log(chunk);
                 arr.forEach((e) => {
-                    addTextLastBubble(e);
+                    text += e;
+                    setTextLastBubble(text);
                 });
                 
             }
+
+            let json = JSON.parse(thread_text[selected_thread]);
+
+            let msg00 = new Object();
+            msg00.who = 'user';
+            msg00.text = message;
+            
+            let msg01 = new Object();
+            msg01.who = 'assistant';
+            msg01.text = text;
+
+            json.push(msg00);
+            json.push(msg01);
+            chat_num_msgs.innerHTML = `${json.length} mensagens`;
+
+            if(selected_thread != -1) {
+                let len = chat_cards.children.length - 2;
+                chat_cards.children[len - selected_thread].children[0].children[0].children[1].innerHTML = `chat: ${thread_ids[selected_thread].id} - ${json.length} mensagens`;
+            }
+
+            thread_text[selected_thread] = JSON.stringify(json);
 
             enableButtons();
         }
@@ -291,6 +423,7 @@ async function sendMsgThread() {
 
 var thread_ids = [];
 var thread_text = [];
+var thread_names = [];
 var selected_thread = -1;
 
 async function listChats() {
@@ -317,6 +450,7 @@ async function listChats() {
         data.forEach((e, i) => {
             thread_ids.push(e.thread_id);
             thread_text.push(e.text);
+            thread_names.push(e.name);
 
             let text = JSON.parse(e.text);
 
@@ -328,19 +462,27 @@ async function listChats() {
 
             let messageTemp = '';
 
-            if(text[0].text.length > 25) {
-                messageTemp = text[0].text.slice(0, 22).trim();
-                messageTemp += '...';
-            } else 
-                messageTemp = text[0].text; 
+            if(e.name == null || (e.name != null && e.name.length == 0)) {
+                if(text[0].text.length > 25) {
+                    messageTemp = text[0].text.slice(0, 22).trim();
+                    messageTemp += '...';
+                } else 
+                    messageTemp = text[0].text; 
 
-            chat_cards.children[1].children[0].children[0].children[0].innerHTML = messageTemp;
+                chat_cards.children[1].children[0].children[0].children[0].innerHTML = messageTemp;
+            } else
+                chat_cards.children[1].children[0].children[0].children[0].innerHTML = e.name;
            
-            chat_cards.children[1].children[0].children[0].children[1].innerHTML = `chat: ${e.id}`;
+            chat_cards.children[1].children[0].children[0].children[1].innerHTML = `chat: ${e.id} - ${JSON.parse(e.text).length} mensagens`;
             chat_cards.children[1].classList.remove('active');
             chat_cards.children[1].setAttribute('data-api-index', i);
             chat_cards.children[1].setAttribute('data-api-thread', e.id);
             chat_cards.children[1].addEventListener('click', event => {
+
+                if(event.target == event.currentTarget.children[0].children[1].children[0]
+                    || event.target == event.currentTarget.children[0].children[1])
+                    return;
+
                 let btn = event.currentTarget;
                 let index = parseInt(btn.getAttribute('data-api-index'));
                 let thread = parseInt(btn.getAttribute('data-api-thread'));
@@ -367,7 +509,15 @@ async function buildChat() {
 
     cleanDOM(msg_body);
 
+    if(thread_names[selected_thread] == null || (thread_names[selected_thread] != null && thread_names[selected_thread].length == 0)) {
+        let len = chat_cards.children.length - 1;
+        chat_name.innerHTML = chat_cards.children[len - selected_thread].children[0].children[0].children[0].innerHTML;
+    } else
+        chat_name.innerHTML = thread_names[selected_thread];
+
+
     let json = JSON.parse(thread_text[selected_thread]);
+    chat_num_msgs.innerHTML = `${json.length} mensagens`;
 
     json.forEach(e => {
         if(e.who == 'user')
@@ -394,23 +544,34 @@ const bubble_user =
     </div>`;
 
 const chat_card = 
-    `<li class="border-top border-bottom border-dark active">
-        <button class="d-flex bd-highlight btn w-100 text-start">
+    `<li class="chat_btn active">
+        <div class="d-flex justify-content-between bd-highlight btn w-100 text-start">
             <div class="user_info">
                 <span></span>
                 <p></p>
             </div>
-        </button>
+            <span id="btn-group dropend">
+                <i class="fas fa-ellipsis-v btn btn-dots" data-bs-toggle="dropdown"></i>
+                <ul class="dropdown-menu">
+                    <li><i class="fas fa-pen"></i> Renomear</li>
+                    <li><i class="fas fa-trash-can-xmark"></i> Deletar</li>
+                </ul>
+            </span>
+        </div>
     </li>`;
 
 const add_chat = 
-    `<li class=" d-flex flex-column justify-content-center align-items-center">
-        <button class="d-flex justify-content-center text-black bd-highlight rounded-pill bg-white" style="width: 90% !important;" data-bs-toggle="modal" data-bs-target="#add_thread_modal_id">
+    `<li class=" d-flex flex-column justify-content-center align-items-center" style="margin-bottom: 15px !important">
+        <button class="d-flex justify-content-center text-black rounded-pill btn-tertiary" style="width: 90% !important; border: 0px;" data-bs-toggle="modal" data-bs-target="#add_thread_modal_id">
             <span style="padding: 5px; border-radius: 10px;">
                 <i class="fa-solid fa-plus"></i>
             </span>
         </button>
     </li>`;
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 function cleanDOM(dom) {
     dom.innerHTML = '';
@@ -423,18 +584,59 @@ function attachDOM(dom, content) {
 function addTextLastBubble(text) {
     let len = msg_body.children.length - 1;
     let s = msg_body.children[len].children[0].children[0];
-    s.innerHTML += text; 
+    s.innerHTML += marked.parse(text); 
+    msg_body.scrollTop = msg_body.scrollHeight
 }
+
+function setTextLastBubble(text) {
+    let len = msg_body.children.length - 1;
+    let s = msg_body.children[len].children[0].children[0];
+    s.innerHTML = marked.parse(text); 
+    msg_body.scrollTop = msg_body.scrollHeight
+}
+
+async function loadingTextLastBubble() {
+    let len = msg_body.children.length - 1;
+    let s = msg_body.children[len].children[0].children[0];
+    s.innerHTML = `<div class="spinner-border text-white" role="status"></div>`
+    /*
+    let num_dots = 1;
+    msg_body.scrollTop = msg_body.scrollHeight
+
+    while(loading_text) {
+        s.innerHTML = '';
+        for(let i = 0; i < num_dots; i++)
+            s.innerHTML += '.';
+
+        if(!loading_text)
+            break;
+
+        await sleep(250);
+
+        if(!loading_text)
+            break;
+
+        if(num_dots == 3)
+            num_dots = 1;
+        else 
+            num_dots++;
+    }
+    
+    s.innerHTML = '';
+    */
+} 
 
 function disableButtons() {
     $('#send_btn_id')[0].classList.add('disabled_btn');
     $('#add_thread_btn_id')[0].classList.add('disabled_btn');
+    msg_area.classList.add('disabled_btn');
     chat_cards.classList.add('disabled_btn');
 }
 
 function enableButtons() {
     //$('#send_btn_id')[0].classList.remove('disabled_btn');
     $('#add_thread_btn_id')[0].classList.remove('disabled_btn');
+    msg_area.classList.remove('disabled_btn');
     chat_cards.classList.remove('disabled_btn');
 }
 
@@ -449,6 +651,8 @@ $(document).ready(function(){
     msg_body = $('#msg_card_body_id')[0];
     msg_area = $('#msg_area_id')[0];
     chat_cards = $('#chat_cards_id')[0];
+    chat_name = $('#chat_name_id')[0];
+    chat_num_msgs = $('#chat_num_msgs_id')[0];
 
     msg_area.addEventListener('input', event => {
         let dom = event.target;

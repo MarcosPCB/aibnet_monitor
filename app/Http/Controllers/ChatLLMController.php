@@ -13,7 +13,8 @@ class ChatLLMController extends Controller
     public function create(Request $request) {
         $request->validate([
             'text' => 'required|string',
-            'main_brand_id' => 'required|exists:main_brand,id'
+            'main_brand_id' => 'required|exists:main_brand,id',
+            'name' => 'string'
         ]);
 
         $json = [];
@@ -26,6 +27,7 @@ class ChatLLMController extends Controller
         $chat = Chat::create([
             'text' => json_encode($json),
             'main_brand_id' => $request->main_brand_id,
+            'name' => $request->name
         ]);
 
         return response()->json($chat, 201);
@@ -34,7 +36,8 @@ class ChatLLMController extends Controller
     public function createAndRun(Request $request) {
         $request->validate([
             'text' => 'required|string',
-            'main_brand_id' => 'required|exists:main_brand,id'
+            'main_brand_id' => 'required|exists:main_brand,id',
+            'name' => 'string'
         ]);
 
         $llm = new LLMComm($request->main_brand_id);
@@ -51,6 +54,7 @@ class ChatLLMController extends Controller
             'text' => json_encode($json),
             'thread_id' => $data->thread->id,
             'main_brand_id' => $request->main_brand_id,
+            'name' => $request->name
         ]);
 
         return response()->stream(function () use ($data, $json, $chat, $llm) {

@@ -13,6 +13,7 @@ class Chat extends Model
     protected $table = "chat";
 
     protected $fillable = [
+        "name",
         "text",
         'thread_id',
         "main_brand_id"
