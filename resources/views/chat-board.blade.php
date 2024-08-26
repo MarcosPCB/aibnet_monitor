@@ -23,7 +23,17 @@
 			<div class="row justify-content-center h-100">
 				<div class="col-md-4 col-xl-3 chat"><div class="card mb-sm-3 mb-md-0 contacts_card">
 					<div class="card-header">
-						<div class="input-group">
+						<div class="input-group align-items-center">
+							<div class="btn-group dropend">
+								<div class="d-flex justify-content-center align-items-center me-3 btn" style="padding: 0;" data-bs-toggle="dropdown">
+									<img class="img-fluid" style="max-width: 64px; border-radius: 50%" id="brand_pic_id" src="img/logo_black.png">
+								</div>
+								<ul class="dropdown-menu">
+									<li data-bs-toggle="modal" data-bs-target="#switch_modal_id"><i class="fa-solid fa-arrow-up-arrow-down"></i> Mudar marca</li>
+									<li data-bs-toggle="modal" data-bs-target="#config_modal_id"><i class="fa-solid fa-gear"></i> Configurar</li>
+									<li data-bs-toggle="modal" data-bs-target="#logout_modal_id"><i class="fa-solid fa-circle-xmark"></i> Logout</li>
+								</ul>
+							</div>
 							<input type="text" placeholder="Search..." name="" class="form-control search">
 							<div class="input-group-prepend">
 								<span class="input-group-text search_btn"><i class="fas fa-search"></i></span>
@@ -117,6 +127,74 @@
             <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title text-white" id="staticBackdropLabel">Deseja mesmo deletar o chat?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Não</button>
+                <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="delete_chat_btn_id" data-bs-dismiss="modal">Sim</button>
+            </div>
+            </div>
+        </div>
+    </div>
+
+	 <!-- Modal switch brand -->
+	 <div class="modal fade" id="switch_modal_id" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-default">
+            <div class="modal-header">
+                <h5 class="modal-title text-white" id="staticBackdropLabel">Trocar de marca</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+				<input type="text" class="form-control type_msg" id="add_thread_name_id" placeholder="Nome do chat..." style="border-radius: 15px"></input>
+				<br>
+                <textarea class="form-control type_msg" id="add_thread_msg_id" placeholder="Primeira mensagem..." style="border-radius: 15px"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="add_thread_btn_id">
+					<span>
+						<i class="fa-solid fa-paper-plane-top"></i>
+						Trocar
+					</span>
+				</button>
+            </div>
+            </div>
+        </div>
+    </div>
+
+	<!-- Config account -->
+	<div class="modal fade" id="config_modal_id" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white" id="staticBackdropLabel">Configurar conta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+				<input type="text" class="form-control type_msg" id="add_thread_name_id" placeholder="Nome do chat..." style="border-radius: 15px"></input>
+				<br>
+                <textarea class="form-control type_msg" id="add_thread_msg_id" placeholder="Primeira mensagem..." style="border-radius: 15px"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="add_thread_btn_id">
+					<span>
+						<i class="fa-solid fa-floppy-disk"></i>
+						Salvar
+					</span>
+				</button>
+            </div>
+            </div>
+        </div>
+    </div>
+
+	<!-- Modal logout chat -->
+	<div class="modal fade" id="logout_modal_id" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white" id="staticBackdropLabel">Deseja mesmo deslogar?</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-footer">

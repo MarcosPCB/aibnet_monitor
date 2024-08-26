@@ -35,10 +35,12 @@ textarea.form-control {
 .card-header{
     border-radius: 15px 15px 0 0 !important;
     border-bottom: 0 !important;
+    background-color: rgba(0, 0, 0, .1);
 }
 .card-footer{
     border-radius: 0 0 15px 15px !important;
     border-top: 0 !important;
+    background-color: rgba(0, 0, 0, .1);
 }
 .container{
     align-content: center;
@@ -365,6 +367,10 @@ background-color: rgba(0,0,0,0.2);
 
 .move-down {
     transform: translateY(200%);
+}
+
+.bg-default {
+    background-color:  rgba(0,0,0,0.6)
 }
 
 @media(max-width: 576px) {
