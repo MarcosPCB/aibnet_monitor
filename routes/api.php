@@ -134,6 +134,7 @@ Route::middleware(['auth:sanctum', 'isOperatorOrAccountUser'])->group(function (
         Route::patch('/add/thread/{id}/{account_id}', [ChatLLMController::class,'attachThread'])->name('chat.add.thread');
         Route::get('/get/{id}/{account_id}', [ChatLLMController::class,'getChat'])->name('chat.get');
         Route::get('/list/{main_brand_id}/{account_id}', [ChatLLMController::class,'listAll'])->name('chat.list');
+        Route::patch('/update/{id}/{account_id}', [ChatLLMController::class,'renameChat'])->name('chat.rename');
         Route::delete('/delete/{id}/{account_id}', [ChatLLMController::class, 'delete'])->name('chat.delete');
      });
 });

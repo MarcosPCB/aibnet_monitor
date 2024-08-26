@@ -19742,8 +19742,12 @@ var chat_cards;
 var chat_name;
 var chat_num_msgs;
 var loading_text = false;
-function cleanMsgArea() {
+function cleanMsgBody() {
   msg_area.value = '';
+  msg_body.innerHTML = "<div class=\"d-flex justify-content-center align-items-center h-100\">\n\t\t\t\t\t\t\t\t<img class=\"img-fluid\" src=\"img/logo_cyan.png\">\n\t\t\t\t\t\t\t</div>";
+  if ($('#msg_body_footer')[0].classList.length == 1) $('#msg_body_footer')[0].classList.add('move-down');
+  chat_name.innerHTML = '';
+  chat_num_msgs = '';
 }
 function addThread() {
   return _addThread.apply(this, arguments);
@@ -19760,6 +19764,7 @@ function _addThread() {
           $('#add_thread_msg_id')[0].value = $('#add_thread_name_id')[0].value = '';
           $('#add_thread_modal_id').modal('hide');
           disableButtons();
+          if ($('#msg_body_footer')[0].classList[1] == 'move-down') $('#msg_body_footer')[0].classList.remove('move-down');
           cleanDOM(msg_body);
           chat_name.innerHTML = new_chat_name;
           chat_num_msgs.innerHTML = '1 mensagem';
@@ -19798,8 +19803,8 @@ function _addThread() {
           attachDOM(msg_body, bubble_sys);
           loading_text = true;
           loadingTextLastBubble();
-          _context2.prev = 21;
-          _context2.next = 24;
+          _context2.prev = 22;
+          _context2.next = 25;
           return fetch(api_url + 'chat/create-run/1', {
             method: 'POST',
             headers: {
@@ -19813,20 +19818,20 @@ function _addThread() {
               name: new_chat_name
             })
           });
-        case 24:
+        case 25:
           response = _context2.sent;
           if (response.body) {
-            _context2.next = 27;
+            _context2.next = 28;
             break;
           }
           throw new Error('A resposta não contém uma stream legível.');
-        case 27:
+        case 28:
           if (!(response.status != 200)) {
-            _context2.next = 29;
+            _context2.next = 30;
             break;
           }
           throw new Error('ERRO: não foi possível receber uma responsta do servidor');
-        case 29:
+        case 30:
           reader = response.body.getReader();
           decoder = new TextDecoder();
           chat_num_msgs.innerHTML = '2 mensagens';
@@ -19894,17 +19899,17 @@ function _addThread() {
             };
           }();
           processChunk();
-          _context2.next = 39;
+          _context2.next = 40;
           break;
-        case 36:
-          _context2.prev = 36;
-          _context2.t0 = _context2["catch"](21);
+        case 37:
+          _context2.prev = 37;
+          _context2.t0 = _context2["catch"](22);
           console.error('Erro ao processar o stream:', _context2.t0);
-        case 39:
+        case 40:
         case "end":
           return _context2.stop();
       }
-    }, _callee2, null, [[21, 36]]);
+    }, _callee2, null, [[22, 37]]);
   }));
   return _addThread.apply(this, arguments);
 }
@@ -20003,8 +20008,8 @@ function _sendMsgThread() {
                     json.push(msg01);
                     chat_num_msgs.innerHTML = "".concat(json.length, " mensagens");
                     if (selected_thread != -1) {
-                      len = chat_cards.children.length - 2;
-                      chat_cards.children[len - selected_thread].children[0].children[0].children[1].innerHTML = "chat: ".concat(thread_ids[selected_thread].id, " - ").concat(json.length, " mensagens");
+                      len = chat_cards.children.length - 1;
+                      chat_cards.children[len - selected_thread].children[0].children[0].children[1].innerHTML = "chat: ".concat(current_thread, " - ").concat(json.length, " mensagens");
                     }
                     thread_text[selected_thread] = JSON.stringify(json);
                     enableButtons();
@@ -20073,7 +20078,7 @@ function _listChats() {
             thread_names.push(e.name);
             var text = JSON.parse(e.text);
             var len = chat_cards.children.length - 1;
-            if (len > 1) {
+            if (len > 0) {
               chat_cards.insertBefore($(chat_card)[0], chat_cards.children[1]);
             } else chat_cards.innerHTML += chat_card;
             var messageTemp = '';
@@ -20089,7 +20094,18 @@ function _listChats() {
             chat_cards.children[1].setAttribute('data-api-index', i);
             chat_cards.children[1].setAttribute('data-api-thread', e.id);
             chat_cards.children[1].addEventListener('click', function (event) {
-              if (event.target == event.currentTarget.children[0].children[1].children[0] || event.target == event.currentTarget.children[0].children[1]) return;
+              if (event.target == event.currentTarget.children[0].children[1].children[0] || event.target == event.currentTarget.children[0].children[1]) {
+                menu_chat = parseInt(event.currentTarget.getAttribute('data-api-thread'));
+                menu_chat_index = parseInt(event.currentTarget.getAttribute('data-api-index'));
+                return;
+              }
+
+              // Rename
+              if (event.target == event.currentTarget.children[0].children[1].children[1].children[0] || event.target == event.currentTarget.children[0].children[1].children[1].children[0].children[0]) return;
+
+              // Delete
+              if (event.target == event.currentTarget.children[0].children[1].children[1].children[1] || event.target == event.currentTarget.children[0].children[1].children[1].children[1].children[0]) return;
+              if ($('#msg_body_footer')[0].classList[1] == 'move-down') $('#msg_body_footer')[0].classList.remove('move-down');
               var btn = event.currentTarget;
               var index = parseInt(btn.getAttribute('data-api-index'));
               var thread = parseInt(btn.getAttribute('data-api-thread'));
@@ -20151,9 +20167,56 @@ function _buildChat() {
   }));
   return _buildChat.apply(this, arguments);
 }
+var menu_chat = -1;
+var menu_chat_index = -1;
+function renameChat() {
+  var token = readCookie('token');
+  var new_chat_name = $('#rename_chat_name_id')[0].value;
+  window.axios.patch(api_url + "chat/update/".concat(menu_chat, "/1"), {
+    name: new_chat_name
+  }, {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 200) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    thread_names[menu_chat_index] = new_chat_name;
+    var len = chat_cards.children.length - 1;
+    chat_cards.children[len - menu_chat_index].children[0].children[0].children[0].innerHTML = new_chat_name;
+    if (selected_thread == menu_chat_index) chat_name.innerHTML = new_chat_name;
+  })["catch"](function (e) {
+    console.error('Erro ao renomear o chat:', e);
+  });
+}
+function deleteChat() {
+  var token = readCookie('token');
+  window.axios["delete"](api_url + "chat/delete/".concat(menu_chat, "/1"), {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 200) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    thread_names[menu_chat_index] = null;
+    var len = chat_cards.children.length - 1;
+    chat_cards.children[len - menu_chat_index].style.display = "none";
+    if (selected_thread == menu_chat_index) {
+      cleanMsgBody();
+    }
+  })["catch"](function (e) {
+    console.error('Erro ao deletar o chat:', e);
+  });
+}
 var bubble_sys = "<div class=\"d-flex justify-content-start mb-4\">\n        <div class=\"msg_cotainer msg_bubble_sys\">\n            <span></span>\n        </div>\n    </div>";
 var bubble_user = "<div class=\"d-flex justify-content-end mb-4\">\n        <div class=\"msg_cotainer_send msg_bubble_user\">\n            <span></span>\n        </div>\n    </div>";
-var chat_card = "<li class=\"chat_btn active\">\n        <div class=\"d-flex justify-content-between bd-highlight btn w-100 text-start\">\n            <div class=\"user_info\">\n                <span></span>\n                <p></p>\n            </div>\n            <span id=\"btn-group dropend\">\n                <i class=\"fas fa-ellipsis-v btn btn-dots\" data-bs-toggle=\"dropdown\"></i>\n                <ul class=\"dropdown-menu\">\n                    <li><i class=\"fas fa-pen\"></i> Renomear</li>\n                    <li><i class=\"fas fa-trash-can-xmark\"></i> Deletar</li>\n                </ul>\n            </span>\n        </div>\n    </li>";
+var chat_card = "<li class=\"chat_btn active\">\n        <div class=\"d-flex justify-content-between bd-highlight btn w-100 text-start\">\n            <div class=\"user_info\">\n                <span></span>\n                <p></p>\n            </div>\n            <span id=\"btn-group dropend\">\n                <i class=\"fas fa-ellipsis-v btn btn-dots\" data-bs-toggle=\"dropdown\"></i>\n                <ul class=\"dropdown-menu\">\n                    <li data-bs-toggle=\"modal\" data-bs-target=\"#rename_modal_id\"><i class=\"fas fa-pen\"></i> Renomear</li>\n                    <li data-bs-toggle=\"modal\" data-bs-target=\"#delete_modal_id\"><i class=\"fas fa-trash-can-xmark\"></i> Deletar</li>\n                </ul>\n            </span>\n        </div>\n    </li>";
 var add_chat = "<li class=\" d-flex flex-column justify-content-center align-items-center\" style=\"margin-bottom: 15px !important\">\n        <button class=\"d-flex justify-content-center text-black rounded-pill btn-tertiary\" style=\"width: 90% !important; border: 0px;\" data-bs-toggle=\"modal\" data-bs-target=\"#add_thread_modal_id\">\n            <span style=\"padding: 5px; border-radius: 10px;\">\n                <i class=\"fa-solid fa-plus\"></i>\n            </span>\n        </button>\n    </li>";
 function sleep(ms) {
   return new Promise(function (resolve) {
@@ -20223,12 +20286,20 @@ function disableButtons() {
   $('#add_thread_btn_id')[0].classList.add('disabled_btn');
   msg_area.classList.add('disabled_btn');
   chat_cards.classList.add('disabled_btn');
+  Array.from(chat_cards.children).forEach(function (e, i) {
+    if (i == 0) return;
+    e.children[0].children[1].children[0].classList.add('disabled_btn');
+  });
 }
 function enableButtons() {
   //$('#send_btn_id')[0].classList.remove('disabled_btn');
   $('#add_thread_btn_id')[0].classList.remove('disabled_btn');
   msg_area.classList.remove('disabled_btn');
   chat_cards.classList.remove('disabled_btn');
+  Array.from(chat_cards.children).forEach(function (e, i) {
+    if (i == 0) return;
+    e.children[0].children[1].children[0].classList.remove('disabled_btn');
+  });
 }
 $(document).ready(function () {
   $('#action_menu_btn').click(function () {
@@ -20236,6 +20307,8 @@ $(document).ready(function () {
   });
   $('#add_thread_btn_id').click(addThread);
   $('#send_btn_id').click(sendMsgThread);
+  $('#rename_chat_btn_id').click(renameChat);
+  $('#delete_chat_btn_id').click(deleteChat);
   msg_body = $('#msg_card_body_id')[0];
   msg_area = $('#msg_area_id')[0];
   chat_cards = $('#chat_cards_id')[0];

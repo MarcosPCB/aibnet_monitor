@@ -255,6 +255,22 @@ class ChatLLMController extends Controller
         return response()->json($chats, 200);
     }
 
+    public function renameChat(Request $request, $id) {
+        $request->validate([
+            'name' => 'required|string'
+        ]);
+
+        $chat = Chat::findOrFail($id);
+
+        $chat->update([
+            'name' => $request->name
+        ]);
+
+        $chat->save();
+
+        return response()->json($chat, 200);
+    }
+
     public function delete(Request $request) {
         $chat = Chat::findOrFail($request->id);
 
