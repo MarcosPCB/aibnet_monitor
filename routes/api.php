@@ -107,6 +107,7 @@ Route::middleware(['auth:sanctum', 'isOperator'])->group(function () {
 Route::middleware(['auth:sanctum', 'isOperatorOrAccountUser'])->group(function () {
      // Account
      Route::patch('/account/update/{account_id}', [AccountController::class, 'update'])->name('account.update');
+     Route::get('/account/list/main-brands/{account_id}', [AccountController::class, 'listMainBrands'])->name('account.listMainBrands');
  
      // User
      Route::post('/user/create/{account_id}', [UserController::class, 'create'])->name('user.create');
@@ -122,8 +123,8 @@ Route::middleware(['auth:sanctum', 'isOperatorOrAccountUser'])->group(function (
 
      Route::get('account/{account_id}', [AccountController::class, 'get'])->name('account.get');
      Route::get('user/{id}/{account_id}', [UserController::class, 'get'])->name('user.get');
-     Route::get('mainbrand/{id}/{account_id}', [MainBrandController::class, 'get'])->name('main-brand.get');
-     Route::get('mainbrand/weekly/{id}/{account_id}', [MainBrandController::class, 'buildDelta'])->name('main-brand.weekly');
+     Route::get('main-brand/{id}/{account_id}', [MainBrandController::class, 'get'])->name('main-brand.get');
+     Route::get('main-brand/weekly/{id}/{account_id}', [MainBrandController::class, 'buildDelta'])->name('main-brand.weekly');
 
      // Chat
      Route::prefix('chat')->group(function () {

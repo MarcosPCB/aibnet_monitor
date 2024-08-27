@@ -29,7 +29,7 @@
 									<img class="img-fluid" style="max-width: 64px; border-radius: 50%" id="brand_pic_id" src="img/logo_black.png">
 								</div>
 								<ul class="dropdown-menu">
-									<li data-bs-toggle="modal" data-bs-target="#switch_modal_id"><i class="fa-solid fa-arrow-up-arrow-down"></i> Mudar marca</li>
+									<li data-bs-toggle="modal" data-bs-target="#switch_modal_id"><i class="fa-solid fa-arrow-right-arrow-left"></i> Mudar marca</li>
 									<li data-bs-toggle="modal" data-bs-target="#config_modal_id"><i class="fa-solid fa-gear"></i> Configurar</li>
 									<li data-bs-toggle="modal" data-bs-target="#logout_modal_id"><i class="fa-solid fa-circle-xmark"></i> Logout</li>
 								</ul>
@@ -58,7 +58,7 @@
 						</div>
 						<div class="card-body msg_card_body" id="msg_card_body_id">
 							<div class="d-flex justify-content-center align-items-center h-100">
-								<img class="img-fluid" src="img/logo_cyan.png">
+								<img class="img-fluid h-100" src="img/logo_cyan.png">
 							</div>
 						</div>
 						<div class="card-footer move-down" id="msg_body_footer">
@@ -146,43 +146,56 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-				<input type="text" class="form-control type_msg" id="add_thread_name_id" placeholder="Nome do chat..." style="border-radius: 15px"></input>
-				<br>
-                <textarea class="form-control type_msg" id="add_thread_msg_id" placeholder="Primeira mensagem..." style="border-radius: 15px"></textarea>
+				<select class="form-select type_msg" style="border-radius: 15px" id="brand_select_id">
+				</select>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="add_thread_btn_id">
-					<span>
-						<i class="fa-solid fa-paper-plane-top"></i>
-						Trocar
-					</span>
+                <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="switch_brand_btn_id">
+					<span><i class="fa-solid fa-arrow-right-arrow-left"></i></span>
 				</button>
             </div>
             </div>
         </div>
     </div>
 
-	<!-- Config account -->
+	<!-- Modal Config account -->
 	<div class="modal fade" id="config_modal_id" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
+            <div class="modal-content bg-default">
             <div class="modal-header">
                 <h5 class="modal-title text-white" id="staticBackdropLabel">Configurar conta</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-				<input type="text" class="form-control type_msg" id="add_thread_name_id" placeholder="Nome do chat..." style="border-radius: 15px"></input>
-				<br>
-                <textarea class="form-control type_msg" id="add_thread_msg_id" placeholder="Primeira mensagem..." style="border-radius: 15px"></textarea>
+				<ul class="nav nav-tabs" id="myTab" role="tablist" style="border: 0;">
+					<li class="nav-item" role="presentation">
+						<button class="nav-link active" id="user-modal-tab" data-bs-toggle="tab" data-bs-target="#user-tab" type="button" role="tab" aria-selected="true">Usuário</button>
+					</li>
+					<li class="nav-item" role="presentation">
+						<button class="nav-link disabled_btn" id="account-modal-tab" data-bs-toggle="tab" data-bs-target="#account-tab" type="button" role="tab" aria-selected="false">Conta</button>
+					</li>
+				</ul>
+				<div class="tab-content" id="myTabContent">
+				<div class="tab-pane fade active show p-4 d-flex flex-column" id="user-tab" role="tabpanel">
+						<h3 class="text-white mb-3">Mudar a senha</h3>
+						<hr class="dropdown-divider text-white">
+						<input type="text" class="form-control type_msg mb-3" id="current_password_id" placeholder="Senha atual" style="border-radius: 15px">
+						<input type="text" class="form-control type_msg mb-3" id="new_password_id&quot;" placeholder="Nova senha" style="border-radius: 15px">
+						<input type="text" class="form-control type_msg mb-3" id="new_confirm_password_id&quot;" placeholder="Confirme a nova senha" style="border-radius: 15px">
+						<button type="button" class="btn btn-basic btn-primary rounded-pill px-4 align-self-end mb-3" id="change_password_btn_id">
+							<span>
+								<i class="fa-solid fa-paper-plane-top"></i>
+							</span>
+						</button>
+					</div>
+					<div class="tab-pane fade" id="account-tab" role="tabpanel">...</div>
+				</div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="add_thread_btn_id">
-					<span>
-						<i class="fa-solid fa-floppy-disk"></i>
-						Salvar
-					</span>
+                <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="save_config_btn_id">
+					<span><i class="fa-solid fa-floppy-disk"></i></span>
 				</button>
             </div>
             </div>
@@ -192,14 +205,14 @@
 	<!-- Modal logout chat -->
 	<div class="modal fade" id="logout_modal_id" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
+            <div class="modal-content bg-default">
             <div class="modal-header">
                 <h5 class="modal-title text-white" id="staticBackdropLabel">Deseja mesmo deslogar?</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Não</button>
-                <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="delete_chat_btn_id" data-bs-dismiss="modal">Sim</button>
+                <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="logout_btn_id" data-bs-dismiss="modal">Sim</button>
             </div>
             </div>
         </div>

@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Models\MainBrand;
 
 class AccountController extends Controller
 {
@@ -143,5 +144,13 @@ class AccountController extends Controller
     {
         $account = Account::findOrFail($id);
         return response()->json($account, 200);
+    }
+
+    public function listMainBrands($id)
+    {
+        $account = Account::findOrFail($id);
+        $mainBrands = $account->mainBrand()->get();
+
+        return response()->json($mainBrands, 200);
     }
 }

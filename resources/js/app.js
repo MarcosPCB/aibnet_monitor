@@ -20,6 +20,9 @@ function readCookie(name) {
     return null;
 }
 
+var account_id = 1;
+var main_brand_id = 1;
+
 var incompleteData = '';
 var incompleteEvent = '';
 var currentEvent = null;
@@ -178,15 +181,16 @@ var loading_text = false;
 
 function cleanMsgBody() {
     msg_area.value = '';
-    msg_body.innerHTML = `<div class="d-flex justify-content-center align-items-center h-100">
-								<img class="img-fluid" src="img/logo_cyan.png">
-							</div>`;
+    msg_body.innerHTML = 
+        `<div class="d-flex justify-content-center align-items-center h-100">
+            <img class="img-fluid h-100" src="img/logo_cyan.png">
+        </div>`;
 
     if($('#msg_body_footer')[0].classList.length == 1)
         $('#msg_body_footer')[0].classList.add('move-down');
 
     chat_name.innerHTML = '';
-    chat_num_msgs = '';
+    chat_num_msgs.innerHTML = '';
 }
 
 async function addThread() {
@@ -211,7 +215,7 @@ async function addThread() {
 
     if(selected_thread != -1) {
         let len = chat_cards.children.length - 1;
-        chat_cards.children[len - selected_thread].classList.remove('active');
+        chat_cards.children[len - selected_thread].classList.remove('active-card');
     }
 
     selected_thread = chat_cards.children.length - 2;
@@ -240,11 +244,11 @@ async function addThread() {
         let btn = event.currentTarget;
         let index = parseInt(btn.getAttribute('data-api-index'));
         let thread = parseInt(btn.getAttribute('data-api-thread'));
-        btn.classList.add('active');
+        btn.classList.add('active-card');
 
         if(selected_thread != -1) {
             let len = chat_cards.children.length - 1;
-            chat_cards.children[len - selected_thread].classList.remove('active');
+            chat_cards.children[len - selected_thread].classList.remove('active-card');
         }
 
         selected_thread = index;
@@ -257,7 +261,7 @@ async function addThread() {
     loadingTextLastBubble();
 
     try {
-        const response = await fetch(api_url + 'chat/create-run/1', {
+        const response = await fetch(api_url + 'chat/create-run/' + account_id, {
             method: 'POST',
             headers: {
                 'Authorization': 'Bearer ' + token,
@@ -355,7 +359,7 @@ async function sendMsgThread() {
     loadingTextLastBubble();
 
     try {
-        const response = await fetch(api_url + `chat/add/text/${current_thread}/1`, {
+        const response = await fetch(api_url + `chat/add/text/${current_thread}/${account_id}`, {
             method: 'POST',
             headers: {
                 'Authorization': 'Bearer ' + token,
@@ -445,7 +449,7 @@ async function listChats() {
     thread_ids.length = thread_text.length = 0;
 
     try {
-        const response = await window.axios.get(api_url + `chat/list/1/1`, {
+        const response = await window.axios.get(api_url + `chat/list/${main_brand_id}/${account_id}`, {
             headers: {
                 'Authorization': 'Bearer ' + token,
                 'Content-Type': 'application/json',
@@ -486,7 +490,7 @@ async function listChats() {
                 chat_cards.children[1].children[0].children[0].children[0].innerHTML = e.name;
            
             chat_cards.children[1].children[0].children[0].children[1].innerHTML = `chat: ${e.id} - ${JSON.parse(e.text).length} mensagens`;
-            chat_cards.children[1].classList.remove('active');
+            chat_cards.children[1].classList.remove('active-card');
             chat_cards.children[1].setAttribute('data-api-index', i);
             chat_cards.children[1].setAttribute('data-api-thread', e.id);
             chat_cards.children[1].addEventListener('click', event => {
@@ -515,11 +519,11 @@ async function listChats() {
                 let btn = event.currentTarget;
                 let index = parseInt(btn.getAttribute('data-api-index'));
                 let thread = parseInt(btn.getAttribute('data-api-thread'));
-                btn.classList.add('active');
+                btn.classList.add('active-card');
 
                 if(selected_thread != -1) {
                     let len = chat_cards.children.length - 1;
-                    chat_cards.children[len - selected_thread].classList.remove('active');
+                    chat_cards.children[len - selected_thread].classList.remove('active-card');
                 }
 
                 selected_thread = index;
@@ -558,13 +562,40 @@ async function buildChat() {
     });
 }
 
+function listBrands() {
+    const token = readCookie('token');
+
+    window.axios.get(api_url + `account/list/main-brands/${account_id}`, {
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        if (response.status != 200) {
+            throw new Error(response.body + ` code: ${response.status}`);
+        }
+
+        const list = $('#brand_select_id')[0];
+
+        const brands = response.data;
+
+        brands.forEach((e, i) => {
+            let selected = main_brand_id == e.id ? 'selected' : '';
+            list.innerHTML += `<option value=${e.id} ${selected}>${e.name}</option>`;
+        });
+    }).catch(e => {
+        console.error('Erro ao renomear o chat:', e);
+    });
+}
+
 var menu_chat = -1;
 var menu_chat_index = -1;
 
 function renameChat() {
     const token = readCookie('token');
     let new_chat_name = $('#rename_chat_name_id')[0].value;
-    window.axios.patch(api_url + `chat/update/${menu_chat}/1`, {
+    window.axios.patch(api_url + `chat/update/${menu_chat}/${account_id}`, {
         name: new_chat_name
     },{
         headers: {
@@ -593,7 +624,7 @@ function renameChat() {
 
 function deleteChat() {
     const token = readCookie('token');
-    window.axios.delete(api_url + `chat/delete/${menu_chat}/1`, {
+    window.axios.delete(api_url + `chat/delete/${menu_chat}/${account_id}`, {
         headers: {
             'Authorization': 'Bearer ' + token,
             'Content-Type': 'application/json',
@@ -619,6 +650,14 @@ function deleteChat() {
     });
 }
 
+function switchBrand() {
+    main_brand_id = $('#brand_select_id')[0].value;
+
+    $('#switch_modal_id').modal('hide');
+    cleanMsgBody();
+    listChats();
+}
+
 const bubble_sys = 
     `<div class="d-flex justify-content-start mb-4">
         <div class="msg_cotainer msg_bubble_sys">
@@ -634,7 +673,7 @@ const bubble_user =
     </div>`;
 
 const chat_card = 
-    `<li class="chat_btn active">
+    `<li class="chat_btn active-card">
         <div class="d-flex justify-content-between bd-highlight btn w-100 text-start">
             <div class="user_info">
                 <span></span>
@@ -688,32 +727,7 @@ function setTextLastBubble(text) {
 async function loadingTextLastBubble() {
     let len = msg_body.children.length - 1;
     let s = msg_body.children[len].children[0].children[0];
-    s.innerHTML = `<div class="spinner-border text-white" role="status"></div>`
-    /*
-    let num_dots = 1;
-    msg_body.scrollTop = msg_body.scrollHeight
-
-    while(loading_text) {
-        s.innerHTML = '';
-        for(let i = 0; i < num_dots; i++)
-            s.innerHTML += '.';
-
-        if(!loading_text)
-            break;
-
-        await sleep(250);
-
-        if(!loading_text)
-            break;
-
-        if(num_dots == 3)
-            num_dots = 1;
-        else 
-            num_dots++;
-    }
-    
-    s.innerHTML = '';
-    */
+    s.innerHTML = `<div class="spinner-border text-white" role="status"></div>`;
 } 
 
 function disableButtons() {
@@ -753,6 +767,7 @@ $(document).ready(function(){
     $('#send_btn_id').click(sendMsgThread);
     $('#rename_chat_btn_id').click(renameChat);
     $('#delete_chat_btn_id').click(deleteChat);
+    $('#switch_brand_btn_id').click(switchBrand);
 
     msg_body = $('#msg_card_body_id')[0];
     msg_area = $('#msg_area_id')[0];
@@ -770,6 +785,7 @@ $(document).ready(function(){
     });
 
     listChats();
+    listBrands();
 });
 
 

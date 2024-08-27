@@ -19590,6 +19590,8 @@ function readCookie(name) {
   }
   return null;
 }
+var account_id = 1;
+var main_brand_id = 1;
 var incompleteData = '';
 var incompleteEvent = '';
 var currentEvent = null;
@@ -19744,10 +19746,10 @@ var chat_num_msgs;
 var loading_text = false;
 function cleanMsgBody() {
   msg_area.value = '';
-  msg_body.innerHTML = "<div class=\"d-flex justify-content-center align-items-center h-100\">\n\t\t\t\t\t\t\t\t<img class=\"img-fluid\" src=\"img/logo_cyan.png\">\n\t\t\t\t\t\t\t</div>";
+  msg_body.innerHTML = "<div class=\"d-flex justify-content-center align-items-center h-100\">\n            <img class=\"img-fluid h-100\" src=\"img/logo_cyan.png\">\n        </div>";
   if ($('#msg_body_footer')[0].classList.length == 1) $('#msg_body_footer')[0].classList.add('move-down');
   chat_name.innerHTML = '';
-  chat_num_msgs = '';
+  chat_num_msgs.innerHTML = '';
 }
 function addThread() {
   return _addThread.apply(this, arguments);
@@ -19773,7 +19775,7 @@ function _addThread() {
           chat_cards.insertBefore($(chat_card)[0], chat_cards.children[1]);
           if (selected_thread != -1) {
             len = chat_cards.children.length - 1;
-            chat_cards.children[len - selected_thread].classList.remove('active');
+            chat_cards.children[len - selected_thread].classList.remove('active-card');
           }
           selected_thread = chat_cards.children.length - 2;
           messageTemp = '';
@@ -19791,10 +19793,10 @@ function _addThread() {
             var btn = event.currentTarget;
             var index = parseInt(btn.getAttribute('data-api-index'));
             var thread = parseInt(btn.getAttribute('data-api-thread'));
-            btn.classList.add('active');
+            btn.classList.add('active-card');
             if (selected_thread != -1) {
               var _len = chat_cards.children.length - 1;
-              chat_cards.children[_len - selected_thread].classList.remove('active');
+              chat_cards.children[_len - selected_thread].classList.remove('active-card');
             }
             selected_thread = index;
             current_thread = thread;
@@ -19805,7 +19807,7 @@ function _addThread() {
           loadingTextLastBubble();
           _context2.prev = 22;
           _context2.next = 25;
-          return fetch(api_url + 'chat/create-run/1', {
+          return fetch(api_url + 'chat/create-run/' + account_id, {
             method: 'POST',
             headers: {
               'Authorization': 'Bearer ' + token,
@@ -19933,7 +19935,7 @@ function _sendMsgThread() {
           loadingTextLastBubble();
           _context4.prev = 9;
           _context4.next = 12;
-          return fetch(api_url + "chat/add/text/".concat(current_thread, "/1"), {
+          return fetch(api_url + "chat/add/text/".concat(current_thread, "/").concat(account_id), {
             method: 'POST',
             headers: {
               'Authorization': 'Bearer ' + token,
@@ -20056,7 +20058,7 @@ function _listChats() {
           thread_ids.length = thread_text.length = 0;
           _context5.prev = 3;
           _context5.next = 6;
-          return window.axios.get(api_url + "chat/list/1/1", {
+          return window.axios.get(api_url + "chat/list/".concat(main_brand_id, "/").concat(account_id), {
             headers: {
               'Authorization': 'Bearer ' + token,
               'Content-Type': 'application/json',
@@ -20090,7 +20092,7 @@ function _listChats() {
               chat_cards.children[1].children[0].children[0].children[0].innerHTML = messageTemp;
             } else chat_cards.children[1].children[0].children[0].children[0].innerHTML = e.name;
             chat_cards.children[1].children[0].children[0].children[1].innerHTML = "chat: ".concat(e.id, " - ").concat(JSON.parse(e.text).length, " mensagens");
-            chat_cards.children[1].classList.remove('active');
+            chat_cards.children[1].classList.remove('active-card');
             chat_cards.children[1].setAttribute('data-api-index', i);
             chat_cards.children[1].setAttribute('data-api-thread', e.id);
             chat_cards.children[1].addEventListener('click', function (event) {
@@ -20109,10 +20111,10 @@ function _listChats() {
               var btn = event.currentTarget;
               var index = parseInt(btn.getAttribute('data-api-index'));
               var thread = parseInt(btn.getAttribute('data-api-thread'));
-              btn.classList.add('active');
+              btn.classList.add('active-card');
               if (selected_thread != -1) {
                 var _len2 = chat_cards.children.length - 1;
-                chat_cards.children[_len2 - selected_thread].classList.remove('active');
+                chat_cards.children[_len2 - selected_thread].classList.remove('active-card');
               }
               selected_thread = index;
               current_thread = thread;
@@ -20167,12 +20169,34 @@ function _buildChat() {
   }));
   return _buildChat.apply(this, arguments);
 }
+function listBrands() {
+  var token = readCookie('token');
+  window.axios.get(api_url + "account/list/main-brands/".concat(account_id), {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 200) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    var list = $('#brand_select_id')[0];
+    var brands = response.data;
+    brands.forEach(function (e, i) {
+      var selected = main_brand_id == e.id ? 'selected' : '';
+      list.innerHTML += "<option value=".concat(e.id, " ").concat(selected, ">").concat(e.name, "</option>");
+    });
+  })["catch"](function (e) {
+    console.error('Erro ao renomear o chat:', e);
+  });
+}
 var menu_chat = -1;
 var menu_chat_index = -1;
 function renameChat() {
   var token = readCookie('token');
   var new_chat_name = $('#rename_chat_name_id')[0].value;
-  window.axios.patch(api_url + "chat/update/".concat(menu_chat, "/1"), {
+  window.axios.patch(api_url + "chat/update/".concat(menu_chat, "/").concat(account_id), {
     name: new_chat_name
   }, {
     headers: {
@@ -20194,7 +20218,7 @@ function renameChat() {
 }
 function deleteChat() {
   var token = readCookie('token');
-  window.axios["delete"](api_url + "chat/delete/".concat(menu_chat, "/1"), {
+  window.axios["delete"](api_url + "chat/delete/".concat(menu_chat, "/").concat(account_id), {
     headers: {
       'Authorization': 'Bearer ' + token,
       'Content-Type': 'application/json',
@@ -20214,9 +20238,15 @@ function deleteChat() {
     console.error('Erro ao deletar o chat:', e);
   });
 }
+function switchBrand() {
+  main_brand_id = $('#brand_select_id')[0].value;
+  $('#switch_modal_id').modal('hide');
+  cleanMsgBody();
+  listChats();
+}
 var bubble_sys = "<div class=\"d-flex justify-content-start mb-4\">\n        <div class=\"msg_cotainer msg_bubble_sys\">\n            <span></span>\n        </div>\n    </div>";
 var bubble_user = "<div class=\"d-flex justify-content-end mb-4\">\n        <div class=\"msg_cotainer_send msg_bubble_user\">\n            <span></span>\n        </div>\n    </div>";
-var chat_card = "<li class=\"chat_btn active\">\n        <div class=\"d-flex justify-content-between bd-highlight btn w-100 text-start\">\n            <div class=\"user_info\">\n                <span></span>\n                <p></p>\n            </div>\n            <span id=\"btn-group dropend\">\n                <i class=\"fas fa-ellipsis-v btn btn-dots\" data-bs-toggle=\"dropdown\"></i>\n                <ul class=\"dropdown-menu\">\n                    <li data-bs-toggle=\"modal\" data-bs-target=\"#rename_modal_id\"><i class=\"fas fa-pen\"></i> Renomear</li>\n                    <li data-bs-toggle=\"modal\" data-bs-target=\"#delete_modal_id\"><i class=\"fas fa-trash-can-xmark\"></i> Deletar</li>\n                </ul>\n            </span>\n        </div>\n    </li>";
+var chat_card = "<li class=\"chat_btn active-card\">\n        <div class=\"d-flex justify-content-between bd-highlight btn w-100 text-start\">\n            <div class=\"user_info\">\n                <span></span>\n                <p></p>\n            </div>\n            <span id=\"btn-group dropend\">\n                <i class=\"fas fa-ellipsis-v btn btn-dots\" data-bs-toggle=\"dropdown\"></i>\n                <ul class=\"dropdown-menu\">\n                    <li data-bs-toggle=\"modal\" data-bs-target=\"#rename_modal_id\"><i class=\"fas fa-pen\"></i> Renomear</li>\n                    <li data-bs-toggle=\"modal\" data-bs-target=\"#delete_modal_id\"><i class=\"fas fa-trash-can-xmark\"></i> Deletar</li>\n                </ul>\n            </span>\n        </div>\n    </li>";
 var add_chat = "<li class=\" d-flex flex-column justify-content-center align-items-center\" style=\"margin-bottom: 15px !important\">\n        <button class=\"d-flex justify-content-center text-black rounded-pill btn-tertiary\" style=\"width: 90% !important; border: 0px;\" data-bs-toggle=\"modal\" data-bs-target=\"#add_thread_modal_id\">\n            <span style=\"padding: 5px; border-radius: 10px;\">\n                <i class=\"fa-solid fa-plus\"></i>\n            </span>\n        </button>\n    </li>";
 function sleep(ms) {
   return new Promise(function (resolve) {
@@ -20253,26 +20283,6 @@ function _loadingTextLastBubble() {
           len = msg_body.children.length - 1;
           s = msg_body.children[len].children[0].children[0];
           s.innerHTML = "<div class=\"spinner-border text-white\" role=\"status\"></div>";
-          /*
-          let num_dots = 1;
-          msg_body.scrollTop = msg_body.scrollHeight
-           while(loading_text) {
-              s.innerHTML = '';
-              for(let i = 0; i < num_dots; i++)
-                  s.innerHTML += '.';
-               if(!loading_text)
-                  break;
-               await sleep(250);
-               if(!loading_text)
-                  break;
-               if(num_dots == 3)
-                  num_dots = 1;
-              else 
-                  num_dots++;
-          }
-          
-          s.innerHTML = '';
-          */
         case 3:
         case "end":
           return _context7.stop();
@@ -20309,6 +20319,7 @@ $(document).ready(function () {
   $('#send_btn_id').click(sendMsgThread);
   $('#rename_chat_btn_id').click(renameChat);
   $('#delete_chat_btn_id').click(deleteChat);
+  $('#switch_brand_btn_id').click(switchBrand);
   msg_body = $('#msg_card_body_id')[0];
   msg_area = $('#msg_area_id')[0];
   chat_cards = $('#chat_cards_id')[0];
@@ -20319,6 +20330,7 @@ $(document).ready(function () {
     if (dom.value.length > 0) $('#send_btn_id')[0].classList.remove('disabled_btn');else $('#send_btn_id')[0].classList.add('disabled_btn');
   });
   listChats();
+  listBrands();
 });
 /******/ })()
 ;
