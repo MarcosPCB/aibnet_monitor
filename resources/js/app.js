@@ -22,6 +22,8 @@ function readCookie(name) {
 
 var account_id = 1;
 var main_brand_id = 1;
+var user_id = 1;
+var is_operator = true;
 
 var incompleteData = '';
 var incompleteEvent = '';
@@ -585,7 +587,7 @@ function listBrands() {
             list.innerHTML += `<option value=${e.id} ${selected}>${e.name}</option>`;
         });
     }).catch(e => {
-        console.error('Erro ao renomear o chat:', e);
+        console.error('Erro ao listar marcas:', e);
     });
 }
 
@@ -758,6 +760,89 @@ function enableButtons() {
     });
 }
 
+function loadBrandPic() {
+    const token = readCookie('token');
+
+    window.axios.get(api_url + `main-brand/primary/platforms/${main_brand_id}/${account_id}`, {
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        if (response.status != 200) {
+            throw new Error(response.body + ` code: ${response.status}`);
+        }
+
+        const brand_pic = $('#brand_pic_id')[0];
+
+        const platforms = response.data;
+
+        for(let i = 0; i < platforms.length; i++) {
+            if(platforms[i].avatar_url != null && platforms[i].avatar_url != '') {
+                brand_pic.src = platforms[i].avatar_url;
+                break;
+            }
+        }
+    }).catch(e => {
+        console.error('Erro ao mudar avatar', e);
+    });
+}
+
+function changePassword() {
+    const token = readCookie('token');
+    const new_password = $('#new_password_id')[0].value;
+    const confirm_new_password = $('#new_confirm_password_id')[0].value;
+
+    if(new_password != confirm_new_password) {
+        alert('Senhas diferentes');
+        console.error('Senhas diferentes');
+        return;
+    }
+
+    if(is_operator) {
+        window.axios.patch(api_url + `operator/update/${user_id}`, {
+            password: new_password
+        }, {
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        }).then(response => {
+            if (response.status != 200) {
+                throw new Error(response.body + ` code: ${response.status}`);
+            }
+            
+            alert('Senha alterada!');
+            
+        }).catch(e => {
+            console.error('Erro ao mudar a senha:', e);
+        });
+
+        return;
+    }
+    
+    window.axios.patch(api_url + `user/update/${user_id}/${account_id}`, {
+        password: new_password
+    }, {
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        if (response.status != 200) {
+            throw new Error(response.body + ` code: ${response.status}`);
+        }
+
+       alert('Senha alterada!');
+            
+    }).catch(e => {
+        console.error('Erro ao mudar a senha:', e);
+    });
+}
+
 $(document).ready(function(){
     $('#action_menu_btn').click(function(){
         $('.action_menu').toggle();
@@ -768,6 +853,7 @@ $(document).ready(function(){
     $('#rename_chat_btn_id').click(renameChat);
     $('#delete_chat_btn_id').click(deleteChat);
     $('#switch_brand_btn_id').click(switchBrand);
+    $('#change_password_btn_id').click(changePassword);
 
     msg_body = $('#msg_card_body_id')[0];
     msg_area = $('#msg_area_id')[0];
@@ -786,6 +872,7 @@ $(document).ready(function(){
 
     listChats();
     listBrands();
+    loadBrandPic();
 });
 
 

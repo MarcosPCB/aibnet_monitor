@@ -125,6 +125,7 @@ Route::middleware(['auth:sanctum', 'isOperatorOrAccountUser'])->group(function (
      Route::get('user/{id}/{account_id}', [UserController::class, 'get'])->name('user.get');
      Route::get('main-brand/{id}/{account_id}', [MainBrandController::class, 'get'])->name('main-brand.get');
      Route::get('main-brand/weekly/{id}/{account_id}', [MainBrandController::class, 'buildDelta'])->name('main-brand.weekly');
+     Route::get('main-brand/primary/platforms/{id}/{account_id}', [MainBrandController::class, 'getPlatforms'])->name('main-brand.get.platforms');
 
      // Chat
      Route::prefix('chat')->group(function () {

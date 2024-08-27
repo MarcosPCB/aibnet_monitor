@@ -123,5 +123,14 @@ class MainBrandController extends Controller
         $mainBrand = MainBrand::findOrFail($id);
         return response()->json($mainBrand, 200);
     }
+
+    public function getPlatforms($id) {
+        $mainBrand = MainBrand::find($id);
+        $primaryBrand = $mainBrand->primaryBrand()->first(); // Pegando a primeira primaryBrand
+
+        $platforms = $primaryBrand ? $primaryBrand->platforms : collect(); // Verifica se há uma primaryBrand antes de acessar platforms
+
+        return response()->json($platforms, 200);
+    }
 }
 

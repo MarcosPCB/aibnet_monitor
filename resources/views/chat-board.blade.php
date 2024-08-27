@@ -63,10 +63,10 @@
 						</div>
 						<div class="card-footer move-down" id="msg_body_footer">
 							<div class="input-group">
-								<div class="input-group-append">
+								<!--<div class="input-group-append">
 									<span class="input-group-text attach_btn"><i class="fas fa-paperclip"></i></span>
-								</div>
-								<textarea name="" class="form-control type_msg" placeholder="Digite a sua mensagem..." id="msg_area_id"></textarea>
+								</div>-->
+									<textarea name="" class="form-control type_msg" style="border-radius: 15px 0 0 15px !important;" placeholder="Digite a sua mensagem..." id="msg_area_id"></textarea>
 								<div class="input-group-append">
 									<span class="input-group-text send_btn disabled_btn" id="send_btn_id"><i class="fas fa-location-arrow"></i></span>
 								</div>
@@ -80,7 +80,7 @@
         <!-- Modal add thread -->
         <div class="modal fade" id="add_thread_modal_id" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
+            <div class="modal-content bg-default">
             <div class="modal-header">
                 <h5 class="modal-title text-white" id="staticBackdropLabel">Novo chat</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -105,7 +105,7 @@
 	<!-- Modal rename chat -->
 	<div class="modal fade" id="rename_modal_id" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
+            <div class="modal-content bg-default">
             <div class="modal-header">
                 <h5 class="modal-title text-white" id="staticBackdropLabel">Renomear chat</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -124,7 +124,7 @@
 	<!-- Modal delete chat -->
 	<div class="modal fade" id="delete_modal_id" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
+            <div class="modal-content bg-default">
             <div class="modal-header">
                 <h5 class="modal-title text-white" id="staticBackdropLabel">Deseja mesmo deletar o chat?</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -180,9 +180,8 @@
 				<div class="tab-pane fade active show p-4 d-flex flex-column" id="user-tab" role="tabpanel">
 						<h3 class="text-white mb-3">Mudar a senha</h3>
 						<hr class="dropdown-divider text-white">
-						<input type="text" class="form-control type_msg mb-3" id="current_password_id" placeholder="Senha atual" style="border-radius: 15px">
-						<input type="text" class="form-control type_msg mb-3" id="new_password_id&quot;" placeholder="Nova senha" style="border-radius: 15px">
-						<input type="text" class="form-control type_msg mb-3" id="new_confirm_password_id&quot;" placeholder="Confirme a nova senha" style="border-radius: 15px">
+						<input type="password" class="form-control type_msg mb-3" id="new_password_id" placeholder="Nova senha" style="border-radius: 15px">
+						<input type="password" class="form-control type_msg mb-3" id="new_confirm_password_id" placeholder="Confirme a nova senha" style="border-radius: 15px">
 						<button type="button" class="btn btn-basic btn-primary rounded-pill px-4 align-self-end mb-3" id="change_password_btn_id">
 							<span>
 								<i class="fa-solid fa-paper-plane-top"></i>
