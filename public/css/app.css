@@ -385,6 +385,30 @@ background-color: rgba(0,0,0,0.2);
     color: white !important;
 }
 
+.list-group-item {
+    background-color: rgba(0,0,0,0.3) !important;
+    border:0 !important;
+    color:white !important;
+}
+
+.list-group {
+    border-radius: 15px !important;
+}
+
+.form-check-input {
+    background-color: rgba(0,0,0,0.9) !important;
+    border:0 !important;
+    color:white !important;
+}
+
+.btn-icon:hover {
+    color: #6ae5ff !important;
+}
+
+.btn-icon:active {
+    color: #3341da !important;
+}
+
 @media(max-width: 576px) {
     .contacts_card{
         margin-bottom: 15px !important;

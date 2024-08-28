@@ -29,6 +29,7 @@ use App\Http\Controllers\ChatLLMController;
 */
 
 Route::post('/login', [AuthController::class, 'login'])->name('auth.login');
+Route::post('/recover', [AuthController::class, 'forgotPassword'])->name('auth.recover');
 
 // Operator
 Route::post('/operator/register', [OperatorController::class, 'register'])->name('operator.register');
@@ -84,6 +85,7 @@ Route::middleware(['auth:sanctum', 'isOperator'])->group(function () {
     Route::get('platform/{id}', [PlatformController::class, 'get'])->name('platform.get');
     Route::get('post/{id}', [PostController::class, 'get'])->name('post.get');
     Route::get('comment/{id}', [CommentController::class, 'get'])->name('comment.get');
+    Route::get('account/list/all', [AccountController::class, 'getAll'])->name('comment.get.all');
 
     //API Tokens
     Route::post('api-tokens', [ApiTokenController::class, 'create']);
@@ -108,7 +110,8 @@ Route::middleware(['auth:sanctum', 'isOperatorOrAccountUser'])->group(function (
     Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
      // Account
      Route::patch('/account/update/{account_id}', [AccountController::class, 'update'])->name('account.update');
-     Route::get('/account/list/main-brands/{account_id}', [AccountController::class, 'listMainBrands'])->name('account.listMainBrands');
+     Route::get('/account/list/main-brands/{account_id}', [AccountController::class, 'listMainBrands'])->name('account.list.mainBrands');
+     Route::get('/account/list/users/{account_id}', [AccountController::class, 'getUsers'])->name('account.list.users');
  
      // User
      Route::post('/user/create/{account_id}', [UserController::class, 'create'])->name('user.create');

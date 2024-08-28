@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ContactEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Models\Operator;
 use Illuminate\Support\Facades\Validator;
 use Log;
+use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
@@ -63,7 +66,6 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        Log::info('test');
         // Revoke the token if using token-based authentication
         if (Auth::guard('weboperator')->check()) {
             Auth::guard('weboperator')->user()->tokens()->delete();
@@ -72,5 +74,36 @@ class AuthController extends Controller
         }
 
         return response()->json(['message' => 'Logged out successfully'], 200);
+    }
+
+    public function forgotPassword(Request $request) {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $email = $request->only('email');
+
+        $user = User::where('email', $email)->first();
+
+        if (!$user) {
+            $operator = Operator::where('email', $email)->first();
+            
+            if(!$operator)
+                return response()->json(['message' => 'Invalid email'], 401);
+        }
+
+
+        $detalhes = [
+            'title' => 'Recuperação de senha',
+            'body' => 'Teste'
+        ];
+
+        Mail::to($email['email'])->send(new ContactEmail($detalhes));
+
+        return response()->json(['message'=> 'Email send'], 200);
     }
 }

@@ -20194,6 +20194,7 @@ function listBrands() {
       throw new Error(response.body + " code: ".concat(response.status));
     }
     var list = $('#brand_select_id')[0];
+    list.innerHTML = '';
     var brands = response.data;
     brands.forEach(function (e, i) {
       var selected = main_brand_id == e.id ? 'selected' : '';
@@ -20255,6 +20256,9 @@ function deleteChat() {
 }
 function switchBrand() {
   main_brand_id = $('#brand_select_id')[0].value;
+  var expires = new Date();
+  expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias
+  document.cookie = "main_brand=".concat(main_brand_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
   $('#switch_modal_id').modal('hide');
   cleanMsgBody();
   listChats();
@@ -20347,7 +20351,7 @@ function loadBrandPic() {
       }
     }
   })["catch"](function (e) {
-    console.error('Erro ao mudar avatar', e);
+    alert('Erro ao mudar avatar', e);
     checkAuth(e.response);
   });
 }
@@ -20375,7 +20379,7 @@ function changePassword() {
       }
       alert('Senha alterada!');
     })["catch"](function (e) {
-      console.error('Erro ao mudar a senha:', e);
+      alert('Erro ao mudar a senha:', e);
       checkAuth(e.response);
     });
     return;
@@ -20394,7 +20398,7 @@ function changePassword() {
     }
     alert('Senha alterada!');
   })["catch"](function (e) {
-    console.error('Erro ao mudar a senha:', e);
+    alert('Erro ao mudar a senha:', e);
     checkAuth(e.response);
   });
 }
@@ -20415,9 +20419,41 @@ function logout() {
     cleanMsgBody();
     $('#login_modal_id').modal('show');
   })["catch"](function (e) {
-    console.error('Erro ao deslogar:', e);
+    alert('Erro ao deslogar:', e);
     checkAuth(e.response);
   });
+}
+function listAccounts() {
+  var token = readCookie('token');
+  window.axios.get(api_url + "account/list/all", {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    var list = $('#account_select_id')[0];
+    for (var i = 0; i < response.data.length; i++) {
+      var e = response.data[i];
+      var selected = i == 0 ? 'selected' : '';
+      list.innerHTML += "<option value=".concat(e.id, " ").concat(selected, ">Conta: ").concat(e.id, " - ").concat(e.name, "</option>");
+    }
+    ;
+    $('#select_account_modal_id').modal('show');
+  })["catch"](function (e) {
+    alert('Erro ao listar contas');
+    checkAuth(e);
+  });
+}
+function mainBrandSelect() {
+  account_id = $('#account_select_id')[0].value;
+  listBrands();
+  listUsers();
+  var expires = new Date();
+  expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias
+  document.cookie = "account=".concat(account_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
+  $('#select_account_modal_id').modal('hide');
+  $('#switch_modal_id').modal('show');
 }
 function login() {
   var email = $('#email_id')[0].value;
@@ -20443,9 +20479,11 @@ function login() {
     if (!is_operator) {
       account_id = response.data.account.id;
       main_brand_id = response.data.mainBrands[0].id;
+      $('#account-modal-tab')[0].classList.add('disabled_btn');
     } else {
       account_id = 1;
       main_brand_id = 1;
+      $('#account-modal-tab')[0].classList.remove('disabled_btn');
     }
     var expires = new Date();
     expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias
@@ -20454,12 +20492,98 @@ function login() {
     document.cookie = "main_brand=".concat(main_brand_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
     document.cookie = "user=".concat(user_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
     document.cookie = "is_operator=".concat(is_operator, "; expires=").concat(expires.toUTCString(), "; path=/;");
-    listChats();
-    listBrands();
-    loadBrandPic();
-    $('#login_modal_id').modal('hide');
+    if (is_operator) {
+      $('#login_modal_id').modal('hide');
+      listAccounts();
+    } else {
+      listChats();
+      listBrands();
+      loadBrandPic();
+      $('#login_modal_id').modal('hide');
+    }
   })["catch"](function (e) {
-    console.error('Erro ao fazer login:', e);
+    alert('Erro ao fazer login:', e);
+    checkAuth(e.response);
+  });
+}
+function listUsers() {
+  var token = readCookie('token');
+  window.axios.get(api_url + "account/list/users/".concat(account_id), {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    var list = $('#list_users_id')[0];
+    list.innerHTML = '';
+    var _loop = function _loop() {
+      var e = response.data[i];
+      var element = $("<li class=\"list-group-item d-flex align-items-center mb-2\" data-api-id=".concat(e.id, ">\n\t\t\t\t\t\t\t\t\t<span class=\"me-auto\">Usu\xE1rio: ").concat(e.id, " - ").concat(e.name, "</span>\n\t\t\t\t\t\t\t\t\t<span class=\"btn btn-icon text-white\">\n\t\t\t\t\t\t\t\t\t\t<i class=\"fa-solid fa-ballot-check\"></i>\n\t\t\t\t\t\t\t\t\t</span>\n                                    <span class=\"btn btn-icon text-white\">\n\t\t\t\t\t\t\t\t\t\t<i class=\"fa-solid fa-trash-can-xmark\"></i>\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t</li>"));
+      var len = list.children.length - 1;
+      var id = e.id;
+      element.click(function () {
+        var r = confirm('Deseja mesmo excluir este usuário?');
+        if (r) {
+          window.axios["delete"](api_url + "user/delete/".concat(id, "/").concat(account_id), {
+            headers: {
+              'Authorization': 'Bearer ' + token,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          }).then(function (response) {
+            listUsers();
+          })["catch"](function (e) {
+            checkAuth(e);
+            alert('Erro: não foi possível excluir o usuário');
+          });
+        }
+      });
+      list.appendChild(element[0]);
+    };
+    for (var i = 0; i < response.data.length; i++) {
+      _loop();
+    }
+    ;
+  })["catch"](function (e) {
+    alert('Erro ao listar usuários');
+    console.error('error', e);
+    checkAuth(e);
+  });
+}
+function createUser() {
+  var token = readCookie('token');
+  var name = $('#new_user_name_id')[0].value;
+  var email = $('#new_user_email_id')[0].value;
+  var password = $('#new_user_password_id')[0].value;
+  var confirm_password = $('#new_user_confirm_password_id')[0].value;
+  if (password != confirm_password) {
+    alert('Senhas diferentes');
+    console.error('Senhas diferentes');
+    return;
+  }
+  window.axios.post(api_url + "user/create/".concat(account_id), {
+    name: name,
+    email: email,
+    password: password,
+    permission: '1',
+    account_id: account_id
+  }, {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 201) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    alert('Usuário criado');
+    listUsers();
+    $('#create_user_modal_id').modal('hide');
+    $('#config_modal_id').modal('show');
+  })["catch"](function (e) {
+    alert('Erro ao criar usuário:', e);
     checkAuth(e.response);
   });
 }
@@ -20475,6 +20599,9 @@ $(document).ready(function () {
   $('#change_password_btn_id').click(changePassword);
   $('#logout_btn_id').click(logout);
   $('#login_btn_id').click(login);
+  $('#account_select_btn_id').click(mainBrandSelect);
+  $('#create_user_btn_id').click(createUser);
+  $('#change_account_btn_id').click(listAccounts);
   msg_body = $('#msg_card_body_id')[0];
   msg_area = $('#msg_area_id')[0];
   chat_cards = $('#chat_cards_id')[0];
@@ -20504,11 +20631,27 @@ $(document).ready(function () {
     listBrands();
     loadBrandPic();
   })["catch"](function (e) {
-    alert('Você foi deslogado');
-    cleanDOM(chat_cards);
-    chat_cards.innerHTML = add_chat;
-    cleanMsgBody();
-    $('#login_modal_id').modal('show');
+    // Try checking if it's an operator
+    window.axios.get(api_url + "operator/".concat(user_id), {
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    }).then(function (response) {
+      listChats();
+      listBrands();
+      loadBrandPic();
+      $('#account-modal-tab')[0].classList.remove('disabled_btn');
+      listUsers();
+    })["catch"](function (e) {
+      alert('Você foi deslogado');
+      cleanDOM(chat_cards);
+      chat_cards.innerHTML = add_chat;
+      cleanMsgBody();
+      $('#account-modal-tab')[0].classList.add('disabled_btn');
+      $('#login_modal_id').modal('show');
+    });
   });
 });
 /******/ })()

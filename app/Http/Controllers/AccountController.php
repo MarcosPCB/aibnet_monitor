@@ -146,6 +146,19 @@ class AccountController extends Controller
         return response()->json($account, 200);
     }
 
+    public function getAll()
+    {
+        $accounts = Account::all();
+        return response()->json($accounts, 200);
+    }
+
+    public function getUsers($id)
+    {
+        $account = Account::findOrFail($id);
+        $users = $account->user()->get();
+        return response()->json($users, 200);
+    }
+
     public function listMainBrands($id)
     {
         $account = Account::findOrFail($id);

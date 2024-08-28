@@ -592,6 +592,7 @@ function listBrands() {
         }
 
         const list = $('#brand_select_id')[0];
+        list.innerHTML = '';
 
         const brands = response.data;
 
@@ -670,6 +671,10 @@ function deleteChat() {
 
 function switchBrand() {
     main_brand_id = $('#brand_select_id')[0].value;
+
+    const expires = new Date();
+    expires.setTime(expires.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 dias
+    document.cookie = `main_brand=${main_brand_id}; expires=${expires.toUTCString()}; path=/;`;
 
     $('#switch_modal_id').modal('hide');
     cleanMsgBody();
@@ -801,7 +806,7 @@ function loadBrandPic() {
             }
         }
     }).catch(e => {
-        console.error('Erro ao mudar avatar', e);
+        alert('Erro ao mudar avatar', e);
         checkAuth(e.response);
     });
 }
@@ -834,7 +839,7 @@ function changePassword() {
             alert('Senha alterada!');
             
         }).catch(e => {
-            console.error('Erro ao mudar a senha:', e);
+            alert('Erro ao mudar a senha:', e);
             checkAuth(e.response);
         });
 
@@ -857,7 +862,7 @@ function changePassword() {
        alert('Senha alterada!');
             
     }).catch(e => {
-        console.error('Erro ao mudar a senha:', e);
+        alert('Erro ao mudar a senha:', e);
         checkAuth(e.response);
     });
 }
@@ -883,9 +888,46 @@ function logout() {
         $('#login_modal_id').modal('show');
             
     }).catch(e => {
-        console.error('Erro ao deslogar:', e);
+        alert('Erro ao deslogar:', e);
         checkAuth(e.response);
     });
+}
+
+function listAccounts() {
+    const token = readCookie('token');
+
+    window.axios.get(api_url + `account/list/all`, {
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        const list = $('#account_select_id')[0];
+
+        for(let i = 0; i < response.data.length; i++) {
+            const e = response.data[i];
+            let selected = i == 0 ? 'selected' : '';
+            list.innerHTML += `<option value=${e.id} ${selected}>Conta: ${e.id} - ${e.name}</option>`;
+        };
+
+        $('#select_account_modal_id').modal('show');
+    }).catch(e => {
+        alert('Erro ao listar contas');
+        checkAuth(e);
+    });
+}
+
+function mainBrandSelect() {
+    account_id = $('#account_select_id')[0].value;
+    listBrands();
+    listUsers();
+
+    const expires = new Date();
+    expires.setTime(expires.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 dias
+    document.cookie = `account=${account_id}; expires=${expires.toUTCString()}; path=/;`;
+    $('#select_account_modal_id').modal('hide');
+    $('#switch_modal_id').modal('show');
 }
 
 function login() {    
@@ -917,9 +959,11 @@ function login() {
         if(!is_operator) {
             account_id = response.data.account.id;
             main_brand_id = response.data.mainBrands[0].id;
+            $('#account-modal-tab')[0].classList.add('disabled_btn');
         } else {
             account_id = 1;
             main_brand_id = 1;
+            $('#account-modal-tab')[0].classList.remove('disabled_btn');
         }
 
         const expires = new Date();
@@ -930,18 +974,118 @@ function login() {
         document.cookie = `user=${user_id}; expires=${expires.toUTCString()}; path=/;`;
         document.cookie = `is_operator=${is_operator}; expires=${expires.toUTCString()}; path=/;`;
 
-        listChats();
-        listBrands();
-        loadBrandPic();
+        if(is_operator) {
+            $('#login_modal_id').modal('hide');
+            listAccounts();
+        } else {
+            listChats();
+            listBrands();
+            loadBrandPic();
 
-        $('#login_modal_id').modal('hide');
+            $('#login_modal_id').modal('hide');
+        }
             
     }).catch(e => {
-        console.error('Erro ao fazer login:', e);
+        alert('Erro ao fazer login:', e);
         checkAuth(e.response);
     });
 }
 
+function listUsers() {
+    const token = readCookie('token');
+
+    window.axios.get(api_url + `account/list/users/${account_id}`, {
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        const list = $('#list_users_id')[0];
+        list.innerHTML = '';
+
+        for(let i = 0; i < response.data.length; i++) {
+            const e = response.data[i];
+            const element = $(`<li class="list-group-item d-flex align-items-center mb-2" data-api-id=${e.id}>
+									<span class="me-auto">Usuário: ${e.id} - ${e.name}</span>
+									<span class="btn btn-icon text-white">
+										<i class="fa-solid fa-ballot-check"></i>
+									</span>
+                                    <span class="btn btn-icon text-white">
+										<i class="fa-solid fa-trash-can-xmark"></i>
+									</span>
+								</li>`);
+            const len = list.children.length - 1;
+            const id = e.id;
+            element.click(() => {
+                const r = confirm('Deseja mesmo excluir este usuário?');
+                if(r) {
+                    window.axios.delete(api_url + `user/delete/${id}/${account_id}`, {
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        }
+                    }).then(response => {
+                        listUsers();
+                    }).catch((e) => {
+                        checkAuth(e);
+                        alert('Erro: não foi possível excluir o usuário');
+                    })
+                }
+            });
+
+            list.appendChild(element[0]);
+        };
+    }).catch(e => {
+        alert('Erro ao listar usuários');
+        console.error('error', e);
+        checkAuth(e);
+    });
+}
+
+function createUser() {
+    const token = readCookie('token');
+
+    const name = $('#new_user_name_id')[0].value;
+    const email = $('#new_user_email_id')[0].value;
+    const password = $('#new_user_password_id')[0].value;
+    const confirm_password = $('#new_user_confirm_password_id')[0].value;
+
+    if(password != confirm_password) {
+        alert('Senhas diferentes');
+        console.error('Senhas diferentes');
+        return;
+    }
+
+    window.axios.post(api_url + `user/create/${account_id}`, {
+        name,
+        email,
+        password,
+        permission: '1',
+        account_id
+    }, {
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        if (response.status != 201) {
+            throw new Error(response.body + ` code: ${response.status}`);
+        }
+
+        alert('Usuário criado');
+
+        listUsers();
+        $('#create_user_modal_id').modal('hide');
+        $('#config_modal_id').modal('show');
+            
+    }).catch(e => {
+        alert('Erro ao criar usuário:', e);
+        checkAuth(e.response);
+    });
+}
 
 $(document).ready(function(){
     $('#action_menu_btn').click(function(){
@@ -956,6 +1100,9 @@ $(document).ready(function(){
     $('#change_password_btn_id').click(changePassword);
     $('#logout_btn_id').click(logout);
     $('#login_btn_id').click(login);
+    $('#account_select_btn_id').click(mainBrandSelect);
+    $('#create_user_btn_id').click(createUser);
+    $('#change_account_btn_id').click(listAccounts);
 
     msg_body = $('#msg_card_body_id')[0];
     msg_area = $('#msg_area_id')[0];
@@ -994,13 +1141,29 @@ $(document).ready(function(){
         listBrands();
         loadBrandPic();
     }).catch(e => {
-        alert('Você foi deslogado');
-        cleanDOM(chat_cards);
-        chat_cards.innerHTML = add_chat;
-        cleanMsgBody();
-
-        $('#login_modal_id').modal('show');
-    })
+        // Try checking if it's an operator
+        window.axios.get(api_url + `operator/${user_id}`, {
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        }).then(response => {
+            listChats();
+            listBrands();
+            loadBrandPic();
+            $('#account-modal-tab')[0].classList.remove('disabled_btn');
+            listUsers();
+        }).catch(e => {
+            alert('Você foi deslogado');
+            cleanDOM(chat_cards);
+            chat_cards.innerHTML = add_chat;
+            cleanMsgBody();
+            $('#account-modal-tab')[0].classList.add('disabled_btn');
+    
+            $('#login_modal_id').modal('show');
+        });
+    });
 });
 
 
