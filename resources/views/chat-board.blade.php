@@ -180,20 +180,22 @@
 				<div class="tab-pane fade active show p-4 d-flex flex-column" id="user-tab" role="tabpanel">
 						<h3 class="text-white mb-3">Mudar a senha</h3>
 						<hr class="dropdown-divider text-white">
-						<input type="password" class="form-control type_msg mb-3" id="new_password_id" placeholder="Nova senha" style="border-radius: 15px">
-						<input type="password" class="form-control type_msg mb-3" id="new_confirm_password_id" placeholder="Confirme a nova senha" style="border-radius: 15px">
-						<button type="button" class="btn btn-basic btn-primary rounded-pill px-4 align-self-end mb-3" id="change_password_btn_id">
-							<span>
-								<i class="fa-solid fa-paper-plane-top"></i>
-							</span>
-						</button>
+						<form>
+							<input type="password" autocomplete="new-password" class="form-control type_msg mb-3" id="new_password_id" placeholder="Nova senha" style="border-radius: 15px">
+							<input type="password" autocomplete="new-password" class="form-control type_msg mb-3" id="new_confirm_password_id" placeholder="Confirme a nova senha" style="border-radius: 15px">
+							<button type="button" class="btn btn-basic btn-primary rounded-pill px-4 align-self-end mb-3" id="change_password_btn_id">
+								<span>
+									<i class="fa-solid fa-paper-plane-top"></i>
+								</span>
+							</button>
+						</form>
 					</div>
 					<div class="tab-pane fade" id="account-tab" role="tabpanel">...</div>
 				</div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="save_config_btn_id">
+                <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="save_config_btn_id" data-bs-dismiss="modal">
 					<span><i class="fa-solid fa-floppy-disk"></i></span>
 				</button>
             </div>
@@ -212,6 +214,29 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Não</button>
                 <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="logout_btn_id" data-bs-dismiss="modal">Sim</button>
+            </div>
+            </div>
+        </div>
+    </div>
+
+	<!-- Modal login brand -->
+	<div class="modal fade" id="login_modal_id" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true" style="backdrop-filter: blur(25px);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-default">
+            <div class="modal-header">
+                <h5 class="modal-title text-white" id="staticBackdropLabel">Faça login</h5>
+            </div>
+            <div class="modal-body">
+				<form>
+					<input type="email" autocomplete="email" class="form-control type_msg mb-3" id="email_id" placeholder="Email" style="border-radius: 15px">
+					<input type="password" autocomplete="password" class="form-control type_msg mb-3" id="password_id" placeholder="Senha" style="border-radius: 15px">
+				</form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4">Esqueci a senha</button>
+                <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="login_btn_id">
+					<span><i class="fa-solid fa-right-to-bracket"></i></span>
+				</button>
             </div>
             </div>
         </div>

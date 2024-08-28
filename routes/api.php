@@ -105,6 +105,7 @@ Route::middleware(['auth:sanctum', 'isOperator'])->group(function () {
 });
 
 Route::middleware(['auth:sanctum', 'isOperatorOrAccountUser'])->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
      // Account
      Route::patch('/account/update/{account_id}', [AccountController::class, 'update'])->name('account.update');
      Route::get('/account/list/main-brands/{account_id}', [AccountController::class, 'listMainBrands'])->name('account.listMainBrands');
@@ -140,8 +141,6 @@ Route::middleware(['auth:sanctum', 'isOperatorOrAccountUser'])->group(function (
         Route::delete('/delete/{id}/{account_id}', [ChatLLMController::class, 'delete'])->name('chat.delete');
      });
 });
-
-Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum'); // Middleware para autenticação com Sanctum ou outro guard
 
 Route::get('/mock-complete-profile', function () {
     $filePath = base_path('tests/Mocks/complete-profile.json');

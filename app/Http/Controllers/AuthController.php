@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
+use Log;
 
 class AuthController extends Controller
 {
@@ -32,9 +33,14 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             // Recupera o usuário autenticado
             $user = Auth::user();
+            $account = $user->account()->first();
+            $mainBrands = $account->mainBrand()->get();
             // Retorna o usuário e um token (se estiver usando tokens, por exemplo, com Passport ou Sanctum)
             return response()->json([
                 'user' => $user,
+                'account' => $account,
+                'mainBrands' => $mainBrands,
+                'isOperator' => false,
                 'token' => $user->createToken('Personal Access Token')->plainTextToken
             ], 200);
         } else if (Auth::guard('weboperator')->attempt($credentials)) {
@@ -42,6 +48,7 @@ class AuthController extends Controller
             // Retorna o usuário e um token (se estiver usando tokens, por exemplo, com Passport ou Sanctum)
             return response()->json([
                 'user' => $user,
+                'isOperator' => true,
                 'token' => $user->createToken('Personal Access Token')->plainTextToken
             ], 200);
         }else {
@@ -56,8 +63,13 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
+        Log::info('test');
         // Revoke the token if using token-based authentication
-        $request->user()->tokens()->delete();
+        if (Auth::guard('weboperator')->check()) {
+            Auth::guard('weboperator')->user()->tokens()->delete();
+        } else if (Auth::check()) {
+            $request->user()->tokens()->delete();
+        }
 
         return response()->json(['message' => 'Logged out successfully'], 200);
     }

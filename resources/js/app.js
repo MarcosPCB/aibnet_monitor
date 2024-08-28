@@ -1,9 +1,6 @@
 const { forEach } = require('lodash');
 
 require('./bootstrap');
-const expires = new Date();
-expires.setTime(expires.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 dias
-document.cookie = `token=1|vozJ1bfLrt2q1cineDcroHEvPVDDEmaoPhYIQfSi; expires=${expires.toUTCString()}; path=/;`;
 
 function readCookie(name) {
     const nameEQ = name + "=";
@@ -18,6 +15,19 @@ function readCookie(name) {
         }
     }
     return null;
+}
+
+function checkAuth(data) {
+    if(data.status == 401) {
+        alert('Você foi deslogado');
+        cleanDOM(chat_cards);
+        chat_cards.innerHTML = add_chat;
+        cleanMsgBody();
+
+        $('#login_modal_id').modal('show');
+
+        document.cookie = `token=;`;
+    }
 }
 
 var account_id = 1;
@@ -342,6 +352,7 @@ async function addThread() {
         processChunk();
     } catch(e) {
         console.error('Erro ao processar o stream:', e);
+        checkAuth(e.response);
     }
 }
 
@@ -436,6 +447,7 @@ async function sendMsgThread() {
         processChunk();
     } catch(e) {
         console.error('Erro ao processar o stream:', e);
+        checkAuth(e.response);
     }
 }
 
@@ -535,6 +547,7 @@ async function listChats() {
         });
     } catch(e) {
         console.error('Erro ao processar requisição de chats:', e);
+        checkAuth(e.response);
     }
 }
 
@@ -588,6 +601,7 @@ function listBrands() {
         });
     }).catch(e => {
         console.error('Erro ao listar marcas:', e);
+        checkAuth(e.response);
     });
 }
 
@@ -621,6 +635,7 @@ function renameChat() {
 
     }).catch(e => {
         console.error('Erro ao renomear o chat:', e);
+        checkAuth(e.response);
     });
 }
 
@@ -649,6 +664,7 @@ function deleteChat() {
 
     }).catch(e => {
         console.error('Erro ao deletar o chat:', e);
+        checkAuth(e.response);
     });
 }
 
@@ -786,6 +802,7 @@ function loadBrandPic() {
         }
     }).catch(e => {
         console.error('Erro ao mudar avatar', e);
+        checkAuth(e.response);
     });
 }
 
@@ -818,6 +835,7 @@ function changePassword() {
             
         }).catch(e => {
             console.error('Erro ao mudar a senha:', e);
+            checkAuth(e.response);
         });
 
         return;
@@ -840,8 +858,90 @@ function changePassword() {
             
     }).catch(e => {
         console.error('Erro ao mudar a senha:', e);
+        checkAuth(e.response);
     });
 }
+
+function logout() {
+    const token = readCookie('token');
+    
+    window.axios.post(api_url + `logout`, {}, {
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        if (response.status != 200) {
+            throw new Error(response.body + ` code: ${response.status}`);
+        }
+
+        cleanDOM(chat_cards);
+        chat_cards.innerHTML = add_chat;
+        cleanMsgBody();
+
+        $('#login_modal_id').modal('show');
+            
+    }).catch(e => {
+        console.error('Erro ao deslogar:', e);
+        checkAuth(e.response);
+    });
+}
+
+function login() {    
+    const email = $('#email_id')[0].value;
+    const password = $('#password_id')[0].value;
+
+    window.axios.post(api_url + `login`, {
+        email,
+        password
+    }, {
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        if (response.status != 200) {
+            throw new Error(response.body + ` code: ${response.status}`);
+        }
+
+        cleanDOM(chat_cards);
+        chat_cards.innerHTML = add_chat;
+        cleanMsgBody();
+
+        const token = response.data.token;
+
+        is_operator = response.data.isOperator;
+        user_id = response.data.user.id;
+
+        if(!is_operator) {
+            account_id = response.data.account.id;
+            main_brand_id = response.data.mainBrands[0].id;
+        } else {
+            account_id = 1;
+            main_brand_id = 1;
+        }
+
+        const expires = new Date();
+        expires.setTime(expires.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 dias
+        document.cookie = `token=${token}; expires=${expires.toUTCString()}; path=/;`;
+        document.cookie = `account=${account_id}; expires=${expires.toUTCString()}; path=/;`;
+        document.cookie = `main_brand=${main_brand_id}; expires=${expires.toUTCString()}; path=/;`;
+        document.cookie = `user=${user_id}; expires=${expires.toUTCString()}; path=/;`;
+        document.cookie = `is_operator=${is_operator}; expires=${expires.toUTCString()}; path=/;`;
+
+        listChats();
+        listBrands();
+        loadBrandPic();
+
+        $('#login_modal_id').modal('hide');
+            
+    }).catch(e => {
+        console.error('Erro ao fazer login:', e);
+        checkAuth(e.response);
+    });
+}
+
 
 $(document).ready(function(){
     $('#action_menu_btn').click(function(){
@@ -854,6 +954,8 @@ $(document).ready(function(){
     $('#delete_chat_btn_id').click(deleteChat);
     $('#switch_brand_btn_id').click(switchBrand);
     $('#change_password_btn_id').click(changePassword);
+    $('#logout_btn_id').click(logout);
+    $('#login_btn_id').click(login);
 
     msg_body = $('#msg_card_body_id')[0];
     msg_area = $('#msg_area_id')[0];
@@ -870,9 +972,35 @@ $(document).ready(function(){
             $('#send_btn_id')[0].classList.add('disabled_btn');
     });
 
-    listChats();
-    listBrands();
-    loadBrandPic();
+    if(readCookie('token') == '') {
+        $('#login_modal_id').modal('show');
+        return;
+    }
+
+    account_id = readCookie('account');
+    main_brand_id = readCookie('main_brand');
+    is_operator = readCookie('is_operator');
+    user_id = readCookie('user');
+    const token = readCookie('token');
+
+    window.axios.get(api_url + `user/${user_id}/${account_id}`, {
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        listChats();
+        listBrands();
+        loadBrandPic();
+    }).catch(e => {
+        alert('Você foi deslogado');
+        cleanDOM(chat_cards);
+        chat_cards.innerHTML = add_chat;
+        cleanMsgBody();
+
+        $('#login_modal_id').modal('show');
+    })
 });
 
 

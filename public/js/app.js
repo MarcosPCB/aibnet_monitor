@@ -19573,9 +19573,6 @@ function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length)
 var _require = __webpack_require__(/*! lodash */ "./node_modules/lodash/lodash.js"),
   forEach = _require.forEach;
 __webpack_require__(/*! ./bootstrap */ "./resources/js/bootstrap.js");
-var expires = new Date();
-expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias
-document.cookie = "token=1|vozJ1bfLrt2q1cineDcroHEvPVDDEmaoPhYIQfSi; expires=".concat(expires.toUTCString(), "; path=/;");
 function readCookie(name) {
   var nameEQ = name + "=";
   var cookies = document.cookie.split(';');
@@ -19589,6 +19586,16 @@ function readCookie(name) {
     }
   }
   return null;
+}
+function checkAuth(data) {
+  if (data.status == 401) {
+    alert('Você foi deslogado');
+    cleanDOM(chat_cards);
+    chat_cards.innerHTML = add_chat;
+    cleanMsgBody();
+    $('#login_modal_id').modal('show');
+    document.cookie = "token=;";
+  }
 }
 var account_id = 1;
 var main_brand_id = 1;
@@ -19903,13 +19910,14 @@ function _addThread() {
             };
           }();
           processChunk();
-          _context2.next = 40;
+          _context2.next = 41;
           break;
         case 37:
           _context2.prev = 37;
           _context2.t0 = _context2["catch"](22);
           console.error('Erro ao processar o stream:', _context2.t0);
-        case 40:
+          checkAuth(_context2.t0.response);
+        case 41:
         case "end":
           return _context2.stop();
       }
@@ -20028,13 +20036,14 @@ function _sendMsgThread() {
             };
           }();
           processChunk();
-          _context4.next = 26;
+          _context4.next = 27;
           break;
         case 23:
           _context4.prev = 23;
           _context4.t0 = _context4["catch"](9);
           console.error('Erro ao processar o stream:', _context4.t0);
-        case 26:
+          checkAuth(_context4.t0.response);
+        case 27:
         case "end":
           return _context4.stop();
       }
@@ -20123,13 +20132,14 @@ function _listChats() {
               buildChat();
             });
           });
-          _context5.next = 16;
+          _context5.next = 17;
           break;
         case 13:
           _context5.prev = 13;
           _context5.t0 = _context5["catch"](3);
           console.error('Erro ao processar requisição de chats:', _context5.t0);
-        case 16:
+          checkAuth(_context5.t0.response);
+        case 17:
         case "end":
           return _context5.stop();
       }
@@ -20191,6 +20201,7 @@ function listBrands() {
     });
   })["catch"](function (e) {
     console.error('Erro ao listar marcas:', e);
+    checkAuth(e.response);
   });
 }
 var menu_chat = -1;
@@ -20216,6 +20227,7 @@ function renameChat() {
     if (selected_thread == menu_chat_index) chat_name.innerHTML = new_chat_name;
   })["catch"](function (e) {
     console.error('Erro ao renomear o chat:', e);
+    checkAuth(e.response);
   });
 }
 function deleteChat() {
@@ -20238,6 +20250,7 @@ function deleteChat() {
     }
   })["catch"](function (e) {
     console.error('Erro ao deletar o chat:', e);
+    checkAuth(e.response);
   });
 }
 function switchBrand() {
@@ -20335,6 +20348,7 @@ function loadBrandPic() {
     }
   })["catch"](function (e) {
     console.error('Erro ao mudar avatar', e);
+    checkAuth(e.response);
   });
 }
 function changePassword() {
@@ -20362,6 +20376,7 @@ function changePassword() {
       alert('Senha alterada!');
     })["catch"](function (e) {
       console.error('Erro ao mudar a senha:', e);
+      checkAuth(e.response);
     });
     return;
   }
@@ -20380,6 +20395,72 @@ function changePassword() {
     alert('Senha alterada!');
   })["catch"](function (e) {
     console.error('Erro ao mudar a senha:', e);
+    checkAuth(e.response);
+  });
+}
+function logout() {
+  var token = readCookie('token');
+  window.axios.post(api_url + "logout", {}, {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 200) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    cleanDOM(chat_cards);
+    chat_cards.innerHTML = add_chat;
+    cleanMsgBody();
+    $('#login_modal_id').modal('show');
+  })["catch"](function (e) {
+    console.error('Erro ao deslogar:', e);
+    checkAuth(e.response);
+  });
+}
+function login() {
+  var email = $('#email_id')[0].value;
+  var password = $('#password_id')[0].value;
+  window.axios.post(api_url + "login", {
+    email: email,
+    password: password
+  }, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 200) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    cleanDOM(chat_cards);
+    chat_cards.innerHTML = add_chat;
+    cleanMsgBody();
+    var token = response.data.token;
+    is_operator = response.data.isOperator;
+    user_id = response.data.user.id;
+    if (!is_operator) {
+      account_id = response.data.account.id;
+      main_brand_id = response.data.mainBrands[0].id;
+    } else {
+      account_id = 1;
+      main_brand_id = 1;
+    }
+    var expires = new Date();
+    expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias
+    document.cookie = "token=".concat(token, "; expires=").concat(expires.toUTCString(), "; path=/;");
+    document.cookie = "account=".concat(account_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
+    document.cookie = "main_brand=".concat(main_brand_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
+    document.cookie = "user=".concat(user_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
+    document.cookie = "is_operator=".concat(is_operator, "; expires=").concat(expires.toUTCString(), "; path=/;");
+    listChats();
+    listBrands();
+    loadBrandPic();
+    $('#login_modal_id').modal('hide');
+  })["catch"](function (e) {
+    console.error('Erro ao fazer login:', e);
+    checkAuth(e.response);
   });
 }
 $(document).ready(function () {
@@ -20392,6 +20473,8 @@ $(document).ready(function () {
   $('#delete_chat_btn_id').click(deleteChat);
   $('#switch_brand_btn_id').click(switchBrand);
   $('#change_password_btn_id').click(changePassword);
+  $('#logout_btn_id').click(logout);
+  $('#login_btn_id').click(login);
   msg_body = $('#msg_card_body_id')[0];
   msg_area = $('#msg_area_id')[0];
   chat_cards = $('#chat_cards_id')[0];
@@ -20401,9 +20484,32 @@ $(document).ready(function () {
     var dom = event.target;
     if (dom.value.length > 0) $('#send_btn_id')[0].classList.remove('disabled_btn');else $('#send_btn_id')[0].classList.add('disabled_btn');
   });
-  listChats();
-  listBrands();
-  loadBrandPic();
+  if (readCookie('token') == '') {
+    $('#login_modal_id').modal('show');
+    return;
+  }
+  account_id = readCookie('account');
+  main_brand_id = readCookie('main_brand');
+  is_operator = readCookie('is_operator');
+  user_id = readCookie('user');
+  var token = readCookie('token');
+  window.axios.get(api_url + "user/".concat(user_id, "/").concat(account_id), {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    listChats();
+    listBrands();
+    loadBrandPic();
+  })["catch"](function (e) {
+    alert('Você foi deslogado');
+    cleanDOM(chat_cards);
+    chat_cards.innerHTML = add_chat;
+    cleanMsgBody();
+    $('#login_modal_id').modal('show');
+  });
 });
 /******/ })()
 ;
