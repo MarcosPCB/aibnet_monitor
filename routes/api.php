@@ -31,6 +31,8 @@ use App\Http\Controllers\ChatLLMController;
 Route::post('/login', [AuthController::class, 'login'])->name('auth.login');
 Route::post('/recover', [AuthController::class, 'forgotPassword'])->name('auth.recover');
 
+Route::post('/logout', [AuthController::class, 'logout'])->middleware(['auth:sanctum'])->name('auth.logout');
+
 // Operator
 Route::post('/operator/register', [OperatorController::class, 'register'])->name('operator.register');
 
@@ -107,7 +109,6 @@ Route::middleware(['auth:sanctum', 'isOperator'])->group(function () {
 });
 
 Route::middleware(['auth:sanctum', 'isOperatorOrAccountUser'])->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
      // Account
      Route::patch('/account/update/{account_id}', [AccountController::class, 'update'])->name('account.update');
      Route::get('/account/list/main-brands/{account_id}', [AccountController::class, 'listMainBrands'])->name('account.list.mainBrands');

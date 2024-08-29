@@ -679,6 +679,7 @@ function switchBrand() {
     $('#switch_modal_id').modal('hide');
     cleanMsgBody();
     listChats();
+    loadBrandPic();
 }
 
 const bubble_sys = 
@@ -947,6 +948,8 @@ function login() {
             throw new Error(response.body + ` code: ${response.status}`);
         }
 
+        $('#email_id')[0].value = $('#password_id')[0].value = '';
+
         cleanDOM(chat_cards);
         chat_cards.innerHTML = add_chat;
         cleanMsgBody();
@@ -960,9 +963,12 @@ function login() {
             account_id = response.data.account.id;
             main_brand_id = response.data.mainBrands[0].id;
             $('#account-modal-tab')[0].classList.add('disabled_btn');
+            const el = $('#user-modal-tab')[0];
+            const tab = new bootstrap.Tab(el);
+            tab.show();
         } else {
-            account_id = 1;
-            main_brand_id = 1;
+            account_id =  1;
+            main_brand_id = 1
             $('#account-modal-tab')[0].classList.remove('disabled_btn');
         }
 
@@ -970,7 +976,6 @@ function login() {
         expires.setTime(expires.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 dias
         document.cookie = `token=${token}; expires=${expires.toUTCString()}; path=/;`;
         document.cookie = `account=${account_id}; expires=${expires.toUTCString()}; path=/;`;
-        document.cookie = `main_brand=${main_brand_id}; expires=${expires.toUTCString()}; path=/;`;
         document.cookie = `user=${user_id}; expires=${expires.toUTCString()}; path=/;`;
         document.cookie = `is_operator=${is_operator}; expires=${expires.toUTCString()}; path=/;`;
 
@@ -978,16 +983,14 @@ function login() {
             $('#login_modal_id').modal('hide');
             listAccounts();
         } else {
-            listChats();
-            listBrands();
-            loadBrandPic();
+            mainBrandSelect();
 
             $('#login_modal_id').modal('hide');
         }
             
     }).catch(e => {
         alert('Erro ao fazer login:', e);
-        checkAuth(e.response);
+        console.error(e);
     });
 }
 

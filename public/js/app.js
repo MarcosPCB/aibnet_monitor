@@ -20262,6 +20262,7 @@ function switchBrand() {
   $('#switch_modal_id').modal('hide');
   cleanMsgBody();
   listChats();
+  loadBrandPic();
 }
 var bubble_sys = "<div class=\"d-flex justify-content-start mb-4\">\n        <div class=\"msg_cotainer msg_bubble_sys\">\n            <span></span>\n        </div>\n    </div>";
 var bubble_user = "<div class=\"d-flex justify-content-end mb-4\">\n        <div class=\"msg_cotainer_send msg_bubble_user\">\n            <span></span>\n        </div>\n    </div>";
@@ -20470,6 +20471,7 @@ function login() {
     if (response.status != 200) {
       throw new Error(response.body + " code: ".concat(response.status));
     }
+    $('#email_id')[0].value = $('#password_id')[0].value = '';
     cleanDOM(chat_cards);
     chat_cards.innerHTML = add_chat;
     cleanMsgBody();
@@ -20480,6 +20482,9 @@ function login() {
       account_id = response.data.account.id;
       main_brand_id = response.data.mainBrands[0].id;
       $('#account-modal-tab')[0].classList.add('disabled_btn');
+      var el = $('#user-modal-tab')[0];
+      var tab = new bootstrap.Tab(el);
+      tab.show();
     } else {
       account_id = 1;
       main_brand_id = 1;
@@ -20489,21 +20494,18 @@ function login() {
     expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias
     document.cookie = "token=".concat(token, "; expires=").concat(expires.toUTCString(), "; path=/;");
     document.cookie = "account=".concat(account_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
-    document.cookie = "main_brand=".concat(main_brand_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
     document.cookie = "user=".concat(user_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
     document.cookie = "is_operator=".concat(is_operator, "; expires=").concat(expires.toUTCString(), "; path=/;");
     if (is_operator) {
       $('#login_modal_id').modal('hide');
       listAccounts();
     } else {
-      listChats();
-      listBrands();
-      loadBrandPic();
+      mainBrandSelect();
       $('#login_modal_id').modal('hide');
     }
   })["catch"](function (e) {
     alert('Erro ao fazer login:', e);
-    checkAuth(e.response);
+    console.error(e);
   });
 }
 function listUsers() {

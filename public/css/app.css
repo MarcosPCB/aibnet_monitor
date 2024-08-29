@@ -409,6 +409,10 @@ background-color: rgba(0,0,0,0.2);
     color: #3341da !important;
 }
 
+.form-floating {
+    color: white;
+}
+
 @media(max-width: 576px) {
     .contacts_card{
         margin-bottom: 15px !important;
