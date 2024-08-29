@@ -358,8 +358,8 @@
 					</div>
 					
 					<div class="d-flex">
-						<input class="form-check" type="checkbox" value="true" id="new_account_paid_id">
-						<label class="form-check-label" for="new_account_paid_id">Pago</label>
+						<input class="form-check text-white" type="checkbox" value="true" id="new_account_paid_id">
+						<label class="form-check-label text-white" for="new_account_paid_id">Pago</label>
 					</div>
 					
 					<div class="d-flex">
