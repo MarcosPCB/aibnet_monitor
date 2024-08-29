@@ -197,7 +197,7 @@
 					<div class="tab-pane fade" id="account-tab" role="tabpanel">
 						<div class="p-4 d-flex flex-column">
 							<div class="d-flex">
-								<button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3" id="change_account_btn_id" data-bs-dismiss="modal">Trocar de conta</button>
+								<button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 me-2" id="change_account_btn_id" data-bs-dismiss="modal">Trocar de conta</button>
 								<button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3" id="create_account_btn_id" data-bs-toggle="modal" data-bs-target="#create_account_modal_id" data-bs-dismiss="modal">Criar conta</button>
 							</div>
 							<hr class="dropdown-divider text-white">
@@ -213,9 +213,10 @@
 									</span>
 								</li>
 							</ul>
-							<button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 align-self-end" data-bs-toggle="modal" data-bs-target="#create_user_modal_id" data-bs-dismiss="modal">Adicionar usuário</button>
-							<hr class="dropdown-divider text-white">
+							<button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-5 align-self-end" data-bs-toggle="modal" data-bs-target="#create_user_modal_id" data-bs-dismiss="modal">Adicionar usuário</button>
+							
 							<h3 class="text-white">Gerenciar marca</h3>
+							<hr class="dropdown-divider text-white">
 						</div>
 					</div>
 				</div>
@@ -288,12 +289,12 @@
 
 	<!-- Modal create account -->
 	<div class="modal fade" id="create_account_modal_id" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true" style="backdrop-filter: blur(25px);">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered" style="min-width: 50vw;">
             <div class="modal-content bg-default">
             <div class="modal-header">
                 <h5 class="modal-title text-white" id="staticBackdropLabel">Crie uma nova conta</h5>
             </div>
-            <div class="modal-body" style="max-height: 480px; overflow-y: auto">
+            <div class="modal-body" style="max-height: 75vh; overflow-y: auto">
 				<form>
 					<div class="form-floating">
 						<input type="name" autocomplete="name" class="form-control type_msg mb-3" id="new_account_name_id" placeholder="Nome da conta" style="border-radius: 15px">
@@ -357,20 +358,20 @@
 						<label for="new_account_cancel_id">Mínimo de meses para cancelar sem multa</label>
 					</div>
 					
-					<div class="d-flex">
-						<input class="form-check text-white" type="checkbox" value="true" id="new_account_paid_id">
-						<label class="form-check-label text-white" for="new_account_paid_id">Pago</label>
+					<div class="list-group-item mb-3">
+						<input class="form-check-input text-white me-2" type="checkbox" checked id="new_account_paid_id">
+						Pago
 					</div>
 					
-					<div class="d-flex">
-						<input class="form-check text-white" type="checkbox" value="true" id="new_account_active_id">
-						<label class="form-check-label text-white" for="new_account_active_id">Ativo</label>
+					<div class="list-group-item">
+						<input class="form-check-input text-white me-2" type="checkbox" checked id="new_account_active_id">
+						Ativo
 					</div>
 				</form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#config_modal_id" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="create_account_btn_id">
+                <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="create_account_2_btn_id">
 					<span><i class="fa-solid fa-cart-plus"></i></span>
 				</button>
             </div>
@@ -378,8 +379,61 @@
         </div>
     </div>
 
+	<!-- Modal create main brand -->
+	<div class="modal fade" id="create_main_brand_modal_id" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true" style="backdrop-filter: blur(25px);">
+        <div class="modal-dialog modal-dialog-centered" style="min-width: 50vw;">
+            <div class="modal-content bg-default">
+            <div class="modal-header">
+                <h5 class="modal-title text-white" id="staticBackdropLabel">Crie um novo cliente</h5>
+            </div>
+            <div class="modal-body" style="max-height: 75vh; overflow-y: auto">
+				<form>
+					<div class="form-floating">
+						<input type="name" autocomplete="name" class="form-control type_msg mb-3" id="new_main_brand_name_id" placeholder="Nome do cliente" style="border-radius: 15px">
+						<label for="new_main_brand_name_id">Nome do cliente</label>
+					</div>
+
+					<div class="d-flex">
+						<div class="form-floating">
+							<select class="form-select type_msg mb-3 me-auto" style="border-radius: 15px" id="new_main_brand_primary_id">
+							</select>
+							<label for="new_main_brand_primary_id">Marca primária</label>
+						</div>
+						<button type="button" class="btn btn-basic btn-primary rounded-pill px-4"  data-bs-toggle="modal" data-bs-target="#create_brand_modal_id" data-bs-dismiss="modal" id="create_brand_btn_id"><span><i class="fa-solid fa-circle-plus"></i></span></button>
+					</div>
+
+					<div class="form-floating">
+						<select class="form-select type_msg mb-3" style="border-radius: 15px" id="new_main_brand_opponent_1_id">
+							<option value="-1">Nenhum</option>
+						</select>
+						<label for="new_main_brand_opponent_1_id">Marca concorrente 1</label>
+					</div>
+
+					<div class="form-floating">
+						<select class="form-select type_msg mb-3" style="border-radius: 15px" id="new_main_brand_opponent_2_id">
+							<option value="-1">Nenhum</option>
+						</select>
+						<label for="new_main_brand_opponent_2_id">Marca concorrente 2</label>
+					</div>
+					
+					<div class="form-floating">
+						<input type="text" class="form-control type_msg mb-3" id="new_main_brand_model_id" value="" style="border-radius: 15px">
+						<label for="new_main_brand_model_id">ID do assistente (OpenAI GPT Assistant - pode deixar em branco, qualquer coisa)</label>
+					</div>
+				</form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#config_modal_id" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="create_main_brand_btn_id">
+					<span><i class="fa-solid fa-folder-plus"></i></span>
+				</button>
+            </div>
+            </div>
+        </div>
+    </div>
+
 	<!-- Modal create user -->
-	<div class="modal fade" id="create_user_modal_id" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+	<div class="modal fade" id="create_user_modal_id" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true" style="backdrop-filter: blur(25px);">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content bg-default">
             <div class="modal-header">
@@ -397,6 +451,36 @@
                 <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#config_modal_id" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="create_user_btn_id">
 					<span><i class="fa-solid fa-user-plus"></i></span>
+				</button>
+            </div>
+            </div>
+        </div>
+    </div>
+
+	<!-- Modal create brand -->
+	<div class="modal fade" id="create_brand_modal_id" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true" style="backdrop-filter: blur(25px);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-default">
+            <div class="modal-header">
+                <h5 class="modal-title text-white" id="staticBackdropLabel">Crie uma nova marca</h5>
+            </div>
+            <div class="modal-body" style="max-height: 75vh; overflow-y: auto">
+				<form>
+					<div class="form-floating">
+						<input type="name" autocomplete="name" class="form-control type_msg mb-3" id="new_brand_name_id" placeholder="Nome da marca" style="border-radius: 15px">
+						<label for="new_account_name_id">Nome da marca</label>
+					</div>
+
+					<div class="form-floating">
+						<textarea class="form-control type_msg mb-3" id="new_brand_desc_id" style="border-radius: 15px"></textarea>
+						<label for="new_brand_desc_id">Descrição da marca</label>
+					</div>
+				</form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#config_modal_id" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="create_new_brand_btn_id">
+					<span><i class="fa-solid fa-file-plus"></i></span>
 				</button>
             </div>
             </div>

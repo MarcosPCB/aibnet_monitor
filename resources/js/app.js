@@ -17,6 +17,40 @@ function readCookie(name) {
     return null;
 }
 
+function saveCookie(type) {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 dias
+
+    switch('type') {
+        case 'token':
+            document.cookie = `token=${token}; expires=${expires.toUTCString()}; path=/;`;
+            break;
+
+        case 'account':
+            document.cookie = `account=${account_id}; expires=${expires.toUTCString()}; path=/;`;
+
+        case 'user':
+            document.cookie = `user=${user_id}; expires=${expires.toUTCString()}; path=/;`;
+            break;
+        
+        case 'operator':
+            document.cookie = `is_operator=${is_operator}; expires=${expires.toUTCString()}; path=/;`;
+            break;
+
+        case 'main_brand':
+            document.cookie = `main_brand=${main_brand_id}; expires=${expires.toUTCString()}; path=/;`;
+            break;
+
+        case 'all':
+            document.cookie = `token=${token}; expires=${expires.toUTCString()}; path=/;`;
+            document.cookie = `account=${account_id}; expires=${expires.toUTCString()}; path=/;`;
+            document.cookie = `user=${user_id}; expires=${expires.toUTCString()}; path=/;`;
+            document.cookie = `is_operator=${is_operator}; expires=${expires.toUTCString()}; path=/;`;
+            document.cookie = `main_brand=${main_brand_id}; expires=${expires.toUTCString()}; path=/;`;
+            break;
+    }
+}
+
 function checkAuth(data) {
     if(data.status == 401) {
         alert('Você foi deslogado');
@@ -34,6 +68,11 @@ var account_id = 1;
 var main_brand_id = 1;
 var user_id = 1;
 var is_operator = true;
+
+var backup = '';
+
+var account_creation = false;
+var brand_id = -1;
 
 var incompleteData = '';
 var incompleteEvent = '';
@@ -722,6 +761,15 @@ const add_chat =
         </button>
     </li>`;
 
+function changeToLoad(target) {
+    backup = target.innerHTML;
+    target.innerHTML = `<div class="spinner-border text-black" role="status"></div>`
+}
+
+function returnToNormal(target) {
+    target.innerHTML = backup;
+}
+
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -1047,7 +1095,7 @@ function listUsers() {
     });
 }
 
-function createUser() {
+function createUser(event) {
     const token = readCookie('token');
 
     const name = $('#new_user_name_id')[0].value;
@@ -1060,6 +1108,8 @@ function createUser() {
         console.error('Senhas diferentes');
         return;
     }
+
+    changeToLoad(event.currentTarget);
 
     window.axios.post(api_url + `user/create/${account_id}`, {
         name,
@@ -1080,14 +1130,99 @@ function createUser() {
 
         alert('Usuário criado');
 
+        returnToNormal(event.currentTarget);
+
         listUsers();
         $('#create_user_modal_id').modal('hide');
-        $('#config_modal_id').modal('show');
+
+        if(!account_creation)
+            $('#config_modal_id').modal('show');
+        else
+            $('#create_main_brand_modal_id').modal('show');
             
     }).catch(e => {
         alert('Erro ao criar usuário:', e);
+        returnToNormal(event.currentTarget);
         checkAuth(e.response);
     });
+}
+
+function createAccount(event) {
+    const token = readCookie('token');
+
+    const r = confirm('Revise as informações inseridas.\nDeseja prosseguir?');
+
+    function getContractTimeInMonths(contractType) {
+        switch (contractType) {
+            case '0': // Mensal
+                return 1;
+            case '1': // Trimestral
+                return 3;
+            case '2': // Semestral
+                return 6;
+            case '3': // Anual
+                return 12;
+            case '4': // 2 anos
+                return 24;
+            case '5': // Promocional
+                return -1;
+            default:
+                return 0; // Valor padrão se nenhum dos casos corresponder
+        }
+    }
+
+    if(r) {
+        changeToLoad(event.currentTarget);
+        const contractTypeValue = $('#new_account_contype_id').val();
+        const contractTimeInMonths = getContractTimeInMonths(contractTypeValue);
+        
+        window.axios.post(api_url + `account/create`, {
+            name: $('#new_account_name_id').val(),
+            token: 'some_token_value', // Valor padrão para token
+            payment_method: $('#new_account_paymethod_id').val(),
+            installments: $('#new_account_installments_id').val(),
+            contract_type: contractTypeValue,
+            contract_description: $('#new_account_condesc_id').val(),
+            contract_brands: $('#new_account_conbrands_id').val(),
+            contract_brand_opponents: $('#new_account_conbrandopp_id').val(),
+            contract_users: $('#new_account_conusers_id').val(),
+            contract_build_brand_time: $('#new_account_conbuild_id').val(),
+            contract_time: contractTimeInMonths,
+            contract_monitored: 1, // Valor padrão para contrato monitorado
+            cancel_time: $('#new_account_cancel_id').val(),
+            paid: $('#new_account_paid_id').is(':checked'),
+            active: $('#new_account_active_id').is(':checked')
+        }, {
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        }).then(response => {
+            if (response.status != 201) {
+                throw new Error(response.body + ` code: ${response.status}`);
+            }
+    
+            alert('Conta criada');
+            returnToNormal(event.currentTarget);
+
+            account_creation = true;
+            account_id = response.data.id;
+            saveCookie('account');
+
+            cleanDOM(chat_cards);
+            cleanMsgBody();
+            chat_cards.innerHTML = add_chat;
+    
+            $('#create_account_modal_id').modal('hide');
+            $('#create_user_modal_id').modal('show');
+        }).catch(e => {
+            alert('Erro ao criar conta:', e);
+            returnToNormal(event.currentTarget);
+            console.error('Erro ao criar conta:', e);
+            checkAuth(e.response);
+        });
+    }
 }
 
 $(document).ready(function(){
@@ -1106,6 +1241,7 @@ $(document).ready(function(){
     $('#account_select_btn_id').click(mainBrandSelect);
     $('#create_user_btn_id').click(createUser);
     $('#change_account_btn_id').click(listAccounts);
+    $('#create_account_2_btn_id').click(createAccount);
 
     msg_body = $('#msg_card_body_id')[0];
     msg_area = $('#msg_area_id')[0];

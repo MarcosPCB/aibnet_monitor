@@ -389,6 +389,7 @@ background-color: rgba(0,0,0,0.2);
     background-color: rgba(0,0,0,0.3) !important;
     border:0 !important;
     color:white !important;
+    border-radius: 15px !important;
 }
 
 .list-group {

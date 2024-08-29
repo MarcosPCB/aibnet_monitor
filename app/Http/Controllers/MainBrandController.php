@@ -10,7 +10,7 @@ use App\Http\Services\LLMComm;
 class MainBrandController extends Controller
 {
     // Cria uma MainBrand com uma Brand principal e possíveis oponentes
-    public function create(Request $request)
+    public function create(Request $request, $account_id)
     {
         // Validação básica (pode ser aprimorada)
         $request->validate([
@@ -24,7 +24,7 @@ class MainBrandController extends Controller
         // Criação da MainBrand
         $mainBrand = MainBrand::create([
             'name' => $request->name,
-            'account_id' => $request->account_id, // Assumindo que account_id é passado
+            'account_id' => $account_id, // Assumindo que account_id é passado
             'follow_tags' => $request->follow_tags,
             'mentions' => $request->mentions,
             'past_stamp' => $request->past_stamp,
