@@ -46,6 +46,7 @@ Route::middleware(['auth:sanctum', 'isOperator'])->group(function () {
         Route::post('/create', [BrandController::class, 'create'])->name('brand.create');
         Route::patch('/update/{id}', [BrandController::class, 'update'])->name('brand.update');
         Route::get('/list', [BrandController::class, 'list'])->name('brand.list');
+        Route::get('/list/platforms/{id}', [BrandController::class, 'listPlatforms'])->name('brand.list.platforms');
     });
 
     // Platforms

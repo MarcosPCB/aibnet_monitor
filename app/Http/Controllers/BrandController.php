@@ -95,4 +95,12 @@ class BrandController extends Controller
         $brands = Brand::all();
         return response()->json($brands, 200);
     }
+
+    public function listPlatforms($id)
+    {
+        $brand = Brand::findOrFail($id);
+        $platforms = $brand->platforms()->get();
+
+        return response()->json($platforms, 200);
+    }
 }

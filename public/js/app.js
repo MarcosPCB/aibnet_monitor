@@ -2090,6 +2090,1537 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 /***/ }),
 
+/***/ "./resources/js/funcs/account.js":
+/*!***************************************!*\
+  !*** ./resources/js/funcs/account.js ***!
+  \***************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+__webpack_require__(/*! ../bootstrap */ "./resources/js/bootstrap.js");
+var globals = __webpack_require__(/*! ../globals */ "./resources/js/globals.js");
+var _require = __webpack_require__(/*! ../utils */ "./resources/js/utils.js"),
+  checkAuth = _require.checkAuth,
+  readCookie = _require.readCookie,
+  changeToLoad = _require.changeToLoad,
+  returnToNormal = _require.returnToNormal,
+  saveCookie = _require.saveCookie,
+  cleanDOM = _require.cleanDOM,
+  cleanMsgBody = _require.cleanMsgBody;
+function listAccounts() {
+  var token = readCookie('token');
+  window.axios.get(globals.api_url + "account/list/all", {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    var list = $('#account_select_id')[0];
+    list.innerHTML = '';
+    for (var i = 0; i < response.data.length; i++) {
+      var e = response.data[i];
+      var selected = i == 0 ? 'selected' : '';
+      list.innerHTML += "<option value=".concat(e.id, " ").concat(selected, ">Conta: ").concat(e.id, " - ").concat(e.name, "</option>");
+    }
+    ;
+    $('#select_account_modal_id').modal('show');
+  })["catch"](function (e) {
+    alert('Erro ao listar contas');
+    checkAuth(e);
+  });
+}
+function createAccount(event) {
+  var token = readCookie('token');
+  var r = confirm('Revise as informações inseridas.\nDeseja prosseguir?');
+  function getContractTimeInMonths(contractType) {
+    switch (contractType) {
+      case '0':
+        // Mensal
+        return 1;
+      case '1':
+        // Trimestral
+        return 3;
+      case '2':
+        // Semestral
+        return 6;
+      case '3':
+        // Anual
+        return 12;
+      case '4':
+        // 2 anos
+        return 24;
+      case '5':
+        // Promocional
+        return -1;
+      default:
+        return 0;
+      // Valor padrão se nenhum dos casos corresponder
+    }
+  }
+  if (r) {
+    changeToLoad(event.currentTarget);
+    var contractTypeValue = $('#new_account_contype_id').val();
+    var contractTimeInMonths = getContractTimeInMonths(contractTypeValue);
+    window.axios.post(globals.api_url + "account/create", {
+      name: $('#new_account_name_id').val(),
+      token: 'some_token_value',
+      // Valor padrão para token
+      payment_method: $('#new_account_paymethod_id').val(),
+      installments: $('#new_account_installments_id').val(),
+      contract_type: contractTypeValue,
+      contract_description: $('#new_account_condesc_id').val(),
+      contract_brands: $('#new_account_conbrands_id').val(),
+      contract_brand_opponents: $('#new_account_conbrandopp_id').val(),
+      contract_users: $('#new_account_conusers_id').val(),
+      contract_build_brand_time: $('#new_account_conbuild_id').val(),
+      contract_time: contractTimeInMonths,
+      contract_monitored: 1,
+      // Valor padrão para contrato monitorado
+      cancel_time: $('#new_account_cancel_id').val(),
+      paid: $('#new_account_paid_id').is(':checked'),
+      active: $('#new_account_active_id').is(':checked')
+    }, {
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    }).then(function (response) {
+      if (response.status != 201) {
+        throw new Error(response.body + " code: ".concat(response.status));
+      }
+      alert('Conta criada');
+      returnToNormal(event.currentTarget);
+      globals.account_creation = true;
+      globals.account_id = response.data.id;
+      saveCookie('account');
+      cleanDOM(globals.chat_cards);
+      cleanMsgBody();
+      globals.chat_cards.innerHTML = globals.add_chat;
+      $('#create_account_modal_id').modal('hide');
+      $('#create_user_modal_id').modal('show');
+    })["catch"](function (e) {
+      alert('Erro ao criar conta:', e);
+      returnToNormal(event.currentTarget);
+      console.error('Erro ao criar conta:', e);
+      checkAuth(e.response);
+    });
+  }
+}
+module.exports = {
+  listAccounts: listAccounts,
+  createAccount: createAccount
+};
+
+/***/ }),
+
+/***/ "./resources/js/funcs/auth.js":
+/*!************************************!*\
+  !*** ./resources/js/funcs/auth.js ***!
+  \************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+__webpack_require__(/*! ../bootstrap */ "./resources/js/bootstrap.js");
+var globals = __webpack_require__(/*! ../globals */ "./resources/js/globals.js");
+var _require = __webpack_require__(/*! ../utils */ "./resources/js/utils.js"),
+  checkAuth = _require.checkAuth,
+  cleanDOM = _require.cleanDOM,
+  cleanMsgBody = _require.cleanMsgBody,
+  readCookie = _require.readCookie;
+var _require2 = __webpack_require__(/*! ./account */ "./resources/js/funcs/account.js"),
+  listAccounts = _require2.listAccounts;
+var _require3 = __webpack_require__(/*! ./mainBrand */ "./resources/js/funcs/mainBrand.js"),
+  mainBrandSelect = _require3.mainBrandSelect;
+function changePassword() {
+  var token = readCookie('token');
+  var new_password = $('#new_password_id')[0].value;
+  var confirm_new_password = $('#new_confirm_password_id')[0].value;
+  if (new_password != confirm_new_password) {
+    alert('Senhas diferentes');
+    console.error('Senhas diferentes');
+    return;
+  }
+  if (globals.is_operator) {
+    window.axios.patch(globals.api_url + "operator/update/".concat(globals.user_id), {
+      password: new_password
+    }, {
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    }).then(function (response) {
+      if (response.status != 200) {
+        throw new Error(response.body + " code: ".concat(response.status));
+      }
+      alert('Senha alterada!');
+    })["catch"](function (e) {
+      alert('Erro ao mudar a senha:', e);
+      checkAuth(e.response);
+    });
+    return;
+  }
+  window.axios.patch(globals.api_url + "user/update/".concat(globals.user_id, "/").concat(globals.account_id), {
+    password: new_password
+  }, {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 200) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    alert('Senha alterada!');
+  })["catch"](function (e) {
+    alert('Erro ao mudar a senha:', e);
+    checkAuth(e.response);
+  });
+}
+function logout() {
+  var token = readCookie('token');
+  window.axios.post(globals.api_url + "logout", {}, {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 200) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    cleanDOM(globals.chat_cards);
+    globals.chat_cards.innerHTML = globals.add_chat;
+    cleanMsgBody();
+    $('#login_modal_id').modal('show');
+  })["catch"](function (e) {
+    alert('Erro ao deslogar:', e);
+    checkAuth(e.response);
+  });
+}
+function login() {
+  var email = $('#email_id')[0].value;
+  var password = $('#password_id')[0].value;
+  window.axios.post(globals.api_url + "login", {
+    email: email,
+    password: password
+  }, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 200) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    $('#email_id')[0].value = $('#password_id')[0].value = '';
+    cleanDOM(globals.chat_cards);
+    globals.chat_cards.innerHTML = globals.add_chat;
+    cleanMsgBody();
+    var token = response.data.token;
+    globals.is_operator = response.data.isOperator;
+    globals.user_id = response.data.user.id;
+    if (!globals.is_operator) {
+      globals.account_id = response.data.account.id;
+      globals.main_brand_id = response.data.mainBrands[0].id;
+      $('#account-modal-tab')[0].classList.add('disabled_btn');
+      var el = $('#user-modal-tab')[0];
+      var tab = new bootstrap.Tab(el);
+      tab.show();
+    } else {
+      globals.account_id = 1;
+      globals.main_brand_id = 1;
+      $('#account-modal-tab')[0].classList.remove('disabled_btn');
+    }
+    var expires = new Date();
+    expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias
+    document.cookie = "token=".concat(token, "; expires=").concat(expires.toUTCString(), "; path=/;");
+    document.cookie = "account=".concat(globals.account_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
+    document.cookie = "user=".concat(globals.user_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
+    document.cookie = "is_operator=".concat(globals.is_operator, "; expires=").concat(expires.toUTCString(), "; path=/;");
+    if (globals.is_operator) {
+      $('#login_modal_id').modal('hide');
+      listAccounts();
+    } else {
+      mainBrandSelect();
+      $('#login_modal_id').modal('hide');
+    }
+  })["catch"](function (e) {
+    alert('Erro ao fazer login:', e);
+    console.error(e);
+  });
+}
+module.exports = {
+  changePassword: changePassword,
+  logout: logout,
+  login: login
+};
+
+/***/ }),
+
+/***/ "./resources/js/funcs/brand.js":
+/*!*************************************!*\
+  !*** ./resources/js/funcs/brand.js ***!
+  \*************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+__webpack_require__(/*! ../bootstrap */ "./resources/js/bootstrap.js");
+var globals = __webpack_require__(/*! ../globals */ "./resources/js/globals.js");
+var _require = __webpack_require__(/*! ../utils */ "./resources/js/utils.js"),
+  readCookie = _require.readCookie,
+  checkAuth = _require.checkAuth,
+  changeToLoad = _require.changeToLoad,
+  returnToNormal = _require.returnToNormal;
+var _require2 = __webpack_require__(/*! ./platform */ "./resources/js/funcs/platform.js"),
+  listPlatforms = _require2.listPlatforms;
+function listBBrands() {
+  var token = readCookie('token');
+  window.axios.get(globals.api_url + "brand/list", {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 200) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    var options = '';
+    var brands = response.data;
+    for (var i = 0; i < brands.length; i++) {
+      options += "<option value=".concat(brands[i].id, ">ID: ").concat(brands[i].id, " - ").concat(brands[i].name, "</option>\n");
+    }
+    $('.list-brands').each(function () {
+      $(this).html($(this).html() + options);
+    });
+  })["catch"](function (e) {
+    alert('Erro ao listar marcas:', e);
+    checkAuth(e.response);
+  });
+}
+function createBrand(event) {
+  var token = readCookie('token');
+  var name = $('#new_brand_name_id').val();
+  var description = $('#new_brand_desc_id').val();
+  changeToLoad(event.currentTarget);
+  window.axios.post(globals.api_url + "brand/create", {
+    name: name,
+    description: description
+  }, {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 201) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    alert('Marca criada');
+    returnToNormal(event.currentTarget);
+    listBBrands();
+    $('#create_brand_modal_id').modal('hide');
+    $('#create_platform_modal_id').modal('show');
+    globals.brand_id = response.data.id;
+  })["catch"](function (e) {
+    alert('Erro ao criar marca:', e);
+    returnToNormal(event.currentTarget);
+    checkAuth(e.response);
+  });
+}
+function editPrimaryBrand(event) {
+  globals.brand_id = $('#new_main_brand_primary_id').val();
+  listPlatforms();
+  $('#create_main_brand_modal_id').modal('hide');
+  $('#edit_brand_modal_id').modal('show');
+}
+module.exports = {
+  listBBrands: listBBrands,
+  createBrand: createBrand,
+  editPrimaryBrand: editPrimaryBrand
+};
+
+/***/ }),
+
+/***/ "./resources/js/funcs/chat.js":
+/*!************************************!*\
+  !*** ./resources/js/funcs/chat.js ***!
+  \************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == _typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator["return"] && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, "catch": function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
+function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
+function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+__webpack_require__(/*! ../bootstrap */ "./resources/js/bootstrap.js");
+var _require = __webpack_require__(/*! ../utils */ "./resources/js/utils.js"),
+  readCookie = _require.readCookie,
+  cleanDOM = _require.cleanDOM,
+  attachDOM = _require.attachDOM,
+  addTextLastBubble = _require.addTextLastBubble,
+  loadingTextLastBubble = _require.loadingTextLastBubble,
+  setTextLastBubble = _require.setTextLastBubble,
+  checkAuth = _require.checkAuth,
+  enableButtons = _require.enableButtons,
+  disableButtons = _require.disableButtons,
+  cleanMsgBody = _require.cleanMsgBody;
+var globals = __webpack_require__(/*! ../globals */ "./resources/js/globals.js");
+function identifyEvent(inputString) {
+  var events = ["thread.created", "thread.run.created", "thread.run.queued", "thread.run.in_progress", "thread.run.requires_action", "thread.run.completed", "thread.run.incomplete", "thread.run.failed", "thread.run.cancelling", "thread.run.cancelled", "thread.run.expired", "thread.run.step.created", "thread.run.step.in_progress", "thread.run.step.delta", "thread.run.step.completed", "thread.run.step.failed", "thread.run.step.cancelled", "thread.run.step.expired", "thread.message.created", "thread.message.in_progress", "thread.message.delta", "thread.message.completed", "thread.message.incomplete", "error", "done"];
+  for (var _i = 0, _events = events; _i < _events.length; _i++) {
+    var event = _events[_i];
+    if (inputString.includes(event)) {
+      return event;
+    }
+  }
+  return "incomplete";
+}
+function processString(chunk) {
+  var lines = chunk.split('\n');
+  var events = [];
+  var _iterator = _createForOfIteratorHelper(lines),
+    _step;
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var line = _step.value;
+      line = line.trim();
+      if (!line) continue;
+
+      // Verifica se estamos processando um dado incompleto
+      if (globals.incompleteData) {
+        globals.incompleteData += line;
+        try {
+          var jsonData = JSON.parse(globals.incompleteData);
+          if (globals.currentEvent) {
+            var _jsonData$delta;
+            var contentArray = ((_jsonData$delta = jsonData.delta) === null || _jsonData$delta === void 0 ? void 0 : _jsonData$delta.content) || [];
+            var _iterator2 = _createForOfIteratorHelper(contentArray),
+              _step2;
+            try {
+              for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+                var _content$text;
+                var content = _step2.value;
+                if (content.type === 'text' && (_content$text = content.text) !== null && _content$text !== void 0 && _content$text.value) {
+                  events.push(content.text.value);
+                }
+              }
+            } catch (err) {
+              _iterator2.e(err);
+            } finally {
+              _iterator2.f();
+            }
+          }
+          globals.incompleteData = ''; // Limpa o estado após processar o dado completo
+          globals.currentEvent = null;
+          continue;
+        } catch (error) {
+          // Continua acumulando dados se o JSON ainda estiver incompleto
+          continue;
+        }
+      }
+      if (globals.incompleteEvent) {
+        globals.incompleteEvent += line;
+        if (globals.incompleteEvent.startsWith('event:')) {
+          globals.currentEvent = globals.incompleteEvent.slice(6).trim();
+          if (globals.currentEvent !== "thread.message.delta") {
+            globals.currentEvent = null;
+            globals.incompleteEvent = '';
+            continue;
+          }
+          globals.incompleteEvent = '';
+          continue;
+        }
+      }
+
+      // Identifica a ID da thread
+      if (line.startsWith('API_THREAD_ID:')) {
+        var data = line.slice(14).trim();
+        globals.current_thread = parseInt(data.slice(0, data.indexOf(';')));
+        continue;
+      }
+
+      // Identifica eventos
+      if (line.startsWith('event:')) {
+        globals.currentEvent = line.slice(6).trim();
+        var event = identifyEvent(globals.currentEvent);
+        if (event != "thread.message.delta") {
+          if (event == 'incomplete') globals.incompleteEvent = line;
+          globals.currentEvent = null;
+          continue;
+        }
+        continue;
+      }
+
+      // Identifica dados
+      if (line.startsWith('data:')) {
+        var _data = line.slice(5).trim();
+
+        // Se há dados incompletos, concatena com os novos dados
+        if (globals.incompleteData) {
+          _data = globals.incompleteData + _data;
+          globals.incompleteData = '';
+        }
+
+        // Verifica se o JSON está completo
+        try {
+          var _jsonData = JSON.parse(_data);
+          if (globals.currentEvent) {
+            var _jsonData$delta2;
+            var _contentArray = ((_jsonData$delta2 = _jsonData.delta) === null || _jsonData$delta2 === void 0 ? void 0 : _jsonData$delta2.content) || [];
+            var _iterator3 = _createForOfIteratorHelper(_contentArray),
+              _step3;
+            try {
+              for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+                var _content$text2;
+                var _content = _step3.value;
+                if (_content.type === 'text' && (_content$text2 = _content.text) !== null && _content$text2 !== void 0 && _content$text2.value) {
+                  events.push(_content.text.value);
+                }
+              }
+            } catch (err) {
+              _iterator3.e(err);
+            } finally {
+              _iterator3.f();
+            }
+          }
+          globals.currentEvent = null; // Reseta o evento após processar
+          continue;
+        } catch (error) {
+          // Se o JSON está incompleto, armazena o fragmento
+          globals.incompleteData = _data;
+          continue;
+        }
+      }
+
+      // if got here, probably it's an incomplete event, but check it anyway
+      globals.incompleteEvent = line;
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+  return events;
+}
+function addThread() {
+  return _addThread.apply(this, arguments);
+}
+function _addThread() {
+  _addThread = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
+    var token, first_message, new_chat_name, len, messageTemp, response, reader, decoder, processChunk;
+    return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+      while (1) switch (_context2.prev = _context2.next) {
+        case 0:
+          token = readCookie('token');
+          first_message = $('#add_thread_msg_id')[0].value;
+          new_chat_name = $('#add_thread_name_id')[0].value;
+          $('#add_thread_msg_id')[0].value = $('#add_thread_name_id')[0].value = '';
+          $('#add_thread_modal_id').modal('hide');
+          disableButtons();
+          if ($('#msg_body_footer')[0].classList[1] === 'move-down') {
+            $('#msg_body_footer')[0].classList.remove('move-down');
+          }
+          cleanDOM(globals.msg_body);
+          globals.chat_name.innerHTML = new_chat_name;
+          globals.chat_num_msgs.innerHTML = '1 mensagem';
+          attachDOM(globals.msg_body, globals.bubble_user);
+          addTextLastBubble(first_message);
+          globals.chat_cards.insertBefore($(globals.chat_card)[0], globals.chat_cards.children[1]);
+          if (globals.selected_thread !== -1) {
+            len = globals.chat_cards.children.length - 1;
+            globals.chat_cards.children[len - globals.selected_thread].classList.remove('active-card');
+          }
+          globals.selected_thread = globals.chat_cards.children.length - 2;
+          messageTemp = '';
+          if (new_chat_name.length === 0) {
+            if (first_message.length > 25) {
+              messageTemp = first_message.slice(0, 22).trim();
+              messageTemp += '...';
+            } else {
+              messageTemp = first_message;
+            }
+            globals.chat_name.innerHTML = messageTemp;
+            globals.chat_cards.children[1].children[0].children[0].children[0].innerHTML = messageTemp;
+          } else {
+            globals.chat_cards.children[1].children[0].children[0].children[0].innerHTML = new_chat_name;
+          }
+          globals.chat_cards.children[1].setAttribute('data-api-index', globals.chat_cards.children.length - 2);
+          globals.chat_cards.children[1].addEventListener('click', function (event) {
+            if (event.target == event.currentTarget.children[0].children[1].children[0] || event.target == event.currentTarget.children[0].children[1]) {
+              globals.menu_chat = parseInt(event.currentTarget.getAttribute('data-api-thread'));
+              globals.menu_chat_index = parseInt(event.currentTarget.getAttribute('data-api-index'));
+              return;
+            }
+
+            // Rename
+            if (event.target == event.currentTarget.children[0].children[1].children[1].children[0] || event.target == event.currentTarget.children[0].children[1].children[1].children[0].children[0]) return;
+
+            // Delete
+            if (event.target == event.currentTarget.children[0].children[1].children[1].children[1] || event.target == event.currentTarget.children[0].children[1].children[1].children[1].children[0]) return;
+            var btn = event.currentTarget;
+            var index = parseInt(btn.getAttribute('data-api-index'));
+            var thread = parseInt(btn.getAttribute('data-api-thread'));
+            btn.classList.add('active-card');
+            if (globals.selected_thread !== -1) {
+              var _len = globals.chat_cards.children.length - 1;
+              globals.chat_cards.children[_len - globals.selected_thread].classList.remove('active-card');
+            }
+            globals.selected_thread = index;
+            globals.current_thread = thread;
+            buildChat();
+          });
+          attachDOM(globals.msg_body, globals.bubble_sys);
+          globals.loading_text = true;
+          loadingTextLastBubble();
+          _context2.prev = 22;
+          _context2.next = 25;
+          return fetch(globals.api_url + 'chat/create-run/' + globals.account_id, {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + token,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              text: first_message,
+              main_brand_id: 1,
+              name: new_chat_name
+            })
+          });
+        case 25:
+          response = _context2.sent;
+          if (response.body) {
+            _context2.next = 28;
+            break;
+          }
+          throw new Error('A resposta não contém uma stream legível.');
+        case 28:
+          if (!(response.status !== 200)) {
+            _context2.next = 30;
+            break;
+          }
+          throw new Error('ERRO: não foi possível receber uma resposta do servidor');
+        case 30:
+          reader = response.body.getReader();
+          decoder = new TextDecoder();
+          globals.chat_num_msgs.innerHTML = '2 mensagens';
+          processChunk = /*#__PURE__*/function () {
+            var _ref = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
+              var text, _yield$reader$read, done, value, chunk, arr, json, msg00, msg01;
+              return _regeneratorRuntime().wrap(function _callee$(_context) {
+                while (1) switch (_context.prev = _context.next) {
+                  case 0:
+                    globals.incompleteData = '';
+                    globals.currentEvent = null;
+                    globals.loading_text = false;
+                    text = '';
+                  case 4:
+                    if (false) {}
+                    _context.next = 7;
+                    return reader.read();
+                  case 7:
+                    _yield$reader$read = _context.sent;
+                    done = _yield$reader$read.done;
+                    value = _yield$reader$read.value;
+                    if (!done) {
+                      _context.next = 12;
+                      break;
+                    }
+                    return _context.abrupt("break", 19);
+                  case 12:
+                    // Decodificar o chunk e atualizar o DOM
+                    chunk = decoder.decode(value, {
+                      stream: true
+                    });
+                    console.log(chunk);
+                    arr = processString(chunk);
+                    if (arr.length > 0) {
+                      globals.loading_text = false;
+                    }
+                    arr.forEach(function (e) {
+                      text += e;
+                      setTextLastBubble(text);
+                    });
+                    _context.next = 4;
+                    break;
+                  case 19:
+                    globals.chat_cards.children[1].children[0].children[0].children[1].innerHTML = "chat: ".concat(globals.current_thread, " - 2 mensagens");
+                    globals.chat_cards.children[1].setAttribute('data-api-thread', globals.current_thread);
+                    globals.thread_ids.push(globals.current_thread);
+                    globals.thread_names.push(new_chat_name);
+                    json = [];
+                    msg00 = {
+                      who: 'user',
+                      text: first_message
+                    };
+                    msg01 = {
+                      who: 'assistant',
+                      text: text
+                    };
+                    json.push(msg00);
+                    json.push(msg01);
+                    globals.thread_text.push(JSON.stringify(json));
+                    enableButtons();
+                  case 30:
+                  case "end":
+                    return _context.stop();
+                }
+              }, _callee);
+            }));
+            return function processChunk() {
+              return _ref.apply(this, arguments);
+            };
+          }();
+          processChunk();
+          _context2.next = 41;
+          break;
+        case 37:
+          _context2.prev = 37;
+          _context2.t0 = _context2["catch"](22);
+          console.error('Erro ao processar o stream:', _context2.t0);
+          checkAuth(_context2.t0.response);
+        case 41:
+        case "end":
+          return _context2.stop();
+      }
+    }, _callee2, null, [[22, 37]]);
+  }));
+  return _addThread.apply(this, arguments);
+}
+function sendMsgThread() {
+  return _sendMsgThread.apply(this, arguments);
+}
+function _sendMsgThread() {
+  _sendMsgThread = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee4() {
+    var token, message, response, reader, decoder, processChunk;
+    return _regeneratorRuntime().wrap(function _callee4$(_context4) {
+      while (1) switch (_context4.prev = _context4.next) {
+        case 0:
+          token = readCookie('token');
+          disableButtons();
+          message = globals.msg_area.value;
+          globals.msg_area.value = '';
+          attachDOM(globals.msg_body, globals.bubble_user);
+          addTextLastBubble(message);
+          attachDOM(globals.msg_body, globals.bubble_sys);
+          globals.loading_text = true;
+          loadingTextLastBubble();
+          _context4.prev = 9;
+          _context4.next = 12;
+          return fetch(globals.api_url + "chat/add/text/".concat(globals.current_thread, "/").concat(globals.account_id), {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + token,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              text: message
+            })
+          });
+        case 12:
+          response = _context4.sent;
+          if (response.body) {
+            _context4.next = 15;
+            break;
+          }
+          throw new Error('A resposta não contém um stream legível.');
+        case 15:
+          if (!(response.status !== 200)) {
+            _context4.next = 17;
+            break;
+          }
+          throw new Error('ERRO: não foi possível receber uma resposta do servidor');
+        case 17:
+          reader = response.body.getReader();
+          decoder = new TextDecoder();
+          processChunk = /*#__PURE__*/function () {
+            var _ref2 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
+              var text, _yield$reader$read2, done, value, chunk, arr, json, msg00, msg01, len;
+              return _regeneratorRuntime().wrap(function _callee3$(_context3) {
+                while (1) switch (_context3.prev = _context3.next) {
+                  case 0:
+                    globals.incompleteData = '';
+                    globals.currentEvent = null;
+                    text = '';
+                  case 3:
+                    if (false) {}
+                    _context3.next = 6;
+                    return reader.read();
+                  case 6:
+                    _yield$reader$read2 = _context3.sent;
+                    done = _yield$reader$read2.done;
+                    value = _yield$reader$read2.value;
+                    if (!done) {
+                      _context3.next = 11;
+                      break;
+                    }
+                    return _context3.abrupt("break", 18);
+                  case 11:
+                    // Decodificar o chunk e atualizar o DOM
+                    chunk = decoder.decode(value, {
+                      stream: true
+                    });
+                    arr = processString(chunk);
+                    if (arr.length > 0) {
+                      globals.loading_text = false;
+                    }
+                    console.log(chunk);
+                    arr.forEach(function (e) {
+                      text += e;
+                      setTextLastBubble(text);
+                    });
+                    _context3.next = 3;
+                    break;
+                  case 18:
+                    json = JSON.parse(globals.thread_text[globals.selected_thread]);
+                    msg00 = {
+                      who: 'user',
+                      text: message
+                    };
+                    msg01 = {
+                      who: 'assistant',
+                      text: text
+                    };
+                    json.push(msg00);
+                    json.push(msg01);
+                    globals.chat_num_msgs.innerHTML = "".concat(json.length, " mensagens");
+                    if (globals.selected_thread !== -1) {
+                      len = globals.chat_cards.children.length - 1;
+                      globals.chat_cards.children[len - globals.selected_thread].children[0].children[0].children[1].innerHTML = "chat: ".concat(globals.current_thread, " - ").concat(json.length, " mensagens");
+                    }
+                    globals.thread_text[globals.selected_thread] = JSON.stringify(json);
+                    enableButtons();
+                  case 27:
+                  case "end":
+                    return _context3.stop();
+                }
+              }, _callee3);
+            }));
+            return function processChunk() {
+              return _ref2.apply(this, arguments);
+            };
+          }();
+          processChunk();
+          _context4.next = 27;
+          break;
+        case 23:
+          _context4.prev = 23;
+          _context4.t0 = _context4["catch"](9);
+          console.error('Erro ao processar o stream:', _context4.t0);
+          checkAuth(_context4.t0.response);
+        case 27:
+        case "end":
+          return _context4.stop();
+      }
+    }, _callee4, null, [[9, 23]]);
+  }));
+  return _sendMsgThread.apply(this, arguments);
+}
+function listChats() {
+  return _listChats.apply(this, arguments);
+}
+function _listChats() {
+  _listChats = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee5() {
+    var token, response, data;
+    return _regeneratorRuntime().wrap(function _callee5$(_context5) {
+      while (1) switch (_context5.prev = _context5.next) {
+        case 0:
+          token = readCookie('token');
+          globals.chat_cards.innerHTML = globals.add_chat;
+          globals.thread_ids.length = globals.thread_text.length = 0;
+          _context5.prev = 3;
+          _context5.next = 6;
+          return window.axios.get(globals.api_url + "chat/list/".concat(globals.main_brand_id, "/").concat(globals.account_id), {
+            headers: {
+              'Authorization': 'Bearer ' + token,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          });
+        case 6:
+          response = _context5.sent;
+          if (!(response.status != 200)) {
+            _context5.next = 9;
+            break;
+          }
+          throw new Error(response.body + " code: ".concat(response.status));
+        case 9:
+          data = response.data;
+          data.forEach(function (e, i) {
+            globals.thread_ids.push(e.thread_id);
+            globals.thread_text.push(e.text);
+            globals.thread_names.push(e.name);
+            var text = JSON.parse(e.text);
+            var len = globals.chat_cards.children.length - 1;
+            if (len > 0) {
+              globals.chat_cards.insertBefore($(globals.chat_card)[0], globals.chat_cards.children[1]);
+            } else {
+              globals.chat_cards.innerHTML += globals.chat_card;
+            }
+            var messageTemp = '';
+            if (e.name == null || e.name != null && e.name.length == 0) {
+              if (text[0].text.length > 25) {
+                messageTemp = text[0].text.slice(0, 22).trim();
+                messageTemp += '...';
+              } else {
+                messageTemp = text[0].text;
+              }
+              globals.chat_cards.children[1].children[0].children[0].children[0].innerHTML = messageTemp;
+            } else {
+              globals.chat_cards.children[1].children[0].children[0].children[0].innerHTML = e.name;
+            }
+            globals.chat_cards.children[1].children[0].children[0].children[1].innerHTML = "chat: ".concat(e.id, " - ").concat(JSON.parse(e.text).length, " mensagens");
+            globals.chat_cards.children[1].classList.remove('active-card');
+            globals.chat_cards.children[1].setAttribute('data-api-index', i);
+            globals.chat_cards.children[1].setAttribute('data-api-thread', e.id);
+            globals.chat_cards.children[1].addEventListener('click', function (event) {
+              if (event.target == event.currentTarget.children[0].children[1].children[0] || event.target == event.currentTarget.children[0].children[1]) {
+                globals.menu_chat = parseInt(event.currentTarget.getAttribute('data-api-thread'));
+                globals.menu_chat_index = parseInt(event.currentTarget.getAttribute('data-api-index'));
+                return;
+              }
+
+              // Rename
+              if (event.target == event.currentTarget.children[0].children[1].children[1].children[0] || event.target == event.currentTarget.children[0].children[1].children[1].children[0].children[0]) return;
+
+              // Delete
+              if (event.target == event.currentTarget.children[0].children[1].children[1].children[1] || event.target == event.currentTarget.children[0].children[1].children[1].children[1].children[0]) return;
+              if ($('#msg_body_footer')[0].classList[1] == 'move-down') $('#msg_body_footer')[0].classList.remove('move-down');
+              var btn = event.currentTarget;
+              var index = parseInt(btn.getAttribute('data-api-index'));
+              var thread = parseInt(btn.getAttribute('data-api-thread'));
+              btn.classList.add('active-card');
+              if (globals.selected_thread != -1) {
+                var _len2 = globals.chat_cards.children.length - 1;
+                globals.chat_cards.children[_len2 - globals.selected_thread].classList.remove('active-card');
+              }
+              globals.selected_thread = index;
+              globals.current_thread = thread;
+              buildChat();
+            });
+          });
+          _context5.next = 17;
+          break;
+        case 13:
+          _context5.prev = 13;
+          _context5.t0 = _context5["catch"](3);
+          console.error('Erro ao processar requisição de chats:', _context5.t0);
+          checkAuth(_context5.t0.response);
+        case 17:
+        case "end":
+          return _context5.stop();
+      }
+    }, _callee5, null, [[3, 13]]);
+  }));
+  return _listChats.apply(this, arguments);
+}
+function buildChat() {
+  return _buildChat.apply(this, arguments);
+}
+function _buildChat() {
+  _buildChat = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee6() {
+    var len, json;
+    return _regeneratorRuntime().wrap(function _callee6$(_context6) {
+      while (1) switch (_context6.prev = _context6.next) {
+        case 0:
+          if (!(globals.current_thread == -1)) {
+            _context6.next = 2;
+            break;
+          }
+          throw new Error('ERRO: nenhuma thread ativa');
+        case 2:
+          cleanDOM(globals.msg_body);
+          if (globals.thread_names[globals.selected_thread] == null || globals.thread_names[globals.selected_thread] != null && globals.thread_names[globals.selected_thread].length == 0) {
+            len = globals.chat_cards.children.length - 1;
+            globals.chat_name.innerHTML = globals.chat_cards.children[len - globals.selected_thread].children[0].children[0].children[0].innerHTML;
+          } else {
+            globals.chat_name.innerHTML = globals.thread_names[globals.selected_thread];
+          }
+          json = JSON.parse(globals.thread_text[globals.selected_thread]);
+          globals.chat_num_msgs.innerHTML = "".concat(json.length, " mensagens");
+          json.forEach(function (e) {
+            if (e.who == 'user') attachDOM(globals.msg_body, globals.bubble_user);else attachDOM(globals.msg_body, globals.bubble_sys);
+            addTextLastBubble(e.text);
+          });
+        case 7:
+        case "end":
+          return _context6.stop();
+      }
+    }, _callee6);
+  }));
+  return _buildChat.apply(this, arguments);
+}
+function renameChat() {
+  var token = readCookie('token');
+  var new_chat_name = $('#rename_chat_name_id')[0].value;
+  window.axios.patch(globals.api_url + "chat/update/".concat(globals.menu_chat, "/").concat(globals.account_id), {
+    name: new_chat_name
+  }, {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 200) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    globals.thread_names[globals.menu_chat_index] = new_chat_name;
+    var len = globals.chat_cards.children.length - 1;
+    globals.chat_cards.children[len - globals.menu_chat_index].children[0].children[0].children[0].innerHTML = new_chat_name;
+    if (globals.selected_thread == globals.menu_chat_index) globals.chat_name.innerHTML = new_chat_name;
+  })["catch"](function (e) {
+    console.error('Erro ao renomear o chat:', e);
+    checkAuth(e.response);
+  });
+}
+function deleteChat() {
+  var token = readCookie('token');
+  window.axios["delete"](globals.api_url + "chat/delete/".concat(globals.menu_chat, "/").concat(globals.account_id), {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 200) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    globals.thread_names[globals.menu_chat_index] = null;
+    var len = globals.chat_cards.children.length - 1;
+    globals.chat_cards.children[len - globals.menu_chat_index].style.display = "none";
+    if (globals.selected_thread == globals.menu_chat_index) {
+      cleanMsgBody();
+    }
+  })["catch"](function (e) {
+    console.error('Erro ao deletar o chat:', e);
+    checkAuth(e.response);
+  });
+}
+module.exports = {
+  addThread: addThread,
+  sendMsgThread: sendMsgThread,
+  renameChat: renameChat,
+  deleteChat: deleteChat,
+  listChats: listChats,
+  buildChat: buildChat
+};
+
+/***/ }),
+
+/***/ "./resources/js/funcs/mainBrand.js":
+/*!*****************************************!*\
+  !*** ./resources/js/funcs/mainBrand.js ***!
+  \*****************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+__webpack_require__(/*! ../bootstrap */ "./resources/js/bootstrap.js");
+var globals = __webpack_require__(/*! ../globals */ "./resources/js/globals.js");
+var _require = __webpack_require__(/*! ../utils */ "./resources/js/utils.js"),
+  readCookie = _require.readCookie,
+  checkAuth = _require.checkAuth,
+  cleanMsgBody = _require.cleanMsgBody;
+var _require2 = __webpack_require__(/*! ./user */ "./resources/js/funcs/user.js"),
+  listUsers = _require2.listUsers;
+var _require3 = __webpack_require__(/*! ./chat */ "./resources/js/funcs/chat.js"),
+  listChats = _require3.listChats;
+function listBrands() {
+  var token = readCookie('token');
+  window.axios.get(globals.api_url + "account/list/main-brands/".concat(globals.account_id), {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 200) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    var list = $('#brand_select_id')[0];
+    list.innerHTML = '';
+    var brands = response.data;
+    brands.forEach(function (e, i) {
+      var selected = globals.main_brand_id == e.id ? 'selected' : '';
+      list.innerHTML += "<option value=".concat(e.id, " ").concat(selected, ">").concat(e.name, "</option>");
+    });
+  })["catch"](function (e) {
+    console.error('Erro ao listar marcas:', e);
+    checkAuth(e.response);
+  });
+}
+function switchBrand() {
+  globals.main_brand_id = $('#brand_select_id')[0].value;
+  var expires = new Date();
+  expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias
+  document.cookie = "main_brand=".concat(globals.main_brand_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
+  $('#switch_modal_id').modal('hide');
+  cleanMsgBody();
+  listChats();
+  loadBrandPic();
+}
+function loadBrandPic() {
+  var token = readCookie('token');
+  window.axios.get(globals.api_url + "main-brand/primary/platforms/".concat(globals.main_brand_id, "/").concat(globals.account_id), {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 200) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    var brand_pic = $('#brand_pic_id')[0];
+    var platforms = response.data;
+    for (var i = 0; i < platforms.length; i++) {
+      if (platforms[i].avatar_url != null && platforms[i].avatar_url != '') {
+        brand_pic.src = platforms[i].avatar_url;
+        break;
+      }
+    }
+  })["catch"](function (e) {
+    alert('Erro ao mudar avatar', e);
+    checkAuth(e.response);
+  });
+}
+function mainBrandSelect() {
+  globals.account_id = $('#account_select_id')[0].value;
+  listBrands();
+  listUsers();
+  var expires = new Date();
+  expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias
+  document.cookie = "account=".concat(globals.account_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
+  $('#select_account_modal_id').modal('hide');
+  $('#switch_modal_id').modal('show');
+}
+module.exports = {
+  mainBrandSelect: mainBrandSelect,
+  listBrands: listBrands,
+  switchBrand: switchBrand,
+  loadBrandPic: loadBrandPic
+};
+
+/***/ }),
+
+/***/ "./resources/js/funcs/platform.js":
+/*!****************************************!*\
+  !*** ./resources/js/funcs/platform.js ***!
+  \****************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+__webpack_require__(/*! ../bootstrap */ "./resources/js/bootstrap.js");
+var globals = __webpack_require__(/*! ../globals */ "./resources/js/globals.js");
+var _require = __webpack_require__(/*! ../utils */ "./resources/js/utils.js"),
+  readCookie = _require.readCookie,
+  checkAuth = _require.checkAuth,
+  changeToLoad = _require.changeToLoad,
+  returnToNormal = _require.returnToNormal;
+function createPlatform(event) {
+  var token = readCookie('token');
+  var name = $('#new_platform_name_id').val();
+  var url = $('#new_platform_url_id').val();
+  var type = $('#new_platform_type_id').val();
+  var platform_id = $('#new_platform_id_id').val();
+  var active = $('#new_platform_active_id').is(':checked');
+  changeToLoad(event.currentTarget);
+  window.axios.post(globals.api_url + "platform/create", {
+    name: name,
+    url: url,
+    type: type,
+    platform_id: platform_id,
+    active: active,
+    brand_id: globals.brand_id
+  }, {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 201) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    returnToNormal(event.currentTarget);
+    var r = confirm('Plataforma criada, deseja adicionar outra?');
+    if (r) {
+      $('#new_platform_name_id').val('');
+      $('#new_platform_url_id').val('');
+      $('#new_platform_type_id').val('');
+      $('#new_platform_id_id').val('');
+      $('#new_platform_active_id').prop('checked', false);
+    } else {
+      if (globals.account_creation) {
+        $('#create_brand_modal_id').modal('hide');
+        $('#create_main_brand_modal_id').modal('show');
+      } else {
+        var currentModalId = globals.modalHistory.pop();
+        var previousModalId = globals.modalHistory[globals.modalHistory.length - 1];
+        if (previousModalId) {
+          $("#".concat(currentModalId)).modal('hide');
+          $("#".concat(previousModalId)).modal('show');
+        }
+      }
+    }
+  })["catch"](function (e) {
+    alert('Erro ao criar marca:', e);
+    returnToNormal(event.currentTarget);
+    checkAuth(e.response);
+  });
+}
+function listPlatforms() {
+  var token = readCookie('token');
+  window.axios.get(globals.api_url + "brand/list/platforms/".concat(globals.brand_id), {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    var list = $('#list_platforms_id')[0];
+    list.innerHTML = '';
+    response.data.forEach(function (e) {
+      var element = $("<li class=\"list-group-item d-flex align-items-center data-api-id=".concat(e.id, ">\n                    <span class=\"me-auto\">Plataforma ").concat(e.id, ": ").concat(e.type, " - ").concat(e.name, "</span>\n                    <span class=\"btn btn-icon edit-btn text-white\">\n                        <i class=\"fa-solid fa-pen-to-square\"></i>\n                    </span>\n                    <span class=\"btn btn-icon delete-btn text-white\">\n                        <i class=\"fa-solid fa-trash-can-xmark\"></i>\n                    </span>\n                </li>"));
+      element.find('.delete-btn').on('click', function () {
+        var r = confirm('Deseja mesmo excluir esta plataforma?');
+        if (r) {
+          window.axios["delete"](globals.api_url + "platform/delete/".concat(e.id), {
+            headers: {
+              'Authorization': 'Bearer ' + token,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          }).then(function () {
+            listUsers();
+          })["catch"](function (e) {
+            checkAuth(e);
+            alert('Erro: não foi possível excluir a plataforma');
+          });
+        }
+      });
+      element.find('.edit-btn').on('click', function () {
+        globals.platform_id = e.id;
+        $('#edit_brand_modal_id').modal('hide');
+        $('#edit_platform_modal_id').modal('show');
+      });
+      list.appendChild(element[0]);
+    });
+  })["catch"](function (e) {
+    alert('Erro ao listar usuários');
+    console.error('error', e);
+    checkAuth(e);
+  });
+}
+module.exports = {
+  createPlatform: createPlatform,
+  listPlatforms: listPlatforms
+};
+
+/***/ }),
+
+/***/ "./resources/js/funcs/user.js":
+/*!************************************!*\
+  !*** ./resources/js/funcs/user.js ***!
+  \************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+__webpack_require__(/*! ../bootstrap */ "./resources/js/bootstrap.js");
+var globals = __webpack_require__(/*! ../globals */ "./resources/js/globals.js");
+var _require = __webpack_require__(/*! ../utils */ "./resources/js/utils.js"),
+  readCookie = _require.readCookie,
+  checkAuth = _require.checkAuth,
+  changeToLoad = _require.changeToLoad,
+  returnToNormal = _require.returnToNormal;
+function listUsers() {
+  var token = readCookie('token');
+  window.axios.get(globals.api_url + "account/list/users/".concat(globals.account_id), {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    var list = $('#list_users_id')[0];
+    list.innerHTML = '';
+    response.data.forEach(function (e) {
+      var element = $("<li class=\"list-group-item d-flex align-items-center mb-2\" data-api-id=".concat(e.id, ">\n                <span class=\"me-auto\">Usu\xE1rio: ").concat(e.id, " - ").concat(e.name, "</span>\n                <span class=\"btn btn-icon permission-btn text-white\">\n                    <i class=\"fa-solid fa-ballot-check\"></i>\n                </span>\n                <span class=\"btn btn-icon delete-btn text-white\">\n                    <i class=\"fa-solid fa-trash-can-xmark\"></i>\n                </span>\n            </li>"));
+      element.find('.delete-btn').on('click', function () {
+        var r = confirm('Deseja mesmo excluir este usuário?');
+        if (r) {
+          window.axios["delete"](globals.api_url + "user/delete/".concat(e.id, "/").concat(globals.account_id), {
+            headers: {
+              'Authorization': 'Bearer ' + token,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          }).then(function () {
+            listUsers();
+          })["catch"](function (e) {
+            checkAuth(e);
+            alert('Erro: não foi possível excluir o usuário');
+          });
+        }
+      });
+      list.appendChild(element[0]);
+    });
+  })["catch"](function (e) {
+    alert('Erro ao listar usuários');
+    console.error('error', e);
+    checkAuth(e);
+  });
+}
+function createUser(event) {
+  var token = readCookie('token');
+  var name = $('#new_user_name_id')[0].value;
+  var email = $('#new_user_email_id')[0].value;
+  var password = $('#new_user_password_id')[0].value;
+  var confirm_password = $('#new_user_confirm_password_id')[0].value;
+  if (password != confirm_password) {
+    alert('Senhas diferentes');
+    console.error('Senhas diferentes');
+    return;
+  }
+  changeToLoad(event.currentTarget);
+  window.axios.post(globals.api_url + "user/create/".concat(globals.account_id), {
+    name: name,
+    email: email,
+    password: password,
+    permission: '1',
+    account_id: globals.account_id
+  }, {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 201) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    alert('Usuário criado');
+    returnToNormal(event.currentTarget);
+    listUsers();
+    $('#create_user_modal_id').modal('hide');
+    if (!globals.account_creation) $('#config_modal_id').modal('show');else $('#create_main_brand_modal_id').modal('show');
+  })["catch"](function (e) {
+    alert('Erro ao criar usuário:', e);
+    returnToNormal(event.currentTarget);
+    checkAuth(e.response);
+  });
+}
+module.exports = {
+  listUsers: listUsers,
+  createUser: createUser
+};
+
+/***/ }),
+
+/***/ "./resources/js/globals.js":
+/*!*********************************!*\
+  !*** ./resources/js/globals.js ***!
+  \*********************************/
+/***/ ((module) => {
+
+var globals = {
+  account_id: 1,
+  main_brand_id: 1,
+  user_id: 1,
+  is_operator: true,
+  backup: '',
+  account_creation: false,
+  brand_id: -1,
+  platform_id: -1,
+  incompleteData: '',
+  incompleteEvent: '',
+  currentEvent: null,
+  current_thread: -1,
+  modalHistory: [],
+  api_url: 'http://localhost:8000/api/',
+  msg_body: undefined,
+  msg_area: undefined,
+  chat_cards: undefined,
+  chat_name: undefined,
+  chat_num_msgs: undefined,
+  loading_text: false,
+  thread_ids: [],
+  thread_text: [],
+  thread_names: [],
+  selected_thread: -1,
+  menu_chat: -1,
+  menu_chat_index: -1,
+  bubble_sys: "<div class=\"d-flex justify-content-start mb-4\">\n                    <div class=\"msg_cotainer msg_bubble_sys\">\n                        <span></span>\n                    </div>\n                </div>",
+  bubble_user: "<div class=\"d-flex justify-content-end mb-4\">\n                    <div class=\"msg_cotainer_send msg_bubble_user\">\n                        <span></span>\n                    </div>\n                </div>",
+  chat_card: "<li class=\"chat_btn active-card\">\n                    <div class=\"d-flex justify-content-between bd-highlight btn w-100 text-start\">\n                        <div class=\"user_info\">\n                            <span></span>\n                            <p></p>\n                        </div>\n                        <span id=\"btn-group dropend\">\n                            <i class=\"fas fa-ellipsis-v btn btn-dots\" data-bs-toggle=\"dropdown\"></i>\n                            <ul class=\"dropdown-menu\">\n                                <li data-bs-toggle=\"modal\" data-bs-target=\"#rename_modal_id\"><i class=\"fas fa-pen\"></i> Renomear</li>\n                                <li data-bs-toggle=\"modal\" data-bs-target=\"#delete_modal_id\"><i class=\"fas fa-trash-can-xmark\"></i> Deletar</li>\n                            </ul>\n                        </span>\n                    </div>\n                </li>",
+  add_chat: "<li class=\"d-flex flex-column justify-content-center align-items-center\" style=\"margin-bottom: 15px !important\">\n                    <button class=\"d-flex justify-content-center text-black rounded-pill btn-tertiary\" style=\"width: 90% !important; border: 0px;\" data-bs-toggle=\"modal\" data-bs-target=\"#add_thread_modal_id\">\n                        <span style=\"padding: 5px; border-radius: 10px;\">\n                            <i class=\"fa-solid fa-plus\"></i>\n                        </span>\n                    </button>\n                </li>"
+};
+module.exports = globals;
+
+/***/ }),
+
+/***/ "./resources/js/utils.js":
+/*!*******************************!*\
+  !*** ./resources/js/utils.js ***!
+  \*******************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == _typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator["return"] && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, "catch": function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
+function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
+function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+var globals = __webpack_require__(/*! ./globals */ "./resources/js/globals.js");
+function readCookie(name) {
+  var nameEQ = name + "=";
+  var cookies = document.cookie.split(';');
+  for (var i = 0; i < cookies.length; i++) {
+    var cookie = cookies[i];
+    while (cookie.charAt(0) === ' ') {
+      cookie = cookie.substring(1);
+    }
+    if (cookie.indexOf(nameEQ) === 0) {
+      return cookie.substring(nameEQ.length, cookie.length);
+    }
+  }
+  return null;
+}
+function saveCookie(type, token) {
+  var expires = new Date();
+  expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias
+
+  switch (type) {
+    case 'token':
+      document.cookie = "token=".concat(token, "; expires=").concat(expires.toUTCString(), "; path=/;");
+      break;
+    case 'account':
+      document.cookie = "account=".concat(globals.account_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
+      break;
+    case 'user':
+      document.cookie = "user=".concat(globals.user_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
+      break;
+    case 'operator':
+      document.cookie = "is_operator=".concat(globals.is_operator, "; expires=").concat(expires.toUTCString(), "; path=/;");
+      break;
+    case 'main_brand':
+      document.cookie = "main_brand=".concat(globals.main_brand_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
+      break;
+    case 'all':
+      document.cookie = "token=".concat(token, "; expires=").concat(expires.toUTCString(), "; path=/;");
+      document.cookie = "account=".concat(globals.account_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
+      document.cookie = "user=".concat(globals.user_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
+      document.cookie = "is_operator=".concat(globals.is_operator, "; expires=").concat(expires.toUTCString(), "; path=/;");
+      document.cookie = "main_brand=".concat(globals.main_brand_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
+      break;
+  }
+}
+function checkAuth(data) {
+  if (data.status == 401) {
+    alert('Você foi deslogado');
+    cleanDOM(globals.chat_cards);
+    globals.chat_cards.innerHTML = globals.add_chat;
+    cleanMsgBody();
+    $('#login_modal_id').modal('show');
+    document.cookie = "token=;";
+  }
+}
+function cleanMsgBody() {
+  globals.msg_area.value = '';
+  globals.msg_body.innerHTML = "<div class=\"d-flex justify-content-center align-items-center h-100\">\n            <img class=\"img-fluid h-100\" src=\"img/logo_cyan.png\">\n        </div>";
+  if ($('#msg_body_footer')[0].classList.length == 1) $('#msg_body_footer')[0].classList.add('move-down');
+  globals.chat_name.innerHTML = '';
+  globals.chat_num_msgs.innerHTML = '';
+}
+function changeToLoad(target) {
+  globals.backup = target.innerHTML;
+  target.innerHTML = "<div class=\"spinner-border text-black\" role=\"status\"></div>";
+}
+function returnToNormal(target) {
+  target.innerHTML = globals.backup;
+}
+function sleep(ms) {
+  return new Promise(function (resolve) {
+    return setTimeout(resolve, ms);
+  });
+}
+function cleanDOM(dom) {
+  dom.innerHTML = '';
+}
+function attachDOM(dom, content) {
+  dom.innerHTML += content;
+}
+function addTextLastBubble(text) {
+  var len = globals.msg_body.children.length - 1;
+  var s = globals.msg_body.children[len].children[0].children[0];
+  s.innerHTML += marked.parse(text);
+  globals.msg_body.scrollTop = globals.msg_body.scrollHeight;
+}
+function setTextLastBubble(text) {
+  var len = globals.msg_body.children.length - 1;
+  var s = globals.msg_body.children[len].children[0].children[0];
+  s.innerHTML = marked.parse(text);
+  globals.msg_body.scrollTop = globals.msg_body.scrollHeight;
+}
+function loadingTextLastBubble() {
+  return _loadingTextLastBubble.apply(this, arguments);
+}
+function _loadingTextLastBubble() {
+  _loadingTextLastBubble = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
+    var len, s;
+    return _regeneratorRuntime().wrap(function _callee$(_context) {
+      while (1) switch (_context.prev = _context.next) {
+        case 0:
+          len = globals.msg_body.children.length - 1;
+          s = globals.msg_body.children[len].children[0].children[0];
+          s.innerHTML = "<div class=\"spinner-border text-white\" role=\"status\"></div>";
+        case 3:
+        case "end":
+          return _context.stop();
+      }
+    }, _callee);
+  }));
+  return _loadingTextLastBubble.apply(this, arguments);
+}
+function disableButtons() {
+  $('#send_btn_id')[0].classList.add('disabled_btn');
+  $('#add_thread_btn_id')[0].classList.add('disabled_btn');
+  globals.msg_area.classList.add('disabled_btn');
+  globals.chat_cards.classList.add('disabled_btn');
+  Array.from(globals.chat_cards.children).forEach(function (e, i) {
+    if (i == 0) return;
+    e.children[0].children[1].children[0].classList.add('disabled_btn');
+  });
+}
+function enableButtons() {
+  //$('#send_btn_id')[0].classList.remove('disabled_btn');
+  $('#add_thread_btn_id')[0].classList.remove('disabled_btn');
+  globals.msg_area.classList.remove('disabled_btn');
+  globals.chat_cards.classList.remove('disabled_btn');
+  Array.from(globals.chat_cards.children).forEach(function (e, i) {
+    if (i == 0) return;
+    e.children[0].children[1].children[0].classList.remove('disabled_btn');
+  });
+}
+module.exports = {
+  readCookie: readCookie,
+  saveCookie: saveCookie,
+  checkAuth: checkAuth,
+  cleanMsgBody: cleanMsgBody,
+  changeToLoad: changeToLoad,
+  returnToNormal: returnToNormal,
+  sleep: sleep,
+  cleanDOM: cleanDOM,
+  attachDOM: attachDOM,
+  addTextLastBubble: addTextLastBubble,
+  setTextLastBubble: setTextLastBubble,
+  loadingTextLastBubble: loadingTextLastBubble,
+  disableButtons: disableButtons,
+  enableButtons: enableButtons
+};
+
+/***/ }),
+
 /***/ "./node_modules/lodash/lodash.js":
 /*!***************************************!*\
   !*** ./node_modules/lodash/lodash.js ***!
@@ -19563,1260 +21094,41 @@ var __webpack_exports__ = {};
 /*!*****************************!*\
   !*** ./resources/js/app.js ***!
   \*****************************/
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
-function _regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == _typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator["return"] && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, "catch": function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
-function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
-function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
-function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
-function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
-function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 var _require = __webpack_require__(/*! lodash */ "./node_modules/lodash/lodash.js"),
   forEach = _require.forEach;
 __webpack_require__(/*! ./bootstrap */ "./resources/js/bootstrap.js");
-function readCookie(name) {
-  var nameEQ = name + "=";
-  var cookies = document.cookie.split(';');
-  for (var i = 0; i < cookies.length; i++) {
-    var cookie = cookies[i];
-    while (cookie.charAt(0) === ' ') {
-      cookie = cookie.substring(1);
-    }
-    if (cookie.indexOf(nameEQ) === 0) {
-      return cookie.substring(nameEQ.length, cookie.length);
-    }
-  }
-  return null;
-}
-function saveCookie(type) {
-  var expires = new Date();
-  expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias
-
-  switch ('type') {
-    case 'token':
-      document.cookie = "token=".concat(token, "; expires=").concat(expires.toUTCString(), "; path=/;");
-      break;
-    case 'account':
-      document.cookie = "account=".concat(account_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
-    case 'user':
-      document.cookie = "user=".concat(user_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
-      break;
-    case 'operator':
-      document.cookie = "is_operator=".concat(is_operator, "; expires=").concat(expires.toUTCString(), "; path=/;");
-      break;
-    case 'main_brand':
-      document.cookie = "main_brand=".concat(main_brand_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
-      break;
-    case 'all':
-      document.cookie = "token=".concat(token, "; expires=").concat(expires.toUTCString(), "; path=/;");
-      document.cookie = "account=".concat(account_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
-      document.cookie = "user=".concat(user_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
-      document.cookie = "is_operator=".concat(is_operator, "; expires=").concat(expires.toUTCString(), "; path=/;");
-      document.cookie = "main_brand=".concat(main_brand_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
-      break;
-  }
-}
-function checkAuth(data) {
-  if (data.status == 401) {
-    alert('Você foi deslogado');
-    cleanDOM(chat_cards);
-    chat_cards.innerHTML = add_chat;
-    cleanMsgBody();
-    $('#login_modal_id').modal('show');
-    document.cookie = "token=;";
-  }
-}
-var account_id = 1;
-var main_brand_id = 1;
-var user_id = 1;
-var is_operator = true;
-var backup = '';
-var account_creation = false;
-var brand_id = -1;
-var incompleteData = '';
-var incompleteEvent = '';
-var currentEvent = null;
-var current_thread = -1;
-var modalHistory = [];
-function identifyEvent(inputString) {
-  var events = ["thread.created", "thread.run.created", "thread.run.queued", "thread.run.in_progress", "thread.run.requires_action", "thread.run.completed", "thread.run.incomplete", "thread.run.failed", "thread.run.cancelling", "thread.run.cancelled", "thread.run.expired", "thread.run.step.created", "thread.run.step.in_progress", "thread.run.step.delta", "thread.run.step.completed", "thread.run.step.failed", "thread.run.step.cancelled", "thread.run.step.expired", "thread.message.created", "thread.message.in_progress", "thread.message.delta", "thread.message.completed", "thread.message.incomplete", "error", "done"];
-
-  // Verifica se algum dos eventos está na string
-  for (var _i = 0, _events = events; _i < _events.length; _i++) {
-    var event = _events[_i];
-    if (inputString.includes(event)) {
-      return event;
-    }
-  }
-
-  // Se nenhum evento foi identificado, retorna "incomplete"
-  return "incomplete";
-}
-function processString(chunk) {
-  var lines = chunk.split('\n');
-  var events = [];
-  var _iterator = _createForOfIteratorHelper(lines),
-    _step;
-  try {
-    for (_iterator.s(); !(_step = _iterator.n()).done;) {
-      var line = _step.value;
-      line = line.trim();
-      if (!line) continue;
-
-      // Verifica se estamos processando um dado incompleto
-      if (incompleteData) {
-        incompleteData += line;
-        try {
-          var jsonData = JSON.parse(incompleteData);
-          if (currentEvent) {
-            var _jsonData$delta;
-            var contentArray = ((_jsonData$delta = jsonData.delta) === null || _jsonData$delta === void 0 ? void 0 : _jsonData$delta.content) || [];
-            var _iterator2 = _createForOfIteratorHelper(contentArray),
-              _step2;
-            try {
-              for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-                var _content$text;
-                var content = _step2.value;
-                if (content.type === 'text' && (_content$text = content.text) !== null && _content$text !== void 0 && _content$text.value) {
-                  events.push(content.text.value);
-                }
-              }
-            } catch (err) {
-              _iterator2.e(err);
-            } finally {
-              _iterator2.f();
-            }
-          }
-          incompleteData = ''; // Limpa o estado após processar o dado completo
-          currentEvent = null;
-          continue;
-        } catch (error) {
-          // Continua acumulando dados se o JSON ainda estiver incompleto
-          continue;
-        }
-      }
-      if (incompleteEvent) {
-        incompleteEvent += line;
-        if (incompleteEvent.startsWith('event:')) {
-          currentEvent = incompleteEvent.slice(6).trim();
-          if (currentEvent !== "thread.message.delta") {
-            currentEvent = null;
-            incompleteEvent = '';
-            continue;
-          }
-          incompleteEvent = '';
-          continue;
-        }
-      }
-
-      // Identifica a ID da thread
-      if (line.startsWith('API_THREAD_ID:')) {
-        var data = line.slice(14).trim();
-        current_thread = parseInt(data.slice(0, data.indexOf(';')));
-        continue;
-      }
-
-      // Identifica eventos
-      if (line.startsWith('event:')) {
-        currentEvent = line.slice(6).trim();
-        var event = identifyEvent(currentEvent);
-        if (event != "thread.message.delta") {
-          if (event == 'incomplete') incompleteEvent = line;
-          currentEvent = null;
-          continue;
-        }
-        continue;
-      }
-
-      // Identifica dados
-      if (line.startsWith('data:')) {
-        var _data = line.slice(5).trim();
-
-        // Se há dados incompletos, concatena com os novos dados
-        if (incompleteData) {
-          _data = incompleteData + _data;
-          incompleteData = '';
-        }
-
-        // Verifica se o JSON está completo
-        try {
-          var _jsonData = JSON.parse(_data);
-          if (currentEvent) {
-            var _jsonData$delta2;
-            var _contentArray = ((_jsonData$delta2 = _jsonData.delta) === null || _jsonData$delta2 === void 0 ? void 0 : _jsonData$delta2.content) || [];
-            var _iterator3 = _createForOfIteratorHelper(_contentArray),
-              _step3;
-            try {
-              for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-                var _content$text2;
-                var _content = _step3.value;
-                if (_content.type === 'text' && (_content$text2 = _content.text) !== null && _content$text2 !== void 0 && _content$text2.value) {
-                  events.push(_content.text.value);
-                }
-              }
-            } catch (err) {
-              _iterator3.e(err);
-            } finally {
-              _iterator3.f();
-            }
-          }
-          currentEvent = null; // Reseta o evento após processar
-          continue;
-        } catch (error) {
-          // Se o JSON está incompleto, armazena o fragmento
-          incompleteData = _data;
-          continue;
-        }
-      }
-
-      // if got here, probably it's an incomplete event, but check it anyway
-      incompleteEvent = line;
-    }
-  } catch (err) {
-    _iterator.e(err);
-  } finally {
-    _iterator.f();
-  }
-  return events;
-}
-var api_url = 'http://localhost:8000/api/';
-var msg_body;
-var msg_area;
-var chat_cards;
-var chat_name;
-var chat_num_msgs;
-var loading_text = false;
-function cleanMsgBody() {
-  msg_area.value = '';
-  msg_body.innerHTML = "<div class=\"d-flex justify-content-center align-items-center h-100\">\n            <img class=\"img-fluid h-100\" src=\"img/logo_cyan.png\">\n        </div>";
-  if ($('#msg_body_footer')[0].classList.length == 1) $('#msg_body_footer')[0].classList.add('move-down');
-  chat_name.innerHTML = '';
-  chat_num_msgs.innerHTML = '';
-}
-function addThread() {
-  return _addThread.apply(this, arguments);
-}
-function _addThread() {
-  _addThread = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
-    var token, first_message, new_chat_name, len, messageTemp, response, reader, decoder, processChunk;
-    return _regeneratorRuntime().wrap(function _callee2$(_context2) {
-      while (1) switch (_context2.prev = _context2.next) {
-        case 0:
-          token = readCookie('token');
-          first_message = $('#add_thread_msg_id')[0].value;
-          new_chat_name = $('#add_thread_name_id')[0].value;
-          $('#add_thread_msg_id')[0].value = $('#add_thread_name_id')[0].value = '';
-          $('#add_thread_modal_id').modal('hide');
-          disableButtons();
-          if ($('#msg_body_footer')[0].classList[1] == 'move-down') $('#msg_body_footer')[0].classList.remove('move-down');
-          cleanDOM(msg_body);
-          chat_name.innerHTML = new_chat_name;
-          chat_num_msgs.innerHTML = '1 mensagem';
-          attachDOM(msg_body, bubble_user);
-          addTextLastBubble(first_message);
-          chat_cards.insertBefore($(chat_card)[0], chat_cards.children[1]);
-          if (selected_thread != -1) {
-            len = chat_cards.children.length - 1;
-            chat_cards.children[len - selected_thread].classList.remove('active-card');
-          }
-          selected_thread = chat_cards.children.length - 2;
-          messageTemp = '';
-          if (new_chat_name.length == 0) {
-            if (first_message.length > 25) {
-              messageTemp = first_message.slice(0, 22).trim();
-              messageTemp += '...';
-            } else messageTemp = first_message;
-            chat_name.innerHTML = messageTemp;
-            chat_cards.children[1].children[0].children[0].children[0].innerHTML = messageTemp;
-          } else chat_cards.children[1].children[0].children[0].children[0].innerHTML = new_chat_name;
-          chat_cards.children[1].setAttribute('data-api-index', chat_cards.children.length - 2);
-          chat_cards.children[1].addEventListener('click', function (event) {
-            if (event.target == event.currentTarget.children[0].children[1].children[0] || event.target == event.currentTarget.children[0].children[1]) return;
-            var btn = event.currentTarget;
-            var index = parseInt(btn.getAttribute('data-api-index'));
-            var thread = parseInt(btn.getAttribute('data-api-thread'));
-            btn.classList.add('active-card');
-            if (selected_thread != -1) {
-              var _len = chat_cards.children.length - 1;
-              chat_cards.children[_len - selected_thread].classList.remove('active-card');
-            }
-            selected_thread = index;
-            current_thread = thread;
-            buildChat();
-          });
-          attachDOM(msg_body, bubble_sys);
-          loading_text = true;
-          loadingTextLastBubble();
-          _context2.prev = 22;
-          _context2.next = 25;
-          return fetch(api_url + 'chat/create-run/' + account_id, {
-            method: 'POST',
-            headers: {
-              'Authorization': 'Bearer ' + token,
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-              text: first_message,
-              main_brand_id: 1,
-              name: new_chat_name
-            })
-          });
-        case 25:
-          response = _context2.sent;
-          if (response.body) {
-            _context2.next = 28;
-            break;
-          }
-          throw new Error('A resposta não contém uma stream legível.');
-        case 28:
-          if (!(response.status != 200)) {
-            _context2.next = 30;
-            break;
-          }
-          throw new Error('ERRO: não foi possível receber uma responsta do servidor');
-        case 30:
-          reader = response.body.getReader();
-          decoder = new TextDecoder();
-          chat_num_msgs.innerHTML = '2 mensagens';
-          processChunk = /*#__PURE__*/function () {
-            var _ref = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
-              var text, _yield$reader$read, done, value, chunk, arr, json, msg00, msg01;
-              return _regeneratorRuntime().wrap(function _callee$(_context) {
-                while (1) switch (_context.prev = _context.next) {
-                  case 0:
-                    incompleteData = '';
-                    currentEvent = null;
-                    loading_text = false;
-                    text = '';
-                  case 4:
-                    if (false) {}
-                    _context.next = 7;
-                    return reader.read();
-                  case 7:
-                    _yield$reader$read = _context.sent;
-                    done = _yield$reader$read.done;
-                    value = _yield$reader$read.value;
-                    if (!done) {
-                      _context.next = 12;
-                      break;
-                    }
-                    return _context.abrupt("break", 19);
-                  case 12:
-                    // Decodificar o chunk e atualizar o DOM
-                    chunk = decoder.decode(value, {
-                      stream: true
-                    });
-                    console.log(chunk);
-                    arr = processString(chunk);
-                    if (arr.length > 0) loading_text = false;
-                    arr.forEach(function (e) {
-                      text += e;
-                      setTextLastBubble(text);
-                    });
-                    _context.next = 4;
-                    break;
-                  case 19:
-                    chat_cards.children[1].children[0].children[0].children[1].innerHTML = "chat: ".concat(current_thread, " - 2 mensagens");
-                    chat_cards.children[1].setAttribute('data-api-thread', current_thread);
-                    thread_ids.push(current_thread);
-                    thread_names.push(new_chat_name);
-                    json = [];
-                    msg00 = new Object();
-                    msg00.who = 'user';
-                    msg00.text = first_message;
-                    msg01 = new Object();
-                    msg01.who = 'assistant';
-                    msg01.text = text;
-                    json.push(msg00);
-                    json.push(msg01);
-                    thread_text.push(JSON.stringify(json));
-                    enableButtons();
-                  case 34:
-                  case "end":
-                    return _context.stop();
-                }
-              }, _callee);
-            }));
-            return function processChunk() {
-              return _ref.apply(this, arguments);
-            };
-          }();
-          processChunk();
-          _context2.next = 41;
-          break;
-        case 37:
-          _context2.prev = 37;
-          _context2.t0 = _context2["catch"](22);
-          console.error('Erro ao processar o stream:', _context2.t0);
-          checkAuth(_context2.t0.response);
-        case 41:
-        case "end":
-          return _context2.stop();
-      }
-    }, _callee2, null, [[22, 37]]);
-  }));
-  return _addThread.apply(this, arguments);
-}
-function sendMsgThread() {
-  return _sendMsgThread.apply(this, arguments);
-}
-function _sendMsgThread() {
-  _sendMsgThread = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee4() {
-    var token, message, response, reader, decoder, processChunk;
-    return _regeneratorRuntime().wrap(function _callee4$(_context4) {
-      while (1) switch (_context4.prev = _context4.next) {
-        case 0:
-          token = readCookie('token');
-          disableButtons();
-          message = msg_area.value;
-          msg_area.value = '';
-          attachDOM(msg_body, bubble_user);
-          addTextLastBubble(message);
-          attachDOM(msg_body, bubble_sys);
-          loading_text = true;
-          loadingTextLastBubble();
-          _context4.prev = 9;
-          _context4.next = 12;
-          return fetch(api_url + "chat/add/text/".concat(current_thread, "/").concat(account_id), {
-            method: 'POST',
-            headers: {
-              'Authorization': 'Bearer ' + token,
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-              text: message
-            })
-          });
-        case 12:
-          response = _context4.sent;
-          if (response.body) {
-            _context4.next = 15;
-            break;
-          }
-          throw new Error('A resposta não contém um stream legível.');
-        case 15:
-          if (!(response.status != 200)) {
-            _context4.next = 17;
-            break;
-          }
-          throw new Error('ERRO: não foi possível receber uma resposta do servidor');
-        case 17:
-          reader = response.body.getReader();
-          decoder = new TextDecoder();
-          processChunk = /*#__PURE__*/function () {
-            var _ref2 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
-              var text, _yield$reader$read2, done, value, chunk, arr, json, msg00, msg01, len;
-              return _regeneratorRuntime().wrap(function _callee3$(_context3) {
-                while (1) switch (_context3.prev = _context3.next) {
-                  case 0:
-                    incompleteData = '';
-                    currentEvent = null;
-                    text = '';
-                  case 3:
-                    if (false) {}
-                    _context3.next = 6;
-                    return reader.read();
-                  case 6:
-                    _yield$reader$read2 = _context3.sent;
-                    done = _yield$reader$read2.done;
-                    value = _yield$reader$read2.value;
-                    if (!done) {
-                      _context3.next = 11;
-                      break;
-                    }
-                    return _context3.abrupt("break", 18);
-                  case 11:
-                    // Decodificar o chunk e atualizar o DOM
-                    chunk = decoder.decode(value, {
-                      stream: true
-                    });
-                    arr = processString(chunk);
-                    if (arr.length > 0) loading_text = false;
-                    console.log(chunk);
-                    arr.forEach(function (e) {
-                      text += e;
-                      setTextLastBubble(text);
-                    });
-                    _context3.next = 3;
-                    break;
-                  case 18:
-                    json = JSON.parse(thread_text[selected_thread]);
-                    msg00 = new Object();
-                    msg00.who = 'user';
-                    msg00.text = message;
-                    msg01 = new Object();
-                    msg01.who = 'assistant';
-                    msg01.text = text;
-                    json.push(msg00);
-                    json.push(msg01);
-                    chat_num_msgs.innerHTML = "".concat(json.length, " mensagens");
-                    if (selected_thread != -1) {
-                      len = chat_cards.children.length - 1;
-                      chat_cards.children[len - selected_thread].children[0].children[0].children[1].innerHTML = "chat: ".concat(current_thread, " - ").concat(json.length, " mensagens");
-                    }
-                    thread_text[selected_thread] = JSON.stringify(json);
-                    enableButtons();
-                  case 31:
-                  case "end":
-                    return _context3.stop();
-                }
-              }, _callee3);
-            }));
-            return function processChunk() {
-              return _ref2.apply(this, arguments);
-            };
-          }();
-          processChunk();
-          _context4.next = 27;
-          break;
-        case 23:
-          _context4.prev = 23;
-          _context4.t0 = _context4["catch"](9);
-          console.error('Erro ao processar o stream:', _context4.t0);
-          checkAuth(_context4.t0.response);
-        case 27:
-        case "end":
-          return _context4.stop();
-      }
-    }, _callee4, null, [[9, 23]]);
-  }));
-  return _sendMsgThread.apply(this, arguments);
-}
-var thread_ids = [];
-var thread_text = [];
-var thread_names = [];
-var selected_thread = -1;
-function listChats() {
-  return _listChats.apply(this, arguments);
-}
-function _listChats() {
-  _listChats = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee5() {
-    var token, response, data;
-    return _regeneratorRuntime().wrap(function _callee5$(_context5) {
-      while (1) switch (_context5.prev = _context5.next) {
-        case 0:
-          token = readCookie('token');
-          chat_cards.innerHTML = add_chat;
-          thread_ids.length = thread_text.length = 0;
-          _context5.prev = 3;
-          _context5.next = 6;
-          return window.axios.get(api_url + "chat/list/".concat(main_brand_id, "/").concat(account_id), {
-            headers: {
-              'Authorization': 'Bearer ' + token,
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            }
-          });
-        case 6:
-          response = _context5.sent;
-          if (!(response.status != 200)) {
-            _context5.next = 9;
-            break;
-          }
-          throw new Error(response.body + " code: ".concat(response.status));
-        case 9:
-          data = response.data;
-          data.forEach(function (e, i) {
-            thread_ids.push(e.thread_id);
-            thread_text.push(e.text);
-            thread_names.push(e.name);
-            var text = JSON.parse(e.text);
-            var len = chat_cards.children.length - 1;
-            if (len > 0) {
-              chat_cards.insertBefore($(chat_card)[0], chat_cards.children[1]);
-            } else chat_cards.innerHTML += chat_card;
-            var messageTemp = '';
-            if (e.name == null || e.name != null && e.name.length == 0) {
-              if (text[0].text.length > 25) {
-                messageTemp = text[0].text.slice(0, 22).trim();
-                messageTemp += '...';
-              } else messageTemp = text[0].text;
-              chat_cards.children[1].children[0].children[0].children[0].innerHTML = messageTemp;
-            } else chat_cards.children[1].children[0].children[0].children[0].innerHTML = e.name;
-            chat_cards.children[1].children[0].children[0].children[1].innerHTML = "chat: ".concat(e.id, " - ").concat(JSON.parse(e.text).length, " mensagens");
-            chat_cards.children[1].classList.remove('active-card');
-            chat_cards.children[1].setAttribute('data-api-index', i);
-            chat_cards.children[1].setAttribute('data-api-thread', e.id);
-            chat_cards.children[1].addEventListener('click', function (event) {
-              if (event.target == event.currentTarget.children[0].children[1].children[0] || event.target == event.currentTarget.children[0].children[1]) {
-                menu_chat = parseInt(event.currentTarget.getAttribute('data-api-thread'));
-                menu_chat_index = parseInt(event.currentTarget.getAttribute('data-api-index'));
-                return;
-              }
-
-              // Rename
-              if (event.target == event.currentTarget.children[0].children[1].children[1].children[0] || event.target == event.currentTarget.children[0].children[1].children[1].children[0].children[0]) return;
-
-              // Delete
-              if (event.target == event.currentTarget.children[0].children[1].children[1].children[1] || event.target == event.currentTarget.children[0].children[1].children[1].children[1].children[0]) return;
-              if ($('#msg_body_footer')[0].classList[1] == 'move-down') $('#msg_body_footer')[0].classList.remove('move-down');
-              var btn = event.currentTarget;
-              var index = parseInt(btn.getAttribute('data-api-index'));
-              var thread = parseInt(btn.getAttribute('data-api-thread'));
-              btn.classList.add('active-card');
-              if (selected_thread != -1) {
-                var _len2 = chat_cards.children.length - 1;
-                chat_cards.children[_len2 - selected_thread].classList.remove('active-card');
-              }
-              selected_thread = index;
-              current_thread = thread;
-              buildChat();
-            });
-          });
-          _context5.next = 17;
-          break;
-        case 13:
-          _context5.prev = 13;
-          _context5.t0 = _context5["catch"](3);
-          console.error('Erro ao processar requisição de chats:', _context5.t0);
-          checkAuth(_context5.t0.response);
-        case 17:
-        case "end":
-          return _context5.stop();
-      }
-    }, _callee5, null, [[3, 13]]);
-  }));
-  return _listChats.apply(this, arguments);
-}
-function buildChat() {
-  return _buildChat.apply(this, arguments);
-}
-function _buildChat() {
-  _buildChat = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee6() {
-    var len, json;
-    return _regeneratorRuntime().wrap(function _callee6$(_context6) {
-      while (1) switch (_context6.prev = _context6.next) {
-        case 0:
-          if (!(current_thread == -1)) {
-            _context6.next = 2;
-            break;
-          }
-          throw new Error('ERRO: nenhuma thread ativa');
-        case 2:
-          cleanDOM(msg_body);
-          if (thread_names[selected_thread] == null || thread_names[selected_thread] != null && thread_names[selected_thread].length == 0) {
-            len = chat_cards.children.length - 1;
-            chat_name.innerHTML = chat_cards.children[len - selected_thread].children[0].children[0].children[0].innerHTML;
-          } else chat_name.innerHTML = thread_names[selected_thread];
-          json = JSON.parse(thread_text[selected_thread]);
-          chat_num_msgs.innerHTML = "".concat(json.length, " mensagens");
-          json.forEach(function (e) {
-            if (e.who == 'user') attachDOM(msg_body, bubble_user);else attachDOM(msg_body, bubble_sys);
-            addTextLastBubble(e.text);
-          });
-        case 7:
-        case "end":
-          return _context6.stop();
-      }
-    }, _callee6);
-  }));
-  return _buildChat.apply(this, arguments);
-}
-function listBrands() {
-  var token = readCookie('token');
-  window.axios.get(api_url + "account/list/main-brands/".concat(account_id), {
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    }
-  }).then(function (response) {
-    if (response.status != 200) {
-      throw new Error(response.body + " code: ".concat(response.status));
-    }
-    var list = $('#brand_select_id')[0];
-    list.innerHTML = '';
-    var brands = response.data;
-    brands.forEach(function (e, i) {
-      var selected = main_brand_id == e.id ? 'selected' : '';
-      list.innerHTML += "<option value=".concat(e.id, " ").concat(selected, ">").concat(e.name, "</option>");
-    });
-  })["catch"](function (e) {
-    console.error('Erro ao listar marcas:', e);
-    checkAuth(e.response);
-  });
-}
-var menu_chat = -1;
-var menu_chat_index = -1;
-function renameChat() {
-  var token = readCookie('token');
-  var new_chat_name = $('#rename_chat_name_id')[0].value;
-  window.axios.patch(api_url + "chat/update/".concat(menu_chat, "/").concat(account_id), {
-    name: new_chat_name
-  }, {
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    }
-  }).then(function (response) {
-    if (response.status != 200) {
-      throw new Error(response.body + " code: ".concat(response.status));
-    }
-    thread_names[menu_chat_index] = new_chat_name;
-    var len = chat_cards.children.length - 1;
-    chat_cards.children[len - menu_chat_index].children[0].children[0].children[0].innerHTML = new_chat_name;
-    if (selected_thread == menu_chat_index) chat_name.innerHTML = new_chat_name;
-  })["catch"](function (e) {
-    console.error('Erro ao renomear o chat:', e);
-    checkAuth(e.response);
-  });
-}
-function deleteChat() {
-  var token = readCookie('token');
-  window.axios["delete"](api_url + "chat/delete/".concat(menu_chat, "/").concat(account_id), {
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    }
-  }).then(function (response) {
-    if (response.status != 200) {
-      throw new Error(response.body + " code: ".concat(response.status));
-    }
-    thread_names[menu_chat_index] = null;
-    var len = chat_cards.children.length - 1;
-    chat_cards.children[len - menu_chat_index].style.display = "none";
-    if (selected_thread == menu_chat_index) {
-      cleanMsgBody();
-    }
-  })["catch"](function (e) {
-    console.error('Erro ao deletar o chat:', e);
-    checkAuth(e.response);
-  });
-}
-function switchBrand() {
-  main_brand_id = $('#brand_select_id')[0].value;
-  var expires = new Date();
-  expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias
-  document.cookie = "main_brand=".concat(main_brand_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
-  $('#switch_modal_id').modal('hide');
-  cleanMsgBody();
-  listChats();
-  loadBrandPic();
-}
-var bubble_sys = "<div class=\"d-flex justify-content-start mb-4\">\n        <div class=\"msg_cotainer msg_bubble_sys\">\n            <span></span>\n        </div>\n    </div>";
-var bubble_user = "<div class=\"d-flex justify-content-end mb-4\">\n        <div class=\"msg_cotainer_send msg_bubble_user\">\n            <span></span>\n        </div>\n    </div>";
-var chat_card = "<li class=\"chat_btn active-card\">\n        <div class=\"d-flex justify-content-between bd-highlight btn w-100 text-start\">\n            <div class=\"user_info\">\n                <span></span>\n                <p></p>\n            </div>\n            <span id=\"btn-group dropend\">\n                <i class=\"fas fa-ellipsis-v btn btn-dots\" data-bs-toggle=\"dropdown\"></i>\n                <ul class=\"dropdown-menu\">\n                    <li data-bs-toggle=\"modal\" data-bs-target=\"#rename_modal_id\"><i class=\"fas fa-pen\"></i> Renomear</li>\n                    <li data-bs-toggle=\"modal\" data-bs-target=\"#delete_modal_id\"><i class=\"fas fa-trash-can-xmark\"></i> Deletar</li>\n                </ul>\n            </span>\n        </div>\n    </li>";
-var add_chat = "<li class=\" d-flex flex-column justify-content-center align-items-center\" style=\"margin-bottom: 15px !important\">\n        <button class=\"d-flex justify-content-center text-black rounded-pill btn-tertiary\" style=\"width: 90% !important; border: 0px;\" data-bs-toggle=\"modal\" data-bs-target=\"#add_thread_modal_id\">\n            <span style=\"padding: 5px; border-radius: 10px;\">\n                <i class=\"fa-solid fa-plus\"></i>\n            </span>\n        </button>\n    </li>";
-function changeToLoad(target) {
-  backup = target.innerHTML;
-  target.innerHTML = "<div class=\"spinner-border text-black\" role=\"status\"></div>";
-}
-function returnToNormal(target) {
-  target.innerHTML = backup;
-}
-function sleep(ms) {
-  return new Promise(function (resolve) {
-    return setTimeout(resolve, ms);
-  });
-}
-function cleanDOM(dom) {
-  dom.innerHTML = '';
-}
-function attachDOM(dom, content) {
-  dom.innerHTML += content;
-}
-function addTextLastBubble(text) {
-  var len = msg_body.children.length - 1;
-  var s = msg_body.children[len].children[0].children[0];
-  s.innerHTML += marked.parse(text);
-  msg_body.scrollTop = msg_body.scrollHeight;
-}
-function setTextLastBubble(text) {
-  var len = msg_body.children.length - 1;
-  var s = msg_body.children[len].children[0].children[0];
-  s.innerHTML = marked.parse(text);
-  msg_body.scrollTop = msg_body.scrollHeight;
-}
-function loadingTextLastBubble() {
-  return _loadingTextLastBubble.apply(this, arguments);
-}
-function _loadingTextLastBubble() {
-  _loadingTextLastBubble = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee7() {
-    var len, s;
-    return _regeneratorRuntime().wrap(function _callee7$(_context7) {
-      while (1) switch (_context7.prev = _context7.next) {
-        case 0:
-          len = msg_body.children.length - 1;
-          s = msg_body.children[len].children[0].children[0];
-          s.innerHTML = "<div class=\"spinner-border text-white\" role=\"status\"></div>";
-        case 3:
-        case "end":
-          return _context7.stop();
-      }
-    }, _callee7);
-  }));
-  return _loadingTextLastBubble.apply(this, arguments);
-}
-function disableButtons() {
-  $('#send_btn_id')[0].classList.add('disabled_btn');
-  $('#add_thread_btn_id')[0].classList.add('disabled_btn');
-  msg_area.classList.add('disabled_btn');
-  chat_cards.classList.add('disabled_btn');
-  Array.from(chat_cards.children).forEach(function (e, i) {
-    if (i == 0) return;
-    e.children[0].children[1].children[0].classList.add('disabled_btn');
-  });
-}
-function enableButtons() {
-  //$('#send_btn_id')[0].classList.remove('disabled_btn');
-  $('#add_thread_btn_id')[0].classList.remove('disabled_btn');
-  msg_area.classList.remove('disabled_btn');
-  chat_cards.classList.remove('disabled_btn');
-  Array.from(chat_cards.children).forEach(function (e, i) {
-    if (i == 0) return;
-    e.children[0].children[1].children[0].classList.remove('disabled_btn');
-  });
-}
-function loadBrandPic() {
-  var token = readCookie('token');
-  window.axios.get(api_url + "main-brand/primary/platforms/".concat(main_brand_id, "/").concat(account_id), {
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    }
-  }).then(function (response) {
-    if (response.status != 200) {
-      throw new Error(response.body + " code: ".concat(response.status));
-    }
-    var brand_pic = $('#brand_pic_id')[0];
-    var platforms = response.data;
-    for (var i = 0; i < platforms.length; i++) {
-      if (platforms[i].avatar_url != null && platforms[i].avatar_url != '') {
-        brand_pic.src = platforms[i].avatar_url;
-        break;
-      }
-    }
-  })["catch"](function (e) {
-    alert('Erro ao mudar avatar', e);
-    checkAuth(e.response);
-  });
-}
-function changePassword() {
-  var token = readCookie('token');
-  var new_password = $('#new_password_id')[0].value;
-  var confirm_new_password = $('#new_confirm_password_id')[0].value;
-  if (new_password != confirm_new_password) {
-    alert('Senhas diferentes');
-    console.error('Senhas diferentes');
-    return;
-  }
-  if (is_operator) {
-    window.axios.patch(api_url + "operator/update/".concat(user_id), {
-      password: new_password
-    }, {
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
-    }).then(function (response) {
-      if (response.status != 200) {
-        throw new Error(response.body + " code: ".concat(response.status));
-      }
-      alert('Senha alterada!');
-    })["catch"](function (e) {
-      alert('Erro ao mudar a senha:', e);
-      checkAuth(e.response);
-    });
-    return;
-  }
-  window.axios.patch(api_url + "user/update/".concat(user_id, "/").concat(account_id), {
-    password: new_password
-  }, {
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    }
-  }).then(function (response) {
-    if (response.status != 200) {
-      throw new Error(response.body + " code: ".concat(response.status));
-    }
-    alert('Senha alterada!');
-  })["catch"](function (e) {
-    alert('Erro ao mudar a senha:', e);
-    checkAuth(e.response);
-  });
-}
-function logout() {
-  var token = readCookie('token');
-  window.axios.post(api_url + "logout", {}, {
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    }
-  }).then(function (response) {
-    if (response.status != 200) {
-      throw new Error(response.body + " code: ".concat(response.status));
-    }
-    cleanDOM(chat_cards);
-    chat_cards.innerHTML = add_chat;
-    cleanMsgBody();
-    $('#login_modal_id').modal('show');
-  })["catch"](function (e) {
-    alert('Erro ao deslogar:', e);
-    checkAuth(e.response);
-  });
-}
-function listAccounts() {
-  var token = readCookie('token');
-  window.axios.get(api_url + "account/list/all", {
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    }
-  }).then(function (response) {
-    var list = $('#account_select_id')[0];
-    for (var i = 0; i < response.data.length; i++) {
-      var e = response.data[i];
-      var selected = i == 0 ? 'selected' : '';
-      list.innerHTML += "<option value=".concat(e.id, " ").concat(selected, ">Conta: ").concat(e.id, " - ").concat(e.name, "</option>");
-    }
-    ;
-    $('#select_account_modal_id').modal('show');
-  })["catch"](function (e) {
-    alert('Erro ao listar contas');
-    checkAuth(e);
-  });
-}
-function mainBrandSelect() {
-  account_id = $('#account_select_id')[0].value;
-  listBrands();
-  listUsers();
-  var expires = new Date();
-  expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias
-  document.cookie = "account=".concat(account_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
-  $('#select_account_modal_id').modal('hide');
-  $('#switch_modal_id').modal('show');
-}
-function login() {
-  var email = $('#email_id')[0].value;
-  var password = $('#password_id')[0].value;
-  window.axios.post(api_url + "login", {
-    email: email,
-    password: password
-  }, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    }
-  }).then(function (response) {
-    if (response.status != 200) {
-      throw new Error(response.body + " code: ".concat(response.status));
-    }
-    $('#email_id')[0].value = $('#password_id')[0].value = '';
-    cleanDOM(chat_cards);
-    chat_cards.innerHTML = add_chat;
-    cleanMsgBody();
-    var token = response.data.token;
-    is_operator = response.data.isOperator;
-    user_id = response.data.user.id;
-    if (!is_operator) {
-      account_id = response.data.account.id;
-      main_brand_id = response.data.mainBrands[0].id;
-      $('#account-modal-tab')[0].classList.add('disabled_btn');
-      var el = $('#user-modal-tab')[0];
-      var tab = new bootstrap.Tab(el);
-      tab.show();
-    } else {
-      account_id = 1;
-      main_brand_id = 1;
-      $('#account-modal-tab')[0].classList.remove('disabled_btn');
-    }
-    var expires = new Date();
-    expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias
-    document.cookie = "token=".concat(token, "; expires=").concat(expires.toUTCString(), "; path=/;");
-    document.cookie = "account=".concat(account_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
-    document.cookie = "user=".concat(user_id, "; expires=").concat(expires.toUTCString(), "; path=/;");
-    document.cookie = "is_operator=".concat(is_operator, "; expires=").concat(expires.toUTCString(), "; path=/;");
-    if (is_operator) {
-      $('#login_modal_id').modal('hide');
-      listAccounts();
-    } else {
-      mainBrandSelect();
-      $('#login_modal_id').modal('hide');
-    }
-  })["catch"](function (e) {
-    alert('Erro ao fazer login:', e);
-    console.error(e);
-  });
-}
-function listUsers() {
-  var token = readCookie('token');
-  window.axios.get(api_url + "account/list/users/".concat(account_id), {
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    }
-  }).then(function (response) {
-    var list = $('#list_users_id')[0];
-    list.innerHTML = '';
-    var _loop = function _loop() {
-      var e = response.data[i];
-      var element = $("<li class=\"list-group-item d-flex align-items-center mb-2\" data-api-id=".concat(e.id, ">\n\t\t\t\t\t\t\t\t\t<span class=\"me-auto\">Usu\xE1rio: ").concat(e.id, " - ").concat(e.name, "</span>\n\t\t\t\t\t\t\t\t\t<span class=\"btn btn-icon text-white\">\n\t\t\t\t\t\t\t\t\t\t<i class=\"fa-solid fa-ballot-check\"></i>\n\t\t\t\t\t\t\t\t\t</span>\n                                    <span class=\"btn btn-icon text-white\">\n\t\t\t\t\t\t\t\t\t\t<i class=\"fa-solid fa-trash-can-xmark\"></i>\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t</li>"));
-      var len = list.children.length - 1;
-      var id = e.id;
-      element.click(function () {
-        var r = confirm('Deseja mesmo excluir este usuário?');
-        if (r) {
-          window.axios["delete"](api_url + "user/delete/".concat(id, "/").concat(account_id), {
-            headers: {
-              'Authorization': 'Bearer ' + token,
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            }
-          }).then(function (response) {
-            listUsers();
-          })["catch"](function (e) {
-            checkAuth(e);
-            alert('Erro: não foi possível excluir o usuário');
-          });
-        }
-      });
-      list.appendChild(element[0]);
-    };
-    for (var i = 0; i < response.data.length; i++) {
-      _loop();
-    }
-    ;
-  })["catch"](function (e) {
-    alert('Erro ao listar usuários');
-    console.error('error', e);
-    checkAuth(e);
-  });
-}
-function createUser(event) {
-  var token = readCookie('token');
-  var name = $('#new_user_name_id')[0].value;
-  var email = $('#new_user_email_id')[0].value;
-  var password = $('#new_user_password_id')[0].value;
-  var confirm_password = $('#new_user_confirm_password_id')[0].value;
-  if (password != confirm_password) {
-    alert('Senhas diferentes');
-    console.error('Senhas diferentes');
-    return;
-  }
-  changeToLoad(event.currentTarget);
-  window.axios.post(api_url + "user/create/".concat(account_id), {
-    name: name,
-    email: email,
-    password: password,
-    permission: '1',
-    account_id: account_id
-  }, {
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    }
-  }).then(function (response) {
-    if (response.status != 201) {
-      throw new Error(response.body + " code: ".concat(response.status));
-    }
-    alert('Usuário criado');
-    returnToNormal(event.currentTarget);
-    listUsers();
-    $('#create_user_modal_id').modal('hide');
-    if (!account_creation) $('#config_modal_id').modal('show');else $('#create_main_brand_modal_id').modal('show');
-  })["catch"](function (e) {
-    alert('Erro ao criar usuário:', e);
-    returnToNormal(event.currentTarget);
-    checkAuth(e.response);
-  });
-}
-function createAccount(event) {
-  var token = readCookie('token');
-  var r = confirm('Revise as informações inseridas.\nDeseja prosseguir?');
-  function getContractTimeInMonths(contractType) {
-    switch (contractType) {
-      case '0':
-        // Mensal
-        return 1;
-      case '1':
-        // Trimestral
-        return 3;
-      case '2':
-        // Semestral
-        return 6;
-      case '3':
-        // Anual
-        return 12;
-      case '4':
-        // 2 anos
-        return 24;
-      case '5':
-        // Promocional
-        return -1;
-      default:
-        return 0;
-      // Valor padrão se nenhum dos casos corresponder
-    }
-  }
-  if (r) {
-    changeToLoad(event.currentTarget);
-    var contractTypeValue = $('#new_account_contype_id').val();
-    var contractTimeInMonths = getContractTimeInMonths(contractTypeValue);
-    window.axios.post(api_url + "account/create", {
-      name: $('#new_account_name_id').val(),
-      token: 'some_token_value',
-      // Valor padrão para token
-      payment_method: $('#new_account_paymethod_id').val(),
-      installments: $('#new_account_installments_id').val(),
-      contract_type: contractTypeValue,
-      contract_description: $('#new_account_condesc_id').val(),
-      contract_brands: $('#new_account_conbrands_id').val(),
-      contract_brand_opponents: $('#new_account_conbrandopp_id').val(),
-      contract_users: $('#new_account_conusers_id').val(),
-      contract_build_brand_time: $('#new_account_conbuild_id').val(),
-      contract_time: contractTimeInMonths,
-      contract_monitored: 1,
-      // Valor padrão para contrato monitorado
-      cancel_time: $('#new_account_cancel_id').val(),
-      paid: $('#new_account_paid_id').is(':checked'),
-      active: $('#new_account_active_id').is(':checked')
-    }, {
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
-    }).then(function (response) {
-      if (response.status != 201) {
-        throw new Error(response.body + " code: ".concat(response.status));
-      }
-      alert('Conta criada');
-      returnToNormal(event.currentTarget);
-      account_creation = true;
-      account_id = response.data.id;
-      saveCookie('account');
-      cleanDOM(chat_cards);
-      cleanMsgBody();
-      chat_cards.innerHTML = add_chat;
-      $('#create_account_modal_id').modal('hide');
-      $('#create_user_modal_id').modal('show');
-    })["catch"](function (e) {
-      alert('Erro ao criar conta:', e);
-      returnToNormal(event.currentTarget);
-      console.error('Erro ao criar conta:', e);
-      checkAuth(e.response);
-    });
-  }
-}
-function listBBrands() {
-  var token = readCookie('token');
-  window.axios.get(api_url + "brand/list", {
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    }
-  }).then(function (response) {
-    if (response.status != 200) {
-      throw new Error(response.body + " code: ".concat(response.status));
-    }
-    var options = '';
-    var brands = response.data;
-    for (var i = 0; i < brands.length; i++) {
-      options += "<option value=".concat(brands[i].id, ">ID: ").concat(brands[i].id, " - ").concat(brands[i].name, "</option>\n");
-    }
-    $('.list-brands').each(function () {
-      $(this).html($(this).html() + options);
-    });
-  })["catch"](function (e) {
-    alert('Erro ao listar marcas:', e);
-    checkAuth(e.response);
-  });
-}
-function createBrand(event) {
-  var token = readCookie('token');
-  var name = $('#new_brand_name_id').val();
-  var description = $('#new_brand_desc_id').val();
-  changeToLoad(event.currentTarget);
-  window.axios.post(api_url + "brand/create", {
-    name: name,
-    description: description
-  }, {
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    }
-  }).then(function (response) {
-    if (response.status != 201) {
-      throw new Error(response.body + " code: ".concat(response.status));
-    }
-    alert('Marca criada');
-    returnToNormal(event.currentTarget);
-    listBBrands();
-    $('#create_brand_modal_id').modal('hide');
-    $('#create_platform_modal_id').modal('show');
-    brand_id = response.data.id;
-  })["catch"](function (e) {
-    alert('Erro ao criar marca:', e);
-    returnToNormal(event.currentTarget);
-    checkAuth(e.response);
-  });
-}
-function createPlatform(event) {
-  var token = readCookie('token');
-  var name = $('#new_platform_name_id').val();
-  var url = $('#new_platform_url_id').val();
-  var type = $('#new_platform_type_id').val();
-  var platform_id = $('#new_platform_id_id').val();
-  var active = $('#new_platform_active_id').is(':checked');
-  changeToLoad(event.currentTarget);
-  window.axios.post(api_url + "platform/create", {
-    name: name,
-    url: url,
-    type: type,
-    platform_id: platform_id,
-    active: active,
-    brand_id: brand_id
-  }, {
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    }
-  }).then(function (response) {
-    if (response.status != 201) {
-      throw new Error(response.body + " code: ".concat(response.status));
-    }
-    returnToNormal(event.currentTarget);
-    var r = confirm('Plataform criada, deseja adicionar outra?');
-    if (r) {
-      $('#new_platform_name_id').val('');
-      $('#new_platform_url_id').val('');
-      $('#new_platform_type_id').val('');
-      $('#new_platform_id_id').val('');
-      $('#new_platform_active_id').prop('checked', false);
-    } else {
-      if (account_creation) {
-        $('#create_brand_modal_id').modal('hide');
-        $('#create_main_brand_modal_id').modal('show');
-      } else {
-        var currentModalId = modalHistory.pop();
-        var previousModalId = modalHistory[modalHistory.length - 1];
-        if (previousModalId) {
-          $("#".concat(currentModalId)).modal('hide');
-          $("#".concat(previousModalId)).modal('show');
-        }
-      }
-    }
-    brand_id = response.data.id;
-  })["catch"](function (e) {
-    alert('Erro ao criar marca:', e);
-    returnToNormal(event.currentTarget);
-    checkAuth(e.response);
-  });
-}
+var globals = __webpack_require__(/*! ./globals */ "./resources/js/globals.js");
+var _require2 = __webpack_require__(/*! ./utils */ "./resources/js/utils.js"),
+  cleanDOM = _require2.cleanDOM,
+  cleanMsgBody = _require2.cleanMsgBody,
+  readCookie = _require2.readCookie;
+var _require3 = __webpack_require__(/*! ./funcs/chat */ "./resources/js/funcs/chat.js"),
+  addThread = _require3.addThread,
+  sendMsgThread = _require3.sendMsgThread,
+  renameChat = _require3.renameChat,
+  deleteChat = _require3.deleteChat,
+  listChats = _require3.listChats;
+var _require4 = __webpack_require__(/*! ./funcs/auth */ "./resources/js/funcs/auth.js"),
+  login = _require4.login,
+  logout = _require4.logout,
+  changePassword = _require4.changePassword;
+var _require5 = __webpack_require__(/*! ./funcs/account */ "./resources/js/funcs/account.js"),
+  listAccounts = _require5.listAccounts,
+  createAccount = _require5.createAccount;
+var _require6 = __webpack_require__(/*! ./funcs/mainBrand */ "./resources/js/funcs/mainBrand.js"),
+  switchBrand = _require6.switchBrand,
+  mainBrandSelect = _require6.mainBrandSelect,
+  listBrands = _require6.listBrands,
+  loadBrandPic = _require6.loadBrandPic;
+var _require7 = __webpack_require__(/*! ./funcs/brand */ "./resources/js/funcs/brand.js"),
+  createBrand = _require7.createBrand,
+  listBBrands = _require7.listBBrands,
+  editPrimaryBrand = _require7.editPrimaryBrand;
+var _require8 = __webpack_require__(/*! ./funcs/user */ "./resources/js/funcs/user.js"),
+  createUser = _require8.createUser,
+  app_listUsers = _require8.listUsers;
+var _require9 = __webpack_require__(/*! ./funcs/platform */ "./resources/js/funcs/platform.js"),
+  createPlatform = _require9.createPlatform;
 $(document).ready(function () {
   $('#action_menu_btn').click(function () {
     $('.action_menu').toggle();
@@ -20835,30 +21147,26 @@ $(document).ready(function () {
   $('#create_account_2_btn_id').click(createAccount);
   $('#create_new_brand_btn_id').click(createBrand);
   $('#create_new_platform_btn_id').click(createPlatform);
+  $('#edit_primary_brand_btn_id').click(editPrimaryBrand);
   $(document).on('shown.bs.modal', function (e) {
     var modalId = $(e.target).attr('id');
-    modalHistory.push(modalId);
+    globals.modalHistory.push(modalId);
     if (modalId == 'create_main_brand_modal_id') listBBrands();
   });
-
-  /*$(document).on('hidden.bs.modal', function (e) {
-      modalHistory.pop();
-  });*/
-
   $(document).on('click', '.cancel-btn', function (e) {
-    var currentModalId = modalHistory.pop();
-    var previousModalId = modalHistory[modalHistory.length - 1];
+    var currentModalId = globals.modalHistory.pop();
+    var previousModalId = globals.modalHistory[globals.modalHistory.length - 1];
     if (previousModalId) {
       $("#".concat(currentModalId)).modal('hide');
       $("#".concat(previousModalId)).modal('show');
     }
   });
-  msg_body = $('#msg_card_body_id')[0];
-  msg_area = $('#msg_area_id')[0];
-  chat_cards = $('#chat_cards_id')[0];
-  chat_name = $('#chat_name_id')[0];
-  chat_num_msgs = $('#chat_num_msgs_id')[0];
-  msg_area.addEventListener('input', function (event) {
+  globals.msg_body = $('#msg_card_body_id')[0];
+  globals.msg_area = $('#msg_area_id')[0];
+  globals.chat_cards = $('#chat_cards_id')[0];
+  globals.chat_name = $('#chat_name_id')[0];
+  globals.chat_num_msgs = $('#chat_num_msgs_id')[0];
+  globals.msg_area.addEventListener('input', function (event) {
     var dom = event.target;
     if (dom.value.length > 0) $('#send_btn_id')[0].classList.remove('disabled_btn');else $('#send_btn_id')[0].classList.add('disabled_btn');
   });
@@ -20866,13 +21174,13 @@ $(document).ready(function () {
     $('#login_modal_id').modal('show');
     return;
   }
-  account_id = readCookie('account');
-  main_brand_id = readCookie('main_brand');
-  is_operator = readCookie('is_operator');
-  user_id = readCookie('user');
+  globals.account_id = readCookie('account');
+  globals.main_brand_id = readCookie('main_brand');
+  globals.is_operator = readCookie('is_operator');
+  globals.user_id = readCookie('user');
   var token = readCookie('token');
   $('#create_main_brand_modal_id').modal('show');
-  window.axios.get(api_url + "user/".concat(user_id, "/").concat(account_id), {
+  window.axios.get(globals.api_url + "user/".concat(globals.user_id, "/").concat(globals.account_id), {
     headers: {
       'Authorization': 'Bearer ' + token,
       'Content-Type': 'application/json',
@@ -20884,7 +21192,7 @@ $(document).ready(function () {
     loadBrandPic();
   })["catch"](function (e) {
     // Try checking if it's an operator
-    window.axios.get(api_url + "operator/".concat(user_id), {
+    window.axios.get(globals.api_url + "operator/".concat(globals.user_id), {
       headers: {
         'Authorization': 'Bearer ' + token,
         'Content-Type': 'application/json',
@@ -20895,11 +21203,11 @@ $(document).ready(function () {
       listBrands();
       loadBrandPic();
       $('#account-modal-tab')[0].classList.remove('disabled_btn');
-      listUsers();
+      app_listUsers();
     })["catch"](function (e) {
       alert('Você foi deslogado');
-      cleanDOM(chat_cards);
-      chat_cards.innerHTML = add_chat;
+      cleanDOM(globals.chat_cards);
+      globals.chat_cards.innerHTML = globals.add_chat;
       cleanMsgBody();
       $('#account-modal-tab')[0].classList.add('disabled_btn');
       $('#login_modal_id').modal('show');
