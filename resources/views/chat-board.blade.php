@@ -399,28 +399,28 @@
 							</select>
 							<label for="new_main_brand_primary_id">Marca primária</label>
 						</div>
-						<button type="button" class="btn btn-basic btn-primary rounded-pill px-4 me-2" data-bs-toggle="modal" data-bs-target="#create_brand_modal_id" data-bs-dismiss="modal"><span><i class="fa-solid fa-circle-plus"></i></span></button>
-						<button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="edit_primary_brand_btn_id"><span><i class="fa-solid fa-file-pen"></i></span></button>
+						<button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 me-2" id="edit_primary_brand_btn_id"><span><i class="fa-solid fa-file-pen"></i></span></button>
+						<button type="button" class="btn btn-basic btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#create_brand_modal_id" data-bs-dismiss="modal"><span><i class="fa-solid fa-circle-plus"></i></span></button>
 					</div>
 
 					<div class="d-flex align-items-center mb-3">
 						<div class="form-floating me-3 w-100">
-							<select class="form-select type_msg mb-3 list-brands" style="border-radius: 15px" id="new_main_brand_opponent_1_id">
+							<select class="form-select type_msg list-brands-opponents" style="border-radius: 15px" id="new_main_brand_opponent_1_id">
 								<option value="-1">Nenhum</option>
 							</select>
 							<label for="new_main_brand_opponent_1_id">Marca concorrente 1</label>
 						</div>
-						<button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="edit_opponent_1_brand_btn_id" data-bs-dismiss="modal"><span><i class="fa-solid fa-file-pen"></i></span></button>
+						<button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" id="edit_opponent_1_brand_btn_id"><span><i class="fa-solid fa-file-pen"></i></span></button>
 					</div>
 
 					<div class="d-flex align-items-center mb-3">
 						<div class="form-floating me-3 w-100">
-							<select class="form-select type_msg mb-3 list-brands" style="border-radius: 15px" id="new_main_brand_opponent_2_id">
+							<select class="form-select type_msg list-brands-opponents" style="border-radius: 15px" id="new_main_brand_opponent_2_id">
 								<option value="-1">Nenhum</option>
 							</select>
 							<label for="new_main_brand_opponent_2_id">Marca concorrente 2</label>
 						</div>
-						<button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="edit_opponent_2_brand_btn_id" data-bs-dismiss="modal"><span><i class="fa-solid fa-file-pen"></i></span></button>
+						<button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" id="edit_opponent_2_brand_btn_id"><span><i class="fa-solid fa-file-pen"></i></span></button>
 					</div>
 
 					<div class="form-floating">
@@ -515,19 +515,20 @@
 				</form>
 
 				<h3 class="text-white">Gerenciar plataformas</h3>
-				<ul class="list-group" style="max-height: 320px" id="list_platforms_id">
-					<li class="list-group-item d-flex align-items-center">
-						<span class="me-auto">Plataforma 1: Instagram - Nome da plataforma</span>
-						<span class="btn btn-icon text-white">
-							<i class="fa-solid fa-pen-to-square"></i>
-						</span>
-						<span class="btn btn-icon text-white">
-							<i class="fa-solid fa-trash-can-xmark"></i>
-						</span>
-					</li>
-				</ul>
-				<button type="button" class="btn btn-basic btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#create_platform_modal_id" data-bs-dismiss="modal"><span><i class="fa-solid fa-circle-plus"></i></span></button>
-
+				<div class="d-flex flex-column">
+					<ul class="list-group mb-3" style="max-height: 320px" id="list_platforms_id">
+						<li class="list-group-item d-flex align-items-center">
+							<span class="me-auto">Plataforma 1: Instagram - Nome da plataforma</span>
+							<span class="btn btn-icon text-white">
+								<i class="fa-solid fa-pen-to-square"></i>
+							</span>
+							<span class="btn btn-icon text-white">
+								<i class="fa-solid fa-trash-can-xmark"></i>
+							</span>
+						</li>
+					</ul>
+					<button type="button" class="btn btn-basic btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#create_platform_modal_id" data-bs-dismiss="modal"><span><i class="fa-solid fa-circle-plus"></i></span></button>
+				</div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 cancel-btn" data-bs-dismiss="modal">Cancelar</button>
@@ -588,6 +589,56 @@
             </div>
         </div>
     </div>
+
+	<!-- Modal edit platform -->
+	<div class="modal fade" id="edit_platform_modal_id" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true" style="backdrop-filter: blur(25px);">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content bg-default">
+				<div class="modal-header">
+					<h5 class="modal-title text-white" id="staticBackdropLabel">Altere a plataforma da marca</h5>
+				</div>
+				<div class="modal-body" style="max-height: 75vh; overflow-y: auto">
+					<form>
+						<div class="form-floating">
+							<input type="name" autocomplete="name" class="form-control type_msg mb-3" id="edit_platform_name_id" placeholder="Nome da marca na página" style="border-radius: 15px">
+							<label for="edit_platform_name_id">Nome da marca na página</label>
+						</div>
+
+						<div class="form-floating">
+							<select class="form-select type_msg mb-3 me-auto" style="border-radius: 15px" id="edit_platform_type_id">
+								<option value="instagram">Instagram</option>
+								<option value="tiktok">Tik Tok</option>
+								<option value="youtube">YouTube</option>
+							</select>
+							<label for="edit_platform_type_id">Qual plataforma</label>
+						</div>
+
+						<div class="form-floating">
+							<input type="text" class="form-control type_msg mb-3" id="edit_platform_url_id" placeholder="URL da página" style="border-radius: 15px">
+							<label for="edit_platform_url_id">URL da página</label>
+						</div>
+
+						<div class="form-floating">
+							<input type="text" class="form-control type_msg mb-3" id="edit_platform_id_id" placeholder="ID da página" style="border-radius: 15px">
+							<label for="edit_platform_id_id">ID da página</label>
+						</div>
+
+						<div class="list-group-item">
+							<input class="form-check-input text-white me-2" type="checkbox" checked id="edit_platform_active_id">
+							Ativo
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 cancel-btn" data-bs-dismiss="modal">Cancelar</button>
+					<button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="save_edit_platform_btn_id">
+						<span><i class="fa-solid fa-floppy-disk"></i></span>
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 
 	</body>
 </html>

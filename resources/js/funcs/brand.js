@@ -25,13 +25,43 @@ function listBBrands() {
         }
 
         $('.list-brands').each(function() {
-            $(this).html($(this).html() + options);
+            $(this).html(options);
         });
+
+        $('.list-brands-opponents').each(function() {
+            $(this).html(`<option value=-1>Nenhum</option>\n` + options);
+        });
+
 
     }).catch(e => {
         alert('Erro ao listar marcas:', e);
         checkAuth(e.response);
     });
+}
+
+async function getBBrand() {
+    const token = readCookie('token');
+
+    try {
+        const response = await window.axios.get(globals.api_url + `brand/${globals.brand_id}`, {
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+
+        if (response.status != 200) {
+            throw new Error(response.body + ` code: ${response.status}`);
+        }
+
+        return response.data;
+
+    } catch(e) {
+        alert('Erro ao buscar marca:', e);
+        checkAuth(e.response);
+        return null;
+    }
 }
 
 function createBrand(event) {
@@ -70,9 +100,15 @@ function createBrand(event) {
     });
 }
 
-function editPrimaryBrand(event) {
+async function editPrimaryBrand(event) {
     globals.brand_id = $('#new_main_brand_primary_id').val();
     listPlatforms();
+
+    const brand = await getBBrand();
+
+    $('#edit_brand_name_id').val(brand.name);
+    $('#edit_brand_desc_id').val(brand.description);
+
     $('#create_main_brand_modal_id').modal('hide');
     $('#edit_brand_modal_id').modal('show');
 }
@@ -80,5 +116,6 @@ function editPrimaryBrand(event) {
 module.exports = {
     listBBrands,
     createBrand,
-    editPrimaryBrand
+    editPrimaryBrand,
+    getBBrand
 }

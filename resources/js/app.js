@@ -8,7 +8,7 @@ const { listAccounts, createAccount } = require('./funcs/account');
 const { switchBrand, mainBrandSelect, listBrands, loadBrandPic } = require('./funcs/mainBrand');
 const { createBrand, listBBrands, editPrimaryBrand } = require('./funcs/brand');
 const { createUser, listUsers } = require('./funcs/user');
-const { createPlatform } = require('./funcs/platform');
+const { createPlatform, savePlatform } = require('./funcs/platform');
 
 $(document).ready(function(){
     $('#action_menu_btn').click(function(){
@@ -30,14 +30,68 @@ $(document).ready(function(){
     $('#create_new_brand_btn_id').click(createBrand);
     $('#create_new_platform_btn_id').click(createPlatform);
     $('#edit_primary_brand_btn_id').click(editPrimaryBrand);
+    $('#save_edit_platform_btn_id').click(savePlatform);
 
     $(document).on('shown.bs.modal', function (e) {
         const modalId = $(e.target).attr('id');
         globals.modalHistory.push(modalId);
 
-        if(modalId == 'create_main_brand_modal_id')
+        if(modalId == 'create_main_brand_modal_id') {
             listBBrands();
+
+            const pBrand = $('#new_main_brand_primary_id').val();
+
+            if(!pBrand)
+                $('#edit_primary_brand_btn_id')[0].classList.add('disabled_btn');
+            else
+                $('#edit_primary_brand_btn_id')[0].classList.remove('disabled_btn');
+
+            const oBrand1 = $('#new_main_brand_opponent_1_id').val();
+
+            if(oBrand1 == -1)
+                $('#edit_opponent_1_brand_btn_id')[0].classList.add('disabled_btn');
+            else
+                $('#edit_opponent_1_brand_btn_id')[0].classList.remove('disabled_btn');
+
+            const oBrand2 = $('#new_main_brand_opponent_2_id').val();
+
+            if(oBrand2 == -1)
+                $('#edit_opponent_2_brand_btn_id')[0].classList.add('disabled_btn');
+            else
+                $('#edit_opponent_2_brand_btn_id')[0].classList.remove('disabled_btn');
+        }
     });
+
+    $('#new_main_brand_primary_id').on('change', function() {
+        // A função será executada quando o valor do select mudar
+        const pBrand = $(this).val();
+
+        if(!pBrand)
+            $('#edit_primary_brand_btn_id')[0].classList.add('disabled_btn');
+        else
+            $('#edit_primary_brand_btn_id')[0].classList.remove('disabled_btn');
+    });
+
+    $('#new_main_brand_opponent_1_id').on('change', function() {
+        // A função será executada quando o valor do select mudar
+        const oBrand = $(this).val();
+
+        if(oBrand == -1)
+            $('#edit_opponent_1_brand_btn_id')[0].classList.add('disabled_btn');
+        else
+            $('#edit_opponent_1_brand_btn_id')[0].classList.remove('disabled_btn');
+    });
+
+    $('#new_main_brand_opponent_2_id').on('change', function() {
+        // A função será executada quando o valor do select mudar
+        const oBrand = $(this).val();
+
+        if(oBrand == -1)
+            $('#edit_opponent_2_brand_btn_id')[0].classList.add('disabled_btn');
+        else
+            $('#edit_opponent_2_brand_btn_id')[0].classList.remove('disabled_btn');
+    });
+
 
     $(document).on('click', '.cancel-btn', function (e) {
         const currentModalId = globals.modalHistory.pop();
