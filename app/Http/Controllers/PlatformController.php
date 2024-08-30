@@ -17,6 +17,7 @@ class PlatformController extends Controller
             'type' => 'required|string|max:255',
             'url' => 'required|string|max:255',
             'platform_id' => 'required|string|max:255',
+            'platform_id2' => 'string|max:255',
             'name' => 'required|string|max:255',
             'avatar_url' => 'nullable|string|max:255',
             'description' => 'nullable|string',

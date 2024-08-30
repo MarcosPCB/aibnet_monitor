@@ -89,4 +89,10 @@ class BrandController extends Controller
         $brand = Brand::findOrFail($id);
         return response()->json($brand, 200);
     }
+
+    public function list()
+    {
+        $brands = Brand::all();
+        return response()->json($brands, 200);
+    }
 }

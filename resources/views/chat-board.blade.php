@@ -370,7 +370,7 @@
 				</form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#config_modal_id" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 cancel-btn" >Cancelar</button>
                 <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="create_account_2_btn_id">
 					<span><i class="fa-solid fa-cart-plus"></i></span>
 				</button>
@@ -393,24 +393,24 @@
 						<label for="new_main_brand_name_id">Nome do cliente</label>
 					</div>
 
-					<div class="d-flex">
-						<div class="form-floating">
-							<select class="form-select type_msg mb-3 me-auto" style="border-radius: 15px" id="new_main_brand_primary_id">
+					<div class="d-flex align-items-center mb-3">
+						<div class="form-floating me-3 w-100">
+							<select class="form-select type_msg w-100 list-brands" style="border-radius: 15px" id="new_main_brand_primary_id">
 							</select>
 							<label for="new_main_brand_primary_id">Marca primária</label>
 						</div>
-						<button type="button" class="btn btn-basic btn-primary rounded-pill px-4"  data-bs-toggle="modal" data-bs-target="#create_brand_modal_id" data-bs-dismiss="modal" id="create_brand_btn_id"><span><i class="fa-solid fa-circle-plus"></i></span></button>
+						<button type="button" class="btn btn-basic btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#create_brand_modal_id" data-bs-dismiss="modal"><span><i class="fa-solid fa-circle-plus"></i></span></button>
 					</div>
 
 					<div class="form-floating">
-						<select class="form-select type_msg mb-3" style="border-radius: 15px" id="new_main_brand_opponent_1_id">
+						<select class="form-select type_msg mb-3 list-brands" style="border-radius: 15px" id="new_main_brand_opponent_1_id">
 							<option value="-1">Nenhum</option>
 						</select>
 						<label for="new_main_brand_opponent_1_id">Marca concorrente 1</label>
 					</div>
 
 					<div class="form-floating">
-						<select class="form-select type_msg mb-3" style="border-radius: 15px" id="new_main_brand_opponent_2_id">
+						<select class="form-select type_msg mb-3 list-brands" style="border-radius: 15px" id="new_main_brand_opponent_2_id">
 							<option value="-1">Nenhum</option>
 						</select>
 						<label for="new_main_brand_opponent_2_id">Marca concorrente 2</label>
@@ -423,7 +423,7 @@
 				</form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#config_modal_id" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 cancel-btn" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="create_main_brand_btn_id">
 					<span><i class="fa-solid fa-folder-plus"></i></span>
 				</button>
@@ -448,7 +448,7 @@
 				</form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#config_modal_id" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 cancel-btn" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="create_user_btn_id">
 					<span><i class="fa-solid fa-user-plus"></i></span>
 				</button>
@@ -464,11 +464,11 @@
             <div class="modal-header">
                 <h5 class="modal-title text-white" id="staticBackdropLabel">Crie uma nova marca</h5>
             </div>
-            <div class="modal-body" style="max-height: 75vh; overflow-y: auto">
+            <div class="modal-body">
 				<form>
 					<div class="form-floating">
 						<input type="name" autocomplete="name" class="form-control type_msg mb-3" id="new_brand_name_id" placeholder="Nome da marca" style="border-radius: 15px">
-						<label for="new_account_name_id">Nome da marca</label>
+						<label for="new_brand_name_id">Nome da marca</label>
 					</div>
 
 					<div class="form-floating">
@@ -478,8 +478,57 @@
 				</form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#config_modal_id" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 cancel-btn" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="create_new_brand_btn_id">
+					<span><i class="fa-solid fa-file-plus"></i></span>
+				</button>
+            </div>
+            </div>
+        </div>
+    </div>
+
+	<!-- Modal create platform -->
+	<div class="modal fade" id="create_platform_modal_id" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true" style="backdrop-filter: blur(25px);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-default">
+            <div class="modal-header">
+                <h5 class="modal-title text-white" id="staticBackdropLabel">Insira uma plataforma da marca</h5>
+            </div>
+            <div class="modal-body" style="max-height: 75vh; overflow-y: auto">
+				<form>
+					<div class="form-floating">
+						<input type="name" autocomplete="name" class="form-control type_msg mb-3" id="new_platform_name_id" placeholder="Nome da marca na página" style="border-radius: 15px">
+						<label for="new_platform_name_id">Nome da marca na página</label>
+					</div>
+
+					<div class="form-floating">
+						<select class="form-select type_msg mb-3 me-auto" style="border-radius: 15px" id="new_platform_type_id">
+							<option value="instagram">Instagram</option>
+							<option value="tiktok">Tik Tok</option>
+							<option value="youtube">YouTube</option>
+						</select>
+						<label for="new_platform_type_id">Qual plataforma</label>
+					</div>
+
+					<div class="form-floating">
+						<input type="text" class="form-control type_msg mb-3" id="new_platform_url_id" placeholder="URL da página" style="border-radius: 15px">
+						<label for="new_platform_url_id">URL da página</label>
+					</div>
+
+					<div class="form-floating">
+						<input type="text" class="form-control type_msg mb-3" id="new_platform_id_id" placeholder="ID da página" style="border-radius: 15px">
+						<label for="new_platform_id_id">ID da página</label>
+					</div>
+
+					<div class="list-group-item">
+						<input class="form-check-input text-white me-2" type="checkbox" checked id="new_platform_active_id">
+						Ativo
+					</div>
+				</form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 cancel-btn" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="create_new_platform_btn_id">
 					<span><i class="fa-solid fa-file-plus"></i></span>
 				</button>
             </div>

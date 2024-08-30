@@ -19631,10 +19631,12 @@ var user_id = 1;
 var is_operator = true;
 var backup = '';
 var account_creation = false;
+var brand_id = -1;
 var incompleteData = '';
 var incompleteEvent = '';
 var currentEvent = null;
 var current_thread = -1;
+var modalHistory = [];
 function identifyEvent(inputString) {
   var events = ["thread.created", "thread.run.created", "thread.run.queued", "thread.run.in_progress", "thread.run.requires_action", "thread.run.completed", "thread.run.incomplete", "thread.run.failed", "thread.run.cancelling", "thread.run.cancelled", "thread.run.expired", "thread.run.step.created", "thread.run.step.in_progress", "thread.run.step.delta", "thread.run.step.completed", "thread.run.step.failed", "thread.run.step.cancelled", "thread.run.step.expired", "thread.message.created", "thread.message.in_progress", "thread.message.delta", "thread.message.completed", "thread.message.incomplete", "error", "done"];
 
@@ -20625,6 +20627,7 @@ function createUser(event) {
     if (!account_creation) $('#config_modal_id').modal('show');else $('#create_main_brand_modal_id').modal('show');
   })["catch"](function (e) {
     alert('Erro ao criar usuário:', e);
+    returnToNormal(event.currentTarget);
     checkAuth(e.response);
   });
 }
@@ -20700,10 +20703,119 @@ function createAccount(event) {
       $('#create_user_modal_id').modal('show');
     })["catch"](function (e) {
       alert('Erro ao criar conta:', e);
+      returnToNormal(event.currentTarget);
       console.error('Erro ao criar conta:', e);
       checkAuth(e.response);
     });
   }
+}
+function listBBrands() {
+  var token = readCookie('token');
+  window.axios.get(api_url + "brand/list", {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 200) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    var options = '';
+    var brands = response.data;
+    for (var i = 0; i < brands.length; i++) {
+      options += "<option value=".concat(brands[i].id, ">ID: ").concat(brands[i].id, " - ").concat(brands[i].name, "</option>\n");
+    }
+    $('.list-brands').each(function () {
+      $(this).html($(this).html() + options);
+    });
+  })["catch"](function (e) {
+    alert('Erro ao listar marcas:', e);
+    checkAuth(e.response);
+  });
+}
+function createBrand(event) {
+  var token = readCookie('token');
+  var name = $('#new_brand_name_id').val();
+  var description = $('#new_brand_desc_id').val();
+  changeToLoad(event.currentTarget);
+  window.axios.post(api_url + "brand/create", {
+    name: name,
+    description: description
+  }, {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 201) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    alert('Marca criada');
+    returnToNormal(event.currentTarget);
+    listBBrands();
+    $('#create_brand_modal_id').modal('hide');
+    $('#create_platform_modal_id').modal('show');
+    brand_id = response.data.id;
+  })["catch"](function (e) {
+    alert('Erro ao criar marca:', e);
+    returnToNormal(event.currentTarget);
+    checkAuth(e.response);
+  });
+}
+function createPlatform(event) {
+  var token = readCookie('token');
+  var name = $('#new_platform_name_id').val();
+  var url = $('#new_platform_url_id').val();
+  var type = $('#new_platform_type_id').val();
+  var platform_id = $('#new_platform_id_id').val();
+  var active = $('#new_platform_active_id').is(':checked');
+  changeToLoad(event.currentTarget);
+  window.axios.post(api_url + "platform/create", {
+    name: name,
+    url: url,
+    type: type,
+    platform_id: platform_id,
+    active: active,
+    brand_id: brand_id
+  }, {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 201) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    returnToNormal(event.currentTarget);
+    var r = confirm('Plataform criada, deseja adicionar outra?');
+    if (r) {
+      $('#new_platform_name_id').val('');
+      $('#new_platform_url_id').val('');
+      $('#new_platform_type_id').val('');
+      $('#new_platform_id_id').val('');
+      $('#new_platform_active_id').prop('checked', false);
+    } else {
+      if (account_creation) {
+        $('#create_brand_modal_id').modal('hide');
+        $('#create_main_brand_modal_id').modal('show');
+      } else {
+        var currentModalId = modalHistory.pop();
+        var previousModalId = modalHistory[modalHistory.length - 1];
+        if (previousModalId) {
+          $("#".concat(currentModalId)).modal('hide');
+          $("#".concat(previousModalId)).modal('show');
+        }
+      }
+    }
+    brand_id = response.data.id;
+  })["catch"](function (e) {
+    alert('Erro ao criar marca:', e);
+    returnToNormal(event.currentTarget);
+    checkAuth(e.response);
+  });
 }
 $(document).ready(function () {
   $('#action_menu_btn').click(function () {
@@ -20721,6 +20833,26 @@ $(document).ready(function () {
   $('#create_user_btn_id').click(createUser);
   $('#change_account_btn_id').click(listAccounts);
   $('#create_account_2_btn_id').click(createAccount);
+  $('#create_new_brand_btn_id').click(createBrand);
+  $('#create_new_platform_btn_id').click(createPlatform);
+  $(document).on('shown.bs.modal', function (e) {
+    var modalId = $(e.target).attr('id');
+    modalHistory.push(modalId);
+    if (modalId == 'create_main_brand_modal_id') listBBrands();
+  });
+
+  /*$(document).on('hidden.bs.modal', function (e) {
+      modalHistory.pop();
+  });*/
+
+  $(document).on('click', '.cancel-btn', function (e) {
+    var currentModalId = modalHistory.pop();
+    var previousModalId = modalHistory[modalHistory.length - 1];
+    if (previousModalId) {
+      $("#".concat(currentModalId)).modal('hide');
+      $("#".concat(previousModalId)).modal('show');
+    }
+  });
   msg_body = $('#msg_card_body_id')[0];
   msg_area = $('#msg_area_id')[0];
   chat_cards = $('#chat_cards_id')[0];
@@ -20739,6 +20871,7 @@ $(document).ready(function () {
   is_operator = readCookie('is_operator');
   user_id = readCookie('user');
   var token = readCookie('token');
+  $('#create_main_brand_modal_id').modal('show');
   window.axios.get(api_url + "user/".concat(user_id, "/").concat(account_id), {
     headers: {
       'Authorization': 'Bearer ' + token,
