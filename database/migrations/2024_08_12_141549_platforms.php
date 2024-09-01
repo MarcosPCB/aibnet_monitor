@@ -18,7 +18,7 @@ class Platforms extends Migration
             $table->string('type'); // Tipo da plataforma, como Facebook, Instagram, etc.
             $table->string('url'); // URL do perfil na plataforma
             $table->string('platform_id'); // ID da plataforma, caso seja necessário
-            $table->string('platform_id2'); // ID da plataforma, caso seja necessário
+            $table->string('platform_id2')->nullable(); // ID da plataforma, caso seja necessário
             $table->string('name'); // Nome da plataforma ou do perfil
             $table->string('avatar_url')->nullable(); // URL do avatar ou imagem de perfil
             $table->text('description')->nullable(); // Descrição do perfil ou da conta
