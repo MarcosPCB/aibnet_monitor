@@ -22,7 +22,7 @@ class CreateUsersTable extends Migration
             $table->string('permission');
 
             // Chave estrangeira para Account
-            $table->foreignId('account_id')->constrained()->onDelete('cascade');
+            $table->foreignId('account_id')->constrained('account')->onDelete('cascade');
 
             $table->rememberToken();
             $table->timestamps();

@@ -15,8 +15,8 @@ class MainBrandBrand extends Migration
     {
         Schema::create('main_brand_brand', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('main_brand_id')->constrained()->onDelete('cascade');
-            $table->foreignId('brand_id')->constrained()->onDelete('cascade');
+            $table->foreignId('main_brand_id')->constrained('main_brand')->onDelete('cascade');
+            $table->foreignId('brand_id')->constrained('brand')->onDelete('cascade');
             $table->boolean('is_opponent')->default(false); // Indica se a brand é um concorrente
             $table->timestamps();
         });

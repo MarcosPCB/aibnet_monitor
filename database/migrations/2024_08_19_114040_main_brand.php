@@ -22,7 +22,7 @@ class MainBrand extends Migration
             $table->string('chat_model')->nullable();
 
             // Chave estrangeira para Account
-            $table->foreignId('account_id')->constrained()->onDelete('cascade');
+            $table->foreignId('account_id')->constrained('account')->onDelete('cascade');
 
             $table->timestamps(); // Cria os campos created_at e updated_at
         });

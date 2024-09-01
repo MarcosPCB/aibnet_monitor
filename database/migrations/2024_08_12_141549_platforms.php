@@ -28,7 +28,7 @@ class Platforms extends Migration
             $table->boolean('capture_comments')->default(true); // Captura de comentários
             $table->boolean('capture_users_from_comments')->default(false); // Captura de usuários a partir dos comentários
             $table->boolean('active')->default(true); // Status ativo da plataforma
-            $table->foreignId('brand_id')->constrained()->onDelete('cascade'); // Chave estrangeira para a tabela brands
+            $table->foreignId('brand_id')->constrained('brand')->onDelete('cascade'); // Chave estrangeira para a tabela brands
             $table->timestamps();
         });
     }

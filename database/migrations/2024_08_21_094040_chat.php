@@ -19,7 +19,7 @@ class Chat extends Migration
             $table->json('text')->nullable();
             $table->string('thread_id')->nullable();
 
-            $table->foreignId('main_brand_id')->constrained()->onDelete('cascade');
+            $table->foreignId('main_brand_id')->constrained('main_brand')->onDelete('cascade');
             $table->timestamps(); // Cria os campos created_at e updated_at
         });
     }
