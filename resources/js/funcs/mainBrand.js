@@ -1,6 +1,6 @@
 require('../bootstrap');
 const globals = require('../globals');
-const { readCookie, checkAuth, cleanMsgBody, changeToLoad, returnToNormal, saveCookie } = require('../utils');
+const { readCookie, checkAuth, cleanMsgBody, changeToLoad, returnToNormal, saveCookie, appLoad, startAppLoad } = require('../utils');
 const { listUsers } = require('./user');
 const { listChats } = require('./chat');
 
@@ -27,13 +27,17 @@ function listBrands() {
             let selected = globals.main_brand_id == e.id ? 'selected' : '';
             list.innerHTML += `<option value=${e.id} ${selected}>${e.name}</option>`;
         });
+
+        appLoad();
     }).catch(e => {
         console.error('Erro ao listar marcas:', e);
         checkAuth(e.response);
+        appLoad();
     });
 }
 
 function switchBrand() {
+    startAppLoad();
     globals.main_brand_id = $('#brand_select_id')[0].value;
 
     const expires = new Date();
@@ -70,9 +74,12 @@ function loadBrandPic() {
                 break;
             }
         }
+
+        appLoad();
     }).catch(e => {
         alert('Erro ao mudar avatar', e);
         checkAuth(e.response);
+        appLoad();
     });
 }
 

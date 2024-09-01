@@ -1,4 +1,5 @@
 const globals = {
+    loaded: 0,
     account_id: 1,
     main_brand_id: 1,
     user_id: 1,

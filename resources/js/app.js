@@ -1,7 +1,7 @@
 const { forEach } = require('lodash');
 require('./bootstrap');
 const globals = require('./globals');
-const { cleanDOM, cleanMsgBody, readCookie } = require('./utils');
+const { cleanDOM, cleanMsgBody, readCookie, appLoad } = require('./utils');
 const { addThread, sendMsgThread, renameChat, deleteChat, listChats } = require('./funcs/chat');
 const { login, logout, changePassword } = require('./funcs/auth');
 const { listAccounts, createAccount } = require('./funcs/account');
@@ -13,6 +13,11 @@ const { createPlatform, savePlatform } = require('./funcs/platform');
 $(document).ready(function(){
     $('#action_menu_btn').click(function(){
         $('.action_menu').toggle();
+    });
+
+    $('#load_app_id').on('transitionend', function() {
+        if($('#load_app_id').css('opacity') == '0')
+            $('#load_app_id').hide();
     });
 
     $('#add_thread_btn_id').click(addThread);
@@ -130,8 +135,6 @@ $(document).ready(function(){
     globals.user_id = readCookie('user');
     const token = readCookie('token');
 
-    $('#create_main_brand_modal_id').modal('show');
-
     window.axios.get(globals.api_url + `user/${globals.user_id}/${globals.account_id}`, {
         headers: {
             'Authorization': 'Bearer ' + token,
@@ -157,6 +160,9 @@ $(document).ready(function(){
             $('#account-modal-tab')[0].classList.remove('disabled_btn');
             listUsers();
         }).catch(e => {
+            appLoad();
+            appLoad();
+            appLoad();
             alert('Você foi deslogado');
             cleanDOM(globals.chat_cards);
             globals.chat_cards.innerHTML = globals.add_chat;

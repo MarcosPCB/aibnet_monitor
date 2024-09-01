@@ -43,7 +43,7 @@ function createPlatform(event) {
             $('#new_platform_active_id').prop('checked', false);
         } else {
             if (globals.account_creation) {
-                $('#create_brand_modal_id').modal('hide');
+                $('#create_platform_modal_id').modal('hide');
                 $('#create_main_brand_modal_id').modal('show');
             } else {
                 const currentModalId = globals.modalHistory.pop();

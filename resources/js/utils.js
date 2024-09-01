@@ -51,15 +51,32 @@ function saveCookie(type, token) {
 }
 
 function checkAuth(data) {
-    if(data.status == 401) {
-        alert('Você foi deslogado');
-        cleanDOM(globals.chat_cards);
-        globals.chat_cards.innerHTML = globals.add_chat;
-        cleanMsgBody();
+    switch(data.status) {
+        case 401:
+            alert('Você foi deslogado');
+            cleanDOM(globals.chat_cards);
+            globals.chat_cards.innerHTML = globals.add_chat;
+            cleanMsgBody();
 
-        $('#login_modal_id').modal('show');
+            $('#login_modal_id').modal('show');
 
-        document.cookie = `token=;`;
+            document.cookie = `token=;`;
+            break;
+
+        case 409:
+            alert('Conflito: os dados já existem no sistema');
+            break;
+
+        case 403:
+            alert('Acesso negado: Você não está autorizado a realizar esta ação');
+
+        case 422:
+            alert('Faltaram informações a serem enviadas');
+            break;
+
+        case 500:
+            alert('Erro interno da plataforma');
+            break;
     }
 }
 
@@ -146,6 +163,21 @@ function enableButtons() {
     });
 }
 
+function appLoad() {
+    if(globals.loaded >= 2) {
+        //$('#load_app_id').hide();
+        $('#load_app_id').css('opacity', '0.0');
+        return;
+    }
+
+    globals.loaded++;
+}
+
+function startAppLoad() {
+    $('#load_app_id').css('opacity', '1.0');
+    $('#load_app_id').show();
+}
+
 module.exports = {
     readCookie,
     saveCookie,
@@ -161,4 +193,6 @@ module.exports = {
     loadingTextLastBubble,
     disableButtons,
     enableButtons,
+    appLoad,
+    startAppLoad
 };

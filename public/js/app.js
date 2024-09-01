@@ -2226,7 +2226,9 @@ var _require = __webpack_require__(/*! ../utils */ "./resources/js/utils.js"),
   checkAuth = _require.checkAuth,
   cleanDOM = _require.cleanDOM,
   cleanMsgBody = _require.cleanMsgBody,
-  readCookie = _require.readCookie;
+  readCookie = _require.readCookie,
+  changeToLoad = _require.changeToLoad,
+  returnToNormal = _require.returnToNormal;
 var _require2 = __webpack_require__(/*! ./account */ "./resources/js/funcs/account.js"),
   listAccounts = _require2.listAccounts;
 var _require3 = __webpack_require__(/*! ./mainBrand */ "./resources/js/funcs/mainBrand.js"),
@@ -2293,15 +2295,17 @@ function logout() {
     cleanDOM(globals.chat_cards);
     globals.chat_cards.innerHTML = globals.add_chat;
     cleanMsgBody();
+    globals.loaded = 0;
     $('#login_modal_id').modal('show');
   })["catch"](function (e) {
     alert('Erro ao deslogar:', e);
     checkAuth(e.response);
   });
 }
-function login() {
+function login(event) {
   var email = $('#email_id')[0].value;
   var password = $('#password_id')[0].value;
+  changeToLoad(event.currentTarget);
   window.axios.post(globals.api_url + "login", {
     email: email,
     password: password
@@ -2315,6 +2319,7 @@ function login() {
       throw new Error(response.body + " code: ".concat(response.status));
     }
     $('#email_id')[0].value = $('#password_id')[0].value = '';
+    returnToNormal(event.currentTarget);
     cleanDOM(globals.chat_cards);
     globals.chat_cards.innerHTML = globals.add_chat;
     cleanMsgBody();
@@ -2538,7 +2543,8 @@ var _require = __webpack_require__(/*! ../utils */ "./resources/js/utils.js"),
   checkAuth = _require.checkAuth,
   enableButtons = _require.enableButtons,
   disableButtons = _require.disableButtons,
-  cleanMsgBody = _require.cleanMsgBody;
+  cleanMsgBody = _require.cleanMsgBody,
+  appLoad = _require.appLoad;
 var globals = __webpack_require__(/*! ../globals */ "./resources/js/globals.js");
 function identifyEvent(inputString) {
   var events = ["thread.created", "thread.run.created", "thread.run.queued", "thread.run.in_progress", "thread.run.requires_action", "thread.run.completed", "thread.run.incomplete", "thread.run.failed", "thread.run.cancelling", "thread.run.cancelled", "thread.run.expired", "thread.run.step.created", "thread.run.step.in_progress", "thread.run.step.delta", "thread.run.step.completed", "thread.run.step.failed", "thread.run.step.cancelled", "thread.run.step.expired", "thread.message.created", "thread.message.in_progress", "thread.message.delta", "thread.message.completed", "thread.message.incomplete", "error", "done"];
@@ -2997,7 +3003,7 @@ function listChats() {
 }
 function _listChats() {
   _listChats = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee5() {
-    var token, response, data;
+    var token, response, data, i, text, len, messageTemp;
     return _regeneratorRuntime().wrap(function _callee5$(_context5) {
       while (1) switch (_context5.prev = _context5.next) {
         case 0:
@@ -3022,18 +3028,19 @@ function _listChats() {
           throw new Error(response.body + " code: ".concat(response.status));
         case 9:
           data = response.data;
-          data.forEach(function (e, i) {
+          for (i = 0; i < data.length; i++) {
+            e = data[i];
             globals.thread_ids.push(e.thread_id);
             globals.thread_text.push(e.text);
             globals.thread_names.push(e.name);
-            var text = JSON.parse(e.text);
-            var len = globals.chat_cards.children.length - 1;
+            text = JSON.parse(e.text);
+            len = globals.chat_cards.children.length - 1;
             if (len > 0) {
               globals.chat_cards.insertBefore($(globals.chat_card)[0], globals.chat_cards.children[1]);
             } else {
               globals.chat_cards.innerHTML += globals.chat_card;
             }
-            var messageTemp = '';
+            messageTemp = '';
             if (e.name == null || e.name != null && e.name.length == 0) {
               if (text[0].text.length > 25) {
                 messageTemp = text[0].text.slice(0, 22).trim();
@@ -3074,19 +3081,21 @@ function _listChats() {
               globals.current_thread = thread;
               buildChat();
             });
-          });
-          _context5.next = 17;
+          }
+          appLoad();
+          _context5.next = 19;
           break;
-        case 13:
-          _context5.prev = 13;
+        case 14:
+          _context5.prev = 14;
           _context5.t0 = _context5["catch"](3);
           console.error('Erro ao processar requisição de chats:', _context5.t0);
           checkAuth(_context5.t0.response);
-        case 17:
+          appLoad();
+        case 19:
         case "end":
           return _context5.stop();
       }
-    }, _callee5, null, [[3, 13]]);
+    }, _callee5, null, [[3, 14]]);
   }));
   return _listChats.apply(this, arguments);
 }
@@ -3198,7 +3207,9 @@ var _require = __webpack_require__(/*! ../utils */ "./resources/js/utils.js"),
   cleanMsgBody = _require.cleanMsgBody,
   changeToLoad = _require.changeToLoad,
   returnToNormal = _require.returnToNormal,
-  saveCookie = _require.saveCookie;
+  saveCookie = _require.saveCookie,
+  appLoad = _require.appLoad,
+  startAppLoad = _require.startAppLoad;
 var _require2 = __webpack_require__(/*! ./user */ "./resources/js/funcs/user.js"),
   listUsers = _require2.listUsers;
 var _require3 = __webpack_require__(/*! ./chat */ "./resources/js/funcs/chat.js"),
@@ -3222,12 +3233,15 @@ function listBrands() {
       var selected = globals.main_brand_id == e.id ? 'selected' : '';
       list.innerHTML += "<option value=".concat(e.id, " ").concat(selected, ">").concat(e.name, "</option>");
     });
+    appLoad();
   })["catch"](function (e) {
     console.error('Erro ao listar marcas:', e);
     checkAuth(e.response);
+    appLoad();
   });
 }
 function switchBrand() {
+  startAppLoad();
   globals.main_brand_id = $('#brand_select_id')[0].value;
   var expires = new Date();
   expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias
@@ -3257,9 +3271,11 @@ function loadBrandPic() {
         break;
       }
     }
+    appLoad();
   })["catch"](function (e) {
     alert('Erro ao mudar avatar', e);
     checkAuth(e.response);
+    appLoad();
   });
 }
 function mainBrandSelect() {
@@ -3376,7 +3392,7 @@ function createPlatform(event) {
       $('#new_platform_active_id').prop('checked', false);
     } else {
       if (globals.account_creation) {
-        $('#create_brand_modal_id').modal('hide');
+        $('#create_platform_modal_id').modal('hide');
         $('#create_main_brand_modal_id').modal('show');
       } else {
         var currentModalId = globals.modalHistory.pop();
@@ -3645,6 +3661,7 @@ module.exports = {
 /***/ ((module) => {
 
 var globals = {
+  loaded: 0,
   account_id: 1,
   main_brand_id: 1,
   user_id: 1,
@@ -3735,13 +3752,26 @@ function saveCookie(type, token) {
   }
 }
 function checkAuth(data) {
-  if (data.status == 401) {
-    alert('Você foi deslogado');
-    cleanDOM(globals.chat_cards);
-    globals.chat_cards.innerHTML = globals.add_chat;
-    cleanMsgBody();
-    $('#login_modal_id').modal('show');
-    document.cookie = "token=;";
+  switch (data.status) {
+    case 401:
+      alert('Você foi deslogado');
+      cleanDOM(globals.chat_cards);
+      globals.chat_cards.innerHTML = globals.add_chat;
+      cleanMsgBody();
+      $('#login_modal_id').modal('show');
+      document.cookie = "token=;";
+      break;
+    case 409:
+      alert('Conflito: os dados já existem no sistema');
+      break;
+    case 403:
+      alert('Acesso negado: Você não está autorizado a realizar esta ação');
+    case 422:
+      alert('Faltaram informações a serem enviadas');
+      break;
+    case 500:
+      alert('Erro interno da plataforma');
+      break;
   }
 }
 function cleanMsgBody() {
@@ -3821,6 +3851,18 @@ function enableButtons() {
     e.children[0].children[1].children[0].classList.remove('disabled_btn');
   });
 }
+function appLoad() {
+  if (globals.loaded >= 2) {
+    //$('#load_app_id').hide();
+    $('#load_app_id').css('opacity', '0.0');
+    return;
+  }
+  globals.loaded++;
+}
+function startAppLoad() {
+  $('#load_app_id').css('opacity', '1.0');
+  $('#load_app_id').show();
+}
 module.exports = {
   readCookie: readCookie,
   saveCookie: saveCookie,
@@ -3835,7 +3877,9 @@ module.exports = {
   setTextLastBubble: setTextLastBubble,
   loadingTextLastBubble: loadingTextLastBubble,
   disableButtons: disableButtons,
-  enableButtons: enableButtons
+  enableButtons: enableButtons,
+  appLoad: appLoad,
+  startAppLoad: startAppLoad
 };
 
 /***/ }),
@@ -21320,7 +21364,8 @@ var globals = __webpack_require__(/*! ./globals */ "./resources/js/globals.js");
 var _require2 = __webpack_require__(/*! ./utils */ "./resources/js/utils.js"),
   cleanDOM = _require2.cleanDOM,
   cleanMsgBody = _require2.cleanMsgBody,
-  readCookie = _require2.readCookie;
+  readCookie = _require2.readCookie,
+  appLoad = _require2.appLoad;
 var _require3 = __webpack_require__(/*! ./funcs/chat */ "./resources/js/funcs/chat.js"),
   addThread = _require3.addThread,
   sendMsgThread = _require3.sendMsgThread,
@@ -21353,6 +21398,9 @@ var _require9 = __webpack_require__(/*! ./funcs/platform */ "./resources/js/func
 $(document).ready(function () {
   $('#action_menu_btn').click(function () {
     $('.action_menu').toggle();
+  });
+  $('#load_app_id').on('transitionend', function () {
+    if ($('#load_app_id').css('opacity') == '0') $('#load_app_id').hide();
   });
   $('#add_thread_btn_id').click(addThread);
   $('#send_btn_id').click(sendMsgThread);
@@ -21425,7 +21473,6 @@ $(document).ready(function () {
   globals.is_operator = readCookie('is_operator');
   globals.user_id = readCookie('user');
   var token = readCookie('token');
-  $('#create_main_brand_modal_id').modal('show');
   window.axios.get(globals.api_url + "user/".concat(globals.user_id, "/").concat(globals.account_id), {
     headers: {
       'Authorization': 'Bearer ' + token,
@@ -21451,6 +21498,9 @@ $(document).ready(function () {
       $('#account-modal-tab')[0].classList.remove('disabled_btn');
       app_listUsers();
     })["catch"](function (e) {
+      appLoad();
+      appLoad();
+      appLoad();
       alert('Você foi deslogado');
       cleanDOM(globals.chat_cards);
       globals.chat_cards.innerHTML = globals.add_chat;

@@ -213,7 +213,9 @@
 									</span>
 								</li>
 							</ul>
-							<button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-5 align-self-end" data-bs-toggle="modal" data-bs-target="#create_user_modal_id" data-bs-dismiss="modal">Adicionar usuário</button>
+							<button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-5 align-self-end" data-bs-toggle="modal" data-bs-target="#create_user_modal_id" data-bs-dismiss="modal">
+								<span><i class="fa-solid fa-user-plus"></i></span>
+							</button>
 							
 							<h3 class="text-white">Gerenciar marca</h3>
 							<hr class="dropdown-divider text-white">
@@ -639,6 +641,10 @@
 		</div>
 	</div>
 
+	<div class="flex-column justify-content-center align-items-center" style="position: absolute; top: 0;left: 0; width: 100vw; height: 100vh; z-index: 99999; backdrop-filter: blur(25px); opacity: 1.0; display: flex; transition: all 1s ease-in-out" id="load_app_id">
+		<div class="spinner-border text-white" role="status"></div>
+		<h4 class="text-white mt-3">Carregando...</h4>
+	</div>
 
 	</body>
 </html>

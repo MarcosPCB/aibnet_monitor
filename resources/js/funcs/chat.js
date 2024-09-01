@@ -1,5 +1,5 @@
 require('../bootstrap');
-const { readCookie, cleanDOM, attachDOM, addTextLastBubble, loadingTextLastBubble, setTextLastBubble, checkAuth, enableButtons, disableButtons, cleanMsgBody } = require('../utils');
+const { readCookie, cleanDOM, attachDOM, addTextLastBubble, loadingTextLastBubble, setTextLastBubble, checkAuth, enableButtons, disableButtons, cleanMsgBody, appLoad } = require('../utils');
 const globals = require('../globals');
 
 function identifyEvent(inputString) {
@@ -418,7 +418,9 @@ async function listChats() {
 
         let data = response.data;
 
-        data.forEach((e, i) => {
+        for(let i = 0; i < data.length; i++) {
+            e = data[i];
+
             globals.thread_ids.push(e.thread_id);
             globals.thread_text.push(e.text);
             globals.thread_names.push(e.name);
@@ -489,10 +491,13 @@ async function listChats() {
                 globals.current_thread = thread;
                 buildChat();
             });
-        });
+        }
+
+        appLoad();
     } catch(e) {
         console.error('Erro ao processar requisição de chats:', e);
         checkAuth(e.response);
+        appLoad();
     }
 }
 

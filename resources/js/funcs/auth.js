@@ -1,6 +1,6 @@
 require('../bootstrap');
 const globals = require('../globals');
-const { checkAuth, cleanDOM, cleanMsgBody, readCookie } = require('../utils');
+const { checkAuth, cleanDOM, cleanMsgBody, readCookie, changeToLoad, returnToNormal } = require('../utils');
 const { listAccounts } = require('./account');
 const { mainBrandSelect } = require('./mainBrand');
 
@@ -78,6 +78,8 @@ function logout() {
         globals.chat_cards.innerHTML = globals.add_chat;
         cleanMsgBody();
 
+        globals.loaded = 0;
+
         $('#login_modal_id').modal('show');
             
     }).catch(e => {
@@ -86,9 +88,10 @@ function logout() {
     });
 }
 
-function login() {    
+function login(event) {    
     const email = $('#email_id')[0].value;
     const password = $('#password_id')[0].value;
+    changeToLoad(event.currentTarget);
 
     window.axios.post(globals.api_url + `login`, {
         email,
@@ -104,6 +107,8 @@ function login() {
         }
 
         $('#email_id')[0].value = $('#password_id')[0].value = '';
+
+        returnToNormal(event.currentTarget);
 
         cleanDOM(globals.chat_cards);
         globals.chat_cards.innerHTML = globals.add_chat;
