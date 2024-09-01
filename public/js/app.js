@@ -3195,7 +3195,10 @@ var globals = __webpack_require__(/*! ../globals */ "./resources/js/globals.js")
 var _require = __webpack_require__(/*! ../utils */ "./resources/js/utils.js"),
   readCookie = _require.readCookie,
   checkAuth = _require.checkAuth,
-  cleanMsgBody = _require.cleanMsgBody;
+  cleanMsgBody = _require.cleanMsgBody,
+  changeToLoad = _require.changeToLoad,
+  returnToNormal = _require.returnToNormal,
+  saveCookie = _require.saveCookie;
 var _require2 = __webpack_require__(/*! ./user */ "./resources/js/funcs/user.js"),
   listUsers = _require2.listUsers;
 var _require3 = __webpack_require__(/*! ./chat */ "./resources/js/funcs/chat.js"),
@@ -3269,11 +3272,54 @@ function mainBrandSelect() {
   $('#select_account_modal_id').modal('hide');
   $('#switch_modal_id').modal('show');
 }
+function createMainBrand(event) {
+  var token = readCookie('token');
+  var name = $('#new_main_brand_name_id').val();
+  var primaryBrandId = $('#new_main_brand_primary_id').val();
+  var opponentBrand1Id = $('#new_main_brand_opponent_1_id').val();
+  var opponentBrand2Id = $('#new_main_brand_opponent_2_id').val();
+  var chat_model = $('#new_main_brand_model_id').val();
+  changeToLoad(event.currentTarget);
+  window.axios.post(globals.api_url + "main-brand/create/".concat(globals.account_id), {
+    name: name,
+    main_brand_id: primaryBrandId,
+    chat_model: chat_model,
+    opponents: [opponentBrand1Id, opponentBrand2Id]
+  }, {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 201) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    alert('Cliente criado');
+    returnToNormal(event.currentTarget);
+    listBrands();
+    $('#create_main_brand_modal_id').modal('hide');
+    globals.modalHistory = [];
+    globals.main_brand_id = response.data.id;
+    saveCookie('main_brand');
+    globals.account_creation = false;
+    globals.platform_id = -1;
+    globals.brand_id = -1;
+    cleanMsgBody();
+    listChats();
+    loadBrandPic();
+  })["catch"](function (e) {
+    alert('Erro ao criar cliente:', e);
+    returnToNormal(event.currentTarget);
+    checkAuth(e.response);
+  });
+}
 module.exports = {
   mainBrandSelect: mainBrandSelect,
   listBrands: listBrands,
   switchBrand: switchBrand,
-  loadBrandPic: loadBrandPic
+  loadBrandPic: loadBrandPic,
+  createMainBrand: createMainBrand
 };
 
 /***/ }),
@@ -21292,7 +21338,8 @@ var _require6 = __webpack_require__(/*! ./funcs/mainBrand */ "./resources/js/fun
   switchBrand = _require6.switchBrand,
   mainBrandSelect = _require6.mainBrandSelect,
   listBrands = _require6.listBrands,
-  loadBrandPic = _require6.loadBrandPic;
+  loadBrandPic = _require6.loadBrandPic,
+  createMainBrand = _require6.createMainBrand;
 var _require7 = __webpack_require__(/*! ./funcs/brand */ "./resources/js/funcs/brand.js"),
   createBrand = _require7.createBrand,
   listBBrands = _require7.listBBrands,
@@ -21323,6 +21370,7 @@ $(document).ready(function () {
   $('#create_new_platform_btn_id').click(createPlatform);
   $('#edit_primary_brand_btn_id').click(editPrimaryBrand);
   $('#save_edit_platform_btn_id').click(savePlatform);
+  $('#create_main_brand_btn_id').click(createMainBrand);
   $(document).on('shown.bs.modal', function (e) {
     var modalId = $(e.target).attr('id');
     globals.modalHistory.push(modalId);

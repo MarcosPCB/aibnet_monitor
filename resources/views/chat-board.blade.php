@@ -29,7 +29,7 @@
 									<img class="img-fluid" style="max-width: 64px; border-radius: 50%" id="brand_pic_id" src="img/logo_black.png">
 								</div>
 								<ul class="dropdown-menu">
-									<li data-bs-toggle="modal" data-bs-target="#switch_modal_id"><i class="fa-solid fa-arrow-right-arrow-left"></i> Mudar marca</li>
+									<li data-bs-toggle="modal" data-bs-target="#switch_modal_id"><i class="fa-solid fa-arrow-right-arrow-left"></i> Mudar cliente</li>
 									<li data-bs-toggle="modal" data-bs-target="#config_modal_id"><i class="fa-solid fa-gear"></i> Configurar</li>
 									<li data-bs-toggle="modal" data-bs-target="#logout_modal_id"><i class="fa-solid fa-circle-xmark"></i> Logout</li>
 								</ul>
@@ -142,7 +142,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content bg-default">
             <div class="modal-header">
-                <h5 class="modal-title text-white" id="staticBackdropLabel">Trocar de marca</h5>
+                <h5 class="modal-title text-white" id="staticBackdropLabel">Trocar de cliente</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">

@@ -1,6 +1,6 @@
 require('../bootstrap');
 const globals = require('../globals');
-const { readCookie, checkAuth, cleanMsgBody } = require('../utils');
+const { readCookie, checkAuth, cleanMsgBody, changeToLoad, returnToNormal, saveCookie } = require('../utils');
 const { listUsers } = require('./user');
 const { listChats } = require('./chat');
 
@@ -88,9 +88,61 @@ function mainBrandSelect() {
     $('#switch_modal_id').modal('show');
 }
 
+function createMainBrand(event) {
+    const token = readCookie('token');
+    const name = $('#new_main_brand_name_id').val();
+    const primaryBrandId = $('#new_main_brand_primary_id').val();
+    const opponentBrand1Id = $('#new_main_brand_opponent_1_id').val();
+    const opponentBrand2Id = $('#new_main_brand_opponent_2_id').val();
+    const chat_model = $('#new_main_brand_model_id').val();
+
+    changeToLoad(event.currentTarget);
+
+    window.axios.post(globals.api_url + `main-brand/create/${globals.account_id}`, {
+        name,
+        main_brand_id: primaryBrandId,
+        chat_model,
+        opponents: [
+            opponentBrand1Id,
+            opponentBrand2Id
+        ]
+    }, {
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        if (response.status != 201) {
+            throw new Error(response.body + ` code: ${response.status}`);
+        }
+
+        alert('Cliente criado');
+
+        returnToNormal(event.currentTarget);
+
+        listBrands();
+        $('#create_main_brand_modal_id').modal('hide');
+        globals.modalHistory = [];
+        globals.main_brand_id = response.data.id;
+        saveCookie('main_brand');
+        globals.account_creation = false;
+        globals.platform_id = -1;
+        globals.brand_id = -1;
+        cleanMsgBody();
+        listChats();
+        loadBrandPic();
+    }).catch(e => {
+        alert('Erro ao criar cliente:', e);
+        returnToNormal(event.currentTarget);
+        checkAuth(e.response);
+    });
+}
+
 module.exports = {
     mainBrandSelect,
     listBrands,
     switchBrand,
-    loadBrandPic
+    loadBrandPic,
+    createMainBrand
 };
