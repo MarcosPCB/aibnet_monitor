@@ -17,7 +17,7 @@ class Brand extends Migration
             $table->id();
             $table->string('name');
             $table->boolean('active')->default(true);
-            $table->foreignId('main_brand_id')->nullable()->constrained()->onDelete('cascade');
+            $table->foreignId('main_brand_id')->nullable()->constrained('main_brand')->onDelete('cascade');
             $table->timestamps(); // Cria os campos created_at e updated_at
         });
     }
