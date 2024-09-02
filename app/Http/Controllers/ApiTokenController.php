@@ -57,10 +57,8 @@ class ApiTokenController extends Controller
 
     public function restartLimit($id)
     {
-        $apiToken = ApiToken::findOrFail($id);
+        $apiToken = ApiToken::findOrFail($id)[0];
         $now = Carbon::now();
-
-        print_r($apiToken);
 
         switch ($apiToken->limit_type) {
             case 'daily':

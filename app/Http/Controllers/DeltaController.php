@@ -331,6 +331,7 @@ class DeltaController extends Controller
             $platform->description = $json->biography;
             $platform->num_followers = $json->edge_followed_by->count;
             $platform->avatar_url = $json->profile_pic_url;
+            $platform->platform_id2 = $json->id;
 
             
             $deltaWeek->platforms[] = new \stdClass();

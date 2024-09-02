@@ -14,7 +14,8 @@ class SocialFetcherController extends Controller
     private function updateApiTokenUsage($id, $usedAmount)
     {
         $api = new ApiTokenController();
-        //$api->restartLimit(Request::create('/', 'POST', ['id' => $id]));
+        $request = Request::create('/', 'POST', ['id' => $id]);
+        $api->restartLimit($request);
 
         $apiToken = ApiToken::where('id', $id)->first();
         if ($apiToken) {
@@ -50,8 +51,8 @@ class SocialFetcherController extends Controller
 
         switch($type) {
             case 'complete':
-                //$response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/user/detailed-info?username='.$id.'&token='.$apiTokenData->token);
-                $filePath = base_path('tests/Mocks/complete-profile.json');
+                $response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/user/detailed-info?username='.$id.'&token='.$apiTokenData->token);
+                /*$filePath = base_path('tests/Mocks/complete-profile.json');
 
                 // Verifica se o arquivo existe
                 if (File::exists($filePath)) {
@@ -61,7 +62,7 @@ class SocialFetcherController extends Controller
                     // Retorna o conteúdo como JSON
                     //return response()->json(json_decode($jsonContent), 200);
                     $response = json_decode($jsonContent);
-                }
+                }*/
                 break;
             
             case 'likes':
@@ -91,7 +92,7 @@ class SocialFetcherController extends Controller
             }
         }
 
-        //$this->updateApiTokenUsage($apiToken, $cost);
+        $this->updateApiTokenUsage($apiToken, $cost);
 
         return $response;//->json();
     }
@@ -141,9 +142,10 @@ class SocialFetcherController extends Controller
         
         $response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/user/posts?user_id='.$id.'&token='.$apiTokenData->token.'&depth='.$depth.'&chunk_size='.$chunk.'&oldest_timestamp='.$timestamp);
 
-        //$cost = $response['data']['count'];
+        $json = (object) $response;
+        $cost = $json->data->count;
 
-        //$this->updateApiTokenUsage($apiToken, $cost); // Exemplo de uso
+        $this->updateApiTokenUsage($apiToken, $cost); // Exemplo de uso
 
         return $response;
     }
@@ -157,9 +159,9 @@ class SocialFetcherController extends Controller
 
         $apiTokenData = ApiToken::where('id', $apiToken)->first();
         
-        //$response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/post/details?code='.$id.'&token='.$apiTokenData->token.'&n_comments_to_fetch='.$limit);
+        $response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/post/details?code='.$id.'&token='.$apiTokenData->token.'&n_comments_to_fetch='.$limit);
 
-        $filePath = base_path('tests/Mocks/comments.json');
+        /*$filePath = base_path('tests/Mocks/comments.json');
 
         // Verifica se o arquivo existe
         if (File::exists($filePath)) {
@@ -167,9 +169,14 @@ class SocialFetcherController extends Controller
             $jsonContent = File::get($filePath);
 
             $response = json_decode($jsonContent);
-        }
+        }*/
 
-        //$this->updateApiTokenUsage($apiToken, 1); // Exemplo de uso
+        if($response) {
+            $json = (object) $response;
+            $num = $json->data->edge_media_to_comment->count;
+            $this->updateApiTokenUsage($apiToken, 2 + (ceil($num / 5.0)));
+        } else
+            $this->updateApiTokenUsage($apiToken, 2);
 
         return $response;//->json();
     }

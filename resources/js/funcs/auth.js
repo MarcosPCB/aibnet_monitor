@@ -141,6 +141,7 @@ function login(event) {
 
         if(globals.is_operator) {
             $('#login_modal_id').modal('hide');
+            $('#select_account_cancel_btn_id').hide();
             listAccounts();
         } else {
             mainBrandSelect();

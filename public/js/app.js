@@ -2346,6 +2346,7 @@ function login(event) {
     document.cookie = "is_operator=".concat(globals.is_operator, "; expires=").concat(expires.toUTCString(), "; path=/;");
     if (globals.is_operator) {
       $('#login_modal_id').modal('hide');
+      $('#select_account_cancel_btn_id').hide();
       listAccounts();
     } else {
       mainBrandSelect();
@@ -3549,6 +3550,27 @@ function savePlatform(event) {
     checkAuth(e);
   });
 }
+function genWeeklyReport(event) {
+  var token = readCookie('token');
+  changeToLoad(event.currentTarget);
+  window.axios.get(globals.api_url + "main-brand/weekly/".concat(globals.main_brand_id, "/").concat(globals.account_id), {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 200) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    returnToNormal(event.currentTarget);
+    alert('Relatório criado e armazenado no sistema');
+  })["catch"](function (e) {
+    alert("Erro ao gerar relat\xF3rio: ".concat(e));
+    returnToNormal(event.currentTarget);
+    checkAuth(e.response);
+  });
+}
 module.exports = {
   createPlatform: createPlatform,
   listPlatforms: listPlatforms,
@@ -3671,6 +3693,10 @@ var globals = {
   account_creation: false,
   brand_id: -1,
   platform_id: -1,
+  main_brand_data: {
+    brand_id: -1,
+    chat_model: ''
+  },
   incompleteData: '',
   incompleteEvent: '',
   currentEvent: null,
@@ -21395,7 +21421,8 @@ var _require8 = __webpack_require__(/*! ./funcs/user */ "./resources/js/funcs/us
   app_listUsers = _require8.listUsers;
 var _require9 = __webpack_require__(/*! ./funcs/platform */ "./resources/js/funcs/platform.js"),
   createPlatform = _require9.createPlatform,
-  savePlatform = _require9.savePlatform;
+  savePlatform = _require9.savePlatform,
+  genWeeklyReport = _require9.genWeeklyReport;
 $(document).ready(function () {
   $('#action_menu_btn').click(function () {
     $('.action_menu').toggle();
@@ -21413,13 +21440,17 @@ $(document).ready(function () {
   $('#login_btn_id').click(login);
   $('#account_select_btn_id').click(mainBrandSelect);
   $('#create_user_btn_id').click(createUser);
-  $('#change_account_btn_id').click(listAccounts);
+  $('#change_account_btn_id').click(function () {
+    $('#select_account_cancel_btn_id').show();
+    listAccounts();
+  });
   $('#create_account_2_btn_id').click(createAccount);
   $('#create_new_brand_btn_id').click(createBrand);
   $('#create_new_platform_btn_id').click(createPlatform);
   $('#edit_primary_brand_btn_id').click(editPrimaryBrand);
   $('#save_edit_platform_btn_id').click(savePlatform);
   $('#create_main_brand_btn_id').click(createMainBrand);
+  $('#generate_weekly_report_btn_id').click(genWeeklyReport);
   $(document).on('shown.bs.modal', function (e) {
     var modalId = $(e.target).attr('id');
     globals.modalHistory.push(modalId);

@@ -8,7 +8,7 @@ const { listAccounts, createAccount } = require('./funcs/account');
 const { switchBrand, mainBrandSelect, listBrands, loadBrandPic, createMainBrand } = require('./funcs/mainBrand');
 const { createBrand, listBBrands, editPrimaryBrand } = require('./funcs/brand');
 const { createUser, listUsers } = require('./funcs/user');
-const { createPlatform, savePlatform } = require('./funcs/platform');
+const { createPlatform, savePlatform, genWeeklyReport } = require('./funcs/platform');
 
 $(document).ready(function(){
     $('#action_menu_btn').click(function(){
@@ -30,13 +30,17 @@ $(document).ready(function(){
     $('#login_btn_id').click(login);
     $('#account_select_btn_id').click(mainBrandSelect);
     $('#create_user_btn_id').click(createUser);
-    $('#change_account_btn_id').click(listAccounts);
+    $('#change_account_btn_id').click(() => {
+        $('#select_account_cancel_btn_id').show();
+        listAccounts();
+    });
     $('#create_account_2_btn_id').click(createAccount);
     $('#create_new_brand_btn_id').click(createBrand);
     $('#create_new_platform_btn_id').click(createPlatform);
     $('#edit_primary_brand_btn_id').click(editPrimaryBrand);
     $('#save_edit_platform_btn_id').click(savePlatform);
     $('#create_main_brand_btn_id').click(createMainBrand);
+    $('#generate_weekly_report_btn_id').click(genWeeklyReport);
 
     $(document).on('shown.bs.modal', function (e) {
         const modalId = $(e.target).attr('id');

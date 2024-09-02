@@ -8,6 +8,10 @@ const globals = {
     account_creation: false,
     brand_id: -1,
     platform_id: -1,
+    main_brand_data: {
+        brand_id: -1,
+        chat_model: ''
+    },
     incompleteData: '',
     incompleteEvent: '',
     currentEvent: null,

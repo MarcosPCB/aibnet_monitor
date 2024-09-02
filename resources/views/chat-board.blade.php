@@ -206,8 +206,9 @@
 								<button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 me-2" id="change_account_btn_id" data-bs-dismiss="modal">Trocar de conta</button>
 								<button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3" id="create_account_btn_id" data-bs-toggle="modal" data-bs-target="#create_account_modal_id" data-bs-dismiss="modal">Criar conta</button>
 							</div>
-							<hr class="dropdown-divider text-white">
+							<br>
 							<h3 class="text-white">Gerenciar usuário</h3>
+							<hr class="dropdown-divider text-white">
 							<ul class="list-group" style="max-height: 320px" id="list_users_id">
 								<li class="list-group-item d-flex align-items-center">
 									<span class="me-auto">User: 1 - John Doe</span>
@@ -223,8 +224,9 @@
 								<span><i class="fa-solid fa-user-plus"></i></span>
 							</button>
 							
-							<h3 class="text-white">Gerenciar marca</h3>
+							<h3 class="text-white">Gerenciar cliente</h3>
 							<hr class="dropdown-divider text-white">
+							<button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 me-2" id="generate_weekly_report_btn_id">Gerar relatório semanal</button>
 						</div>
 					</div>
 				</div>
@@ -287,6 +289,7 @@
 				</select>
             </div>
             <div class="modal-footer">
+				<button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 cancel-btn" id="select_account_cancel_btn_id">Cancelar</button>
                 <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="account_select_btn_id">
 					<span><i class="fa-solid fa-check"></i></span>
 				</button>
