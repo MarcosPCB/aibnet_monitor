@@ -163,7 +163,6 @@ $(document).ready(function(){
             appLoad();
             appLoad();
             appLoad();
-            alert('Você foi deslogado');
             cleanDOM(globals.chat_cards);
             globals.chat_cards.innerHTML = globals.add_chat;
             cleanMsgBody();

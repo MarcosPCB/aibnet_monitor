@@ -151,6 +151,7 @@ function login(event) {
     }).catch(e => {
         alert('Erro ao fazer login:', e);
         console.error(e);
+        returnToNormal(event.currentTarget);
     });
 }
 

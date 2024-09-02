@@ -2354,6 +2354,7 @@ function login(event) {
   })["catch"](function (e) {
     alert('Erro ao fazer login:', e);
     console.error(e);
+    returnToNormal(event.currentTarget);
   });
 }
 module.exports = {
@@ -21501,7 +21502,6 @@ $(document).ready(function () {
       appLoad();
       appLoad();
       appLoad();
-      alert('Você foi deslogado');
       cleanDOM(globals.chat_cards);
       globals.chat_cards.innerHTML = globals.add_chat;
       cleanMsgBody();
