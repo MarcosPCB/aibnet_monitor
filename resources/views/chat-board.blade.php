@@ -15,6 +15,12 @@
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
         
+		<script>
+			window.env = {
+				API_URL: "{{ env('API_URL') }}"
+			};
+		</script>
+
         <script src="{{asset('js/app.js')}}"></script>
         <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 	</head>

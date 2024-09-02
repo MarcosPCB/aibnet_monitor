@@ -13,7 +13,7 @@ const globals = {
     currentEvent: null,
     current_thread: -1,
     modalHistory: [],
-    api_url: 'http://localhost:8000/api/',
+    api_url: window.env.API_URL + '/api/',
     msg_body: undefined,
     msg_area: undefined,
     chat_cards: undefined,
