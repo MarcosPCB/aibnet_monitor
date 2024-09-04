@@ -195,31 +195,6 @@ function savePlatform(event) {
     });
 }
 
-function genWeeklyReport(event) {
-    const token = readCookie('token');
-    changeToLoad(event.currentTarget);
-
-    window.axios.get(globals.api_url + `main-brand/weekly/${globals.main_brand_id}/${globals.account_id}`, {
-        headers: {
-            'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
-    }).then(response => {
-        if (response.status != 200) {
-            throw new Error(response.body + ` code: ${response.status}`);
-        }
-
-        returnToNormal(event.currentTarget);
-
-        alert('Relatório criado e armazenado no sistema');
-    }).catch(e => {
-        alert(`Erro ao gerar relatório: ${e}`);
-        returnToNormal(event.currentTarget);
-        checkAuth(e.response);
-    });
-}
-
 module.exports = {
     createPlatform,
     listPlatforms,

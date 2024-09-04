@@ -111,6 +111,8 @@ Route::middleware(['auth:sanctum', 'isOperator'])->group(function () {
 });
 
 Route::middleware(['auth:sanctum', 'isOperatorOrAccountUser'])->group(function () {
+    Route::get('/check-token/{account_id}', [AuthController::class, 'checkToken'])->name('check-token');
+    
      // Account
      Route::patch('/account/update/{account_id}', [AccountController::class, 'update'])->name('account.update');
      Route::get('/account/list/main-brands/{account_id}', [AccountController::class, 'listMainBrands'])->name('account.list.mainBrands');
@@ -125,6 +127,8 @@ Route::middleware(['auth:sanctum', 'isOperatorOrAccountUser'])->group(function (
      Route::prefix('main-brand')->group(function () {
          Route::post('/create/{account_id}', [MainBrandController::class, 'create'])->name('main-brand.create');
          Route::patch('/update/{id}/{account_id}', [MainBrandController::class, 'update'])->name('main-brand.update');
+         Route::patch('/attach/{id}/{account_id}', [MainBrandController::class, 'attachBrand'])->name('main-brand.attach');
+         Route::patch('/detach/{id}/{account_id}', [MainBrandController::class, 'detachBrand'])->name('main-brand.detach');
          Route::delete('/delete/{id}/{account_id}', [MainBrandController::class, 'delete'])->name('main-brand.delete');
      });
 

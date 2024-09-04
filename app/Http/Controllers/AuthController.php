@@ -106,4 +106,28 @@ class AuthController extends Controller
 
         return response()->json(['message'=> 'Email send'], 200);
     }
+
+    public function checkToken(Request $request) {
+        // Verifica se o token pertence ao guard padrão
+        $user = $request->user(); // Isso usa o guard padrão, que geralmente é 'web'
+        if ($user) {
+            if($user instanceof Operator) {
+                return response()->json([
+                    'valid' => true,
+                    'is_operator' => true,
+                    'user' => $user
+                ], 200);
+            }
+
+            return response()->json([
+                'valid' => true,
+                'account_id' => $user->account_id,
+                'is_operator' => false,
+                'user' => $user
+            ], 200);
+        }
+
+        // Caso nenhum usuário seja autenticado
+        return response()->json(['valid' => false], 401);
+    }
 }

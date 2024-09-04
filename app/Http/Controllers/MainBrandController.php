@@ -121,7 +121,13 @@ class MainBrandController extends Controller
     public function get($id)
     {
         $mainBrand = MainBrand::findOrFail($id);
-        return response()->json($mainBrand, 200);
+        $opponents = $mainBrand->opponents()->get();
+        $primary = $mainBrand->primaryBrand()->first();
+        return response()->json([
+            'mainBrand' => $mainBrand,
+            'opponents' => $opponents,
+            'primary'=> $primary
+        ], 200);
     }
 
     public function getPlatforms($id) {
@@ -132,5 +138,45 @@ class MainBrandController extends Controller
 
         return response()->json($platforms, 200);
     }
+
+    public function attachBrand($id, Request $request) {
+        $mainBrand = MainBrand::findOrFail($id);
+
+        $request->validate([
+            'brand_id' => 'required|exists:brand,id',
+            'is_opponent' => 'required|boolean',
+        ]);
+
+        $brand = Brand::findOrFail($request->only('brand_id'));
+
+        $is_opponent = $request->only('is_opponent');
+
+        if(!$is_opponent) {
+            $primary = $mainBrand->primaryBrand()->first();
+            $mainBrand->brands()->detach($primary->id);
+            $mainBrand->attach($brand);
+
+            return response()->json('Success', 200);
+        }
+
+        $mainBrand->brands()->attach($brand[0]->id, ['is_opponent'=> true]);
+        return response()->json('Success', 200);
+    }
+
+    public function detachBrand($id, Request $request) {
+        $mainBrand = MainBrand::findOrFail($id);
+
+        $request->validate([
+            'brand_id' => 'required|exists:brand,id',
+        ]);
+
+        $brand = Brand::findOrFail($request->only('brand_id'));
+
+        $mainBrand->brands()->detach($brand[0]->id);
+
+        return response()->json('Success', 200);
+    }
+
+
 }
 

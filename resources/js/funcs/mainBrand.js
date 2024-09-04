@@ -3,6 +3,7 @@ const globals = require('../globals');
 const { readCookie, checkAuth, cleanMsgBody, changeToLoad, returnToNormal, saveCookie, appLoad, startAppLoad } = require('../utils');
 const { listUsers } = require('./user');
 const { listChats } = require('./chat');
+const { listBBrands } = require('./brand');
 
 function listBrands() {
     const token = readCookie('token');
@@ -33,6 +34,108 @@ function listBrands() {
         console.error('Erro ao listar marcas:', e);
         checkAuth(e.response);
         appLoad();
+    });
+}
+
+function fillEditOpponents() {
+    const token = readCookie('token');
+
+    window.axios.get(globals.api_url + `main-brand/${globals.main_brand_id}/${globals.account_id}`, {
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        if (response.status != 200) {
+            throw new Error(response.body + ` code: ${response.status}`);
+        }
+
+        const mb = response.data;
+
+        $('#edit_main_brand_name_id').val(mb.mainBrand.name);
+        $('#edit_main_brand_model_id').val(mb.mainBrand.chat_model);
+
+        const primary = $('#edit_main_brand_primary_id')[0];
+        primary.innerHTML = '';
+
+        const elementPrimary = 
+            $(`<li class="list-group-item d-flex align-items-center data-api-id=${mb.primary.id}">
+                <span class="me-auto">Marca ${mb.primary.id}: ${mb.primary.name}</span>
+                <span class="btn btn-icon edit-btn text-white">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </span>
+            </li>`);
+
+        elementPrimary.find('.edit-btn').on('click', async () => {
+            await listBBrands();
+
+            // Definindo os valores dos campos no modal
+            $('#select_edit_brand_id').val(mb.primary.id);
+            select_edit_brand_id = 0;
+
+            $('#edit_main_brand_modal_id').modal('hide');
+            $('#select_edit_brand_modal_id').modal('show');
+        });
+
+        primary.appendChild(elementPrimary[0]);
+
+        const list = $('#edit_main_brand_opponents_id')[0];
+        list.innerHTML = '';
+
+        for(let i = 0; i < mb.opponents.length; i++) {
+            const e = mb.opponents[i];
+            const element = 
+                $(`<li class="list-group-item d-flex align-items-center data-api-id=${e.id}">
+                    <span class="me-auto">Marca ${e.id}: ${e.name}</span>
+                    <span class="btn btn-icon edit-btn text-white">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </span>
+                    <span class="btn btn-icon delete-btn text-white">
+                        <i class="fa-solid fa-trash-can-xmark"></i>
+                    </span>
+                </li>`);
+
+            element.find('.edit-btn').on('click', async () => {
+                await listBBrands();
+
+                $('#select_edit_brand_id').val(e.id);
+                select_edit_brand_id = i + 1;
+    
+                // Definindo os valores dos campos no modal
+                $('#select_edit_brand_id').val(e.id);
+    
+                $('#edit_main_brand_modal_id').modal('hide');
+                $('#select_edit_brand_modal_id').modal('show');
+            });
+
+            if(i > 1) {
+                element.find('.delete-btn').on('click', () => {
+                    const r = confirm('Deseja mesmo excluir este concorrente?');
+                    if(r) {
+                        window.axios.delete(globals.api_url + `platform/delete/${e.id}`, {
+                            headers: {
+                                'Authorization': 'Bearer ' + token,
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            }
+                        }).then(() => {
+                            listUsers();
+                        }).catch((e) => {
+                            checkAuth(e);
+                            alert('Erro: não foi possível excluir o concorrente');
+                        });
+                    }
+                });
+            } else {
+                element.find('.delete-btn')[0].classList.add('disabled_btn');
+            }
+
+            list.appendChild(element[0]);
+        }
+    }).catch(e => {
+        console.error('Erro ao listar marcas:', e);
+        checkAuth(e);
     });
 }
 
@@ -78,7 +181,7 @@ function loadBrandPic() {
         appLoad();
     }).catch(e => {
         alert('Erro ao mudar avatar', e);
-        checkAuth(e.response);
+        checkAuth(e);
         appLoad();
     });
 }
@@ -142,8 +245,121 @@ function createMainBrand(event) {
     }).catch(e => {
         alert('Erro ao criar cliente:', e);
         returnToNormal(event.currentTarget);
-        checkAuth(e.response);
+        checkAuth(e);
     });
+}
+
+function genWeeklyReport(event) {
+    const token = readCookie('token');
+    changeToLoad(event.currentTarget);
+
+    window.axios.get(globals.api_url + `main-brand/weekly/${globals.main_brand_id}/${globals.account_id}`, {
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        if (response.status != 200) {
+            throw new Error(response.body + ` code: ${response.status}`);
+        }
+
+        returnToNormal(event.currentTarget);
+
+        alert('Relatório criado e armazenado no sistema');
+    }).catch(e => {
+        alert(`Erro ao gerar relatório: ${e}`);
+        returnToNormal(event.currentTarget);
+        checkAuth(e);
+    });
+}
+
+async function editMainBrandBrands(event) {
+    const token = readCookie('token');
+    const brand_id = $('#select_edit_brand_id').val();
+
+    changeToLoad(event.currentTarget);
+
+    let response = await window.axios.get(globals.api_url + `main-brand/${globals.main_brand_id}/${globals.account_id}`, {
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    });
+
+    const mb = response.data;
+
+    async function detach(id) {
+        try {
+        const response = await window.axios.patch(globals.api_url + `main-brand/detach/${globals.main_brand_id}/${globals.account_id}`, {
+            brand_id: id
+            }, {
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (response.status != 200) {
+                throw new Error(response.body + ` code: ${response.status}`);
+            }
+    
+           return true;
+        } catch(e) {
+            alert(`Erro ao retirar marca ${id} do cliente`);
+            checkAuth(e);
+            return false;
+        }
+    }
+
+
+    if(globals.selected_edit_brand == 0) {
+        const result = await detach(mb.primary.id);
+
+        if(!result) {
+            returnToNormal(event.currentTarget);
+            return false;
+        }
+    } else {
+        const result = await detach(mb.opponents[globals.selected_edit_brand - 1]);
+
+        if(!result) {
+            returnToNormal(event.currentTarget);
+            return false;
+        }
+    }
+
+    try {
+        response = await window.axios.patch(globals.api_url + `main-brand/attach/${globals.main_brand_id}/${globals.account_id}`, {
+        brand_id,
+        is_opponent: globals.selected_edit_brand > 0 ? true : false
+        }, {
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+
+        if (response.status != 200) {
+            throw new Error(response.body + ` code: ${response.status}`);
+        }
+
+        returnToNormal(event.currentTarget);
+
+        fillEditOpponents();
+        $('#select_edit_brand_modal_id').modal('hide');
+        $('#edit_main_brand_modal_id').modal('show');
+
+        return true;
+    } catch(e) {
+        alert('Erro ao atracar nova marca');
+        returnToNormal(event.currentTarget);
+        checkAuth(e);
+        return false;
+    }
 }
 
 module.exports = {
@@ -151,5 +367,8 @@ module.exports = {
     listBrands,
     switchBrand,
     loadBrandPic,
-    createMainBrand
+    createMainBrand,
+    fillEditOpponents,
+    genWeeklyReport,
+    editMainBrandBrands
 };

@@ -3,16 +3,18 @@ const globals = require('../globals');
 const { readCookie, checkAuth, changeToLoad, returnToNormal } = require('../utils');
 const { listPlatforms } = require('./platform');
 
-function listBBrands() {
+async function listBBrands() {
     const token = readCookie('token');
 
-    window.axios.get(globals.api_url + `brand/list`, {
-        headers: {
-            'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
-    }).then(response => {
+    try {
+        const response = await window.axios.get(globals.api_url + `brand/list`, {
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+
         if (response.status != 200) {
             throw new Error(response.body + ` code: ${response.status}`);
         }
@@ -31,12 +33,11 @@ function listBBrands() {
         $('.list-brands-opponents').each(function() {
             $(this).html(`<option value=-1>Nenhum</option>\n` + options);
         });
-
-
-    }).catch(e => {
+        
+    } catch(e) {
         alert('Erro ao listar marcas:', e);
         checkAuth(e.response);
-    });
+    }
 }
 
 async function getBBrand() {

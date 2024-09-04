@@ -12,6 +12,7 @@ const globals = {
         brand_id: -1,
         chat_model: ''
     },
+    selected_edit_brand: 0,
     incompleteData: '',
     incompleteEvent: '',
     currentEvent: null,

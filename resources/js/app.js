@@ -5,10 +5,10 @@ const { cleanDOM, cleanMsgBody, readCookie, appLoad } = require('./utils');
 const { addThread, sendMsgThread, renameChat, deleteChat, listChats } = require('./funcs/chat');
 const { login, logout, changePassword } = require('./funcs/auth');
 const { listAccounts, createAccount } = require('./funcs/account');
-const { switchBrand, mainBrandSelect, listBrands, loadBrandPic, createMainBrand } = require('./funcs/mainBrand');
+const { switchBrand, mainBrandSelect, listBrands, loadBrandPic, createMainBrand, fillEditOpponents, genWeeklyReport, editMainBrandBrands } = require('./funcs/mainBrand');
 const { createBrand, listBBrands, editPrimaryBrand } = require('./funcs/brand');
 const { createUser, listUsers } = require('./funcs/user');
-const { createPlatform, savePlatform, genWeeklyReport } = require('./funcs/platform');
+const { createPlatform, savePlatform } = require('./funcs/platform');
 
 $(document).ready(function(){
     $('#action_menu_btn').click(function(){
@@ -41,6 +41,12 @@ $(document).ready(function(){
     $('#save_edit_platform_btn_id').click(savePlatform);
     $('#create_main_brand_btn_id').click(createMainBrand);
     $('#generate_weekly_report_btn_id').click(genWeeklyReport);
+    $('#edit_main_brand_config_btn_id').click(() => {
+        fillEditOpponents();
+        $('#config_modal_id').modal('hide');
+        $('#edit_main_brand_modal_id').modal('show');
+    })
+    $('#edit_select_brand_btn_id').click(editMainBrandBrands);
 
     $(document).on('shown.bs.modal', function (e) {
         const modalId = $(e.target).attr('id');
@@ -139,40 +145,31 @@ $(document).ready(function(){
     globals.user_id = readCookie('user');
     const token = readCookie('token');
 
-    window.axios.get(globals.api_url + `user/${globals.user_id}/${globals.account_id}`, {
+    window.axios.get(globals.api_url + `check-token/${globals.account_id}`, {
         headers: {
             'Authorization': 'Bearer ' + token,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         }
     }).then(response => {
+        if(response.data.is_operator) {
+            $('#account-modal-tab')[0].classList.remove('disabled_btn');
+            listUsers();
+        }
+
         listChats();
         listBrands();
         loadBrandPic();
     }).catch(e => {
         // Try checking if it's an operator
-        window.axios.get(globals.api_url + `operator/${globals.user_id}`, {
-            headers: {
-                'Authorization': 'Bearer ' + token,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
-        }).then(response => {
-            listChats();
-            listBrands();
-            loadBrandPic();
-            $('#account-modal-tab')[0].classList.remove('disabled_btn');
-            listUsers();
-        }).catch(e => {
-            appLoad();
-            appLoad();
-            appLoad();
-            cleanDOM(globals.chat_cards);
-            globals.chat_cards.innerHTML = globals.add_chat;
-            cleanMsgBody();
-            $('#account-modal-tab')[0].classList.add('disabled_btn');
-    
-            $('#login_modal_id').modal('show');
-        });
+        appLoad();
+        appLoad();
+        appLoad();
+        cleanDOM(globals.chat_cards);
+        globals.chat_cards.innerHTML = globals.add_chat;
+        cleanMsgBody();
+        $('#account-modal-tab')[0].classList.add('disabled_btn');
+
+        $('#login_modal_id').modal('show');
     });
 });
