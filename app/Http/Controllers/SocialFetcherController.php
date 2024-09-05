@@ -172,7 +172,7 @@ class SocialFetcherController extends Controller
         }*/
 
         if($response) {
-            $json = (object) $response;
+            $json = (object) json_decode($response);
             $num = $json->data->edge_media_to_comment->count;
             $this->updateApiTokenUsage($apiToken, 2 + (ceil($num / 5.0)));
         } else

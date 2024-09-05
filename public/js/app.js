@@ -2791,7 +2791,7 @@ function _addThread() {
             },
             body: JSON.stringify({
               text: first_message,
-              main_brand_id: 1,
+              main_brand_id: globals.main_brand_id,
               name: new_chat_name
             })
           });

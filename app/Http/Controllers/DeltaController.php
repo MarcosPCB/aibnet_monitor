@@ -325,7 +325,7 @@ class DeltaController extends Controller
             
             $response = $socialFetcher->fetchProfile($sRequest);  
 
-            $json = (object) $response;
+            $json = (object) json_decode($response);
             $json = $json->data;
 
             $platform->description = $json->biography;
@@ -371,7 +371,7 @@ class DeltaController extends Controller
                     
                 $response = $socialFetcher->fetchPosts($sRequest);
 
-                $json = (object) $response;
+                $json = (object) json_decode($response);
                 $json = $json->data;
                 $posts = $decoder->instagramDecoder($json->edge_owner_to_timeline_media, 'posts', 'none');
             }
