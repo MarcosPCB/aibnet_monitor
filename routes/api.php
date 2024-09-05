@@ -152,12 +152,27 @@ Route::middleware(['auth:sanctum', 'isOperatorOrAccountUser'])->group(function (
      });
 });
 
-Route::get('/proxy-image', function () {
-    $url = 'https://instagram.fthe13-1.fna.fbcdn.net/v/t51.2885-19/448488519_807174578172136_4689952809277985499_n.jpg?stp=dst-jpg_s150x150&_nc_ht=instagram.fthe13-1.fna.fbcdn.net&_nc_cat=104&_nc_ohc=2ZLQhffhZpMQ7kNvgEn0x3d&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AYDfxGIiHglWhga-TAbCr2cYVcj3f6M1pyn5Q2bpqtkL0w&oe=66DF9D79&_nc_sid=8b3546';
+Route::get('/proxy-image', function (Request $request) {
+    $url = $request->query('url');
 
-    $response = Http::get($url);
+    if (!$url) {
+        return response()->json(['error' => 'URL is required'], 400);
+    }
 
-    return response($response->body())->header('Content-Type', 'image/jpeg');
+    try {
+        // Tenta fazer a requisição da imagem externa
+        $response = Http::get($url);
+
+        if ($response->successful()) {
+            return response($response->body())->header('Content-Type', 'image/jpeg');
+        }
+    } catch (\Exception $e) {
+        // Se falhar, cai na imagem local
+    }
+
+    // Retorna a imagem local como fallback
+    $fallbackImagePath = public_path('img/logo_black.png');
+    return response()->file($fallbackImagePath);
 });
 
 Route::get('/mock-complete-profile', function () {

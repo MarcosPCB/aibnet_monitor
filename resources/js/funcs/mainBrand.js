@@ -173,7 +173,7 @@ function loadBrandPic() {
 
         for(let i = 0; i < platforms.length; i++) {
             if(platforms[i].avatar_url != null && platforms[i].avatar_url != '') {
-                brand_pic.src = platforms[i].avatar_url;
+                brand_pic.src = `/api/proxy-image?url=${platforms[i].avatar_url}`;
                 break;
             }
         }
@@ -191,7 +191,7 @@ function mainBrandSelect() {
         globals.account_id = $('#account_select_id')[0].value;
 
     globals.login_flow = false;
-    
+
     listBrands();
     listUsers();
 
