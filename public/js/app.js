@@ -3394,7 +3394,7 @@ function loadBrandPic() {
     var platforms = response.data;
     for (var i = 0; i < platforms.length; i++) {
       if (platforms[i].avatar_url != null && platforms[i].avatar_url != '') {
-        brand_pic.src = platforms[i].avatar_url;
+        brand_pic.src = "/api/proxy-image?url=".concat(platforms[i].avatar_url);
         break;
       }
     }
