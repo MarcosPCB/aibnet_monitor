@@ -250,7 +250,7 @@ class DeltaController extends Controller
     public function deltaBuilder(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'brand_id' => 'required|exists:brand,id',
+            'brand_id' => 'required|exists:brand,id'
         ]);
 
         if ($validator->fails()) {
@@ -402,6 +402,122 @@ class DeltaController extends Controller
         ]);
 
         $delta->save();
+
+        return response()->json($deltaWeek, 200);
+    }
+
+    public function buildMonth(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'brand_id' => 'required|exists:brand,id',
+            'month' => 'required|number',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Busca as informações de Brand
+        $brand = Brand::findOrFail($request->input('brand_id'));
+        $month = $request->input('month');
+
+        // Avalia qual ApiToken pode ser usado (a lógica exata de escolha pode variar)
+        $apiToken = ApiToken::where(function ($query) {
+            $query->whereColumn('limit_used', '<', 'limit')
+                  ->orWhere(function ($query) {
+                      $query->whereRaw('CASE
+                          WHEN limit_type = "daily" AND DATE(last_used) < CURDATE() THEN TRUE
+                          WHEN limit_type = "weekly" AND YEARWEEK(last_used, 1) < YEARWEEK(CURDATE(), 1) THEN TRUE
+                          WHEN limit_type = "monthly" AND DATE_FORMAT(last_used, "%Y-%m") < DATE_FORMAT(CURDATE(), "%Y-%m") THEN TRUE
+                          WHEN limit_type = "yearly" AND YEAR(last_used) < YEAR(CURDATE()) THEN TRUE
+                          ELSE FALSE
+                      END');
+                  });
+        })
+        ->where('status', true)
+        ->where('expires', '>', now())  // Verifica se o token ainda não expirou
+        ->firstOrFail();        
+
+        // Instancia o controlador SocialFetcher
+        $socialFetcher = new SocialFetcherController();
+
+        $platforms = Platform::where('brand_id', $brand->id)->get();
+
+        $decoder = new PostDecoder();
+
+        $deltaWeek = new \stdClass();
+        $deltaWeek->month = date('m');
+        $deltaWeek->year = date('Y');
+        $deltaWeek->brand_name = $brand->name;
+        $deltaWeek->platforms = [];
+
+        for($i = 0; $i < count($platforms); $i++) {
+            $platform = $platforms[$i];
+
+            // Lógica para capturar perfil e posts
+            $sRequest = Request::create('/',
+                'POST',
+                ['id' => $platform->platform_id,
+                'platform' => $platform->type,
+                'type' => 'complete',
+                'api_id' => $apiToken->id]);
+            
+            $response = $socialFetcher->fetchProfile($sRequest);  
+
+            $json = (object) json_decode($response);
+            $json = $json->data;
+
+            $platform->description = $json->biography;
+            $platform->num_followers = $json->edge_followed_by->count;
+            $platform->avatar_url = $json->profile_pic_url;
+            $platform->platform_id2 = $json->id;
+
+            
+            $deltaWeek->platforms[] = new \stdClass();
+            $deltaWeek->platforms[$i]->id = $platform->id;
+            $deltaWeek->platforms[$i]->followers = $json->edge_followed_by->count;
+            $deltaWeek->platforms[$i]->total_platform_posts = $json->edge_owner_to_timeline_media->count;
+
+            $currentYear = Carbon::now()->year;
+
+            // Criando a data com o primeiro dia do mês
+            $startDate = Carbon::create($currentYear, $month, 1)->format('Y-m-d');
+           
+            $sRequest = Request::create('/',
+                'POST',
+                ['id' => $platform->platform_id2,
+                'platform' => $platform->type,
+                'start_date' => $startDate,
+                'api_id' => $apiToken->id]);
+                
+            $response = $socialFetcher->fetchPosts($sRequest);
+
+            $json = (object) json_decode($response);
+            $json = $json->data;
+            $posts = $decoder->instagramDecoder($json->edge_owner_to_timeline_media, 'posts', 'none');
+
+            // Lógica para capturar comments
+            if ($posts->count > 0) {
+                foreach($posts->posts as $post) {
+                    $sRequest = Request::create('/',
+                        'POST',
+                        ['id' => $post->shortcode,
+                        'platform' => $platform->type,
+                        'comments_limit' => 20,
+                        'api_id' => $apiToken->id]);
+                    
+                    $response = $socialFetcher->fetchComments($sRequest);
+
+                    $json = (object) $response;
+                    $json = $json->data;
+                    $post->comments = $decoder->instagramCommentDecoder($json->edge_media_to_comment);
+                }
+            }
+
+            $deltaWeek->platforms[$i]->week_posts = $posts;
+        }
 
         return response()->json($deltaWeek, 200);
     }

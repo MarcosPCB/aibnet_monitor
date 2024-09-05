@@ -2349,6 +2349,7 @@ function login(event) {
       $('#select_account_cancel_btn_id').hide();
       listAccounts();
     } else {
+      globals.login_flow = true;
       mainBrandSelect();
       $('#login_modal_id').modal('hide');
     }
@@ -3405,7 +3406,8 @@ function loadBrandPic() {
   });
 }
 function mainBrandSelect() {
-  globals.account_id = $('#account_select_id')[0].value;
+  if (!globals.login_flow) globals.account_id = $('#account_select_id')[0].value;
+  globals.login_flow = false;
   listBrands();
   listUsers();
   var expires = new Date();
@@ -3960,6 +3962,7 @@ var globals = {
     chat_model: ''
   },
   selected_edit_brand: 0,
+  login_flow: false,
   incompleteData: '',
   incompleteEvent: '',
   currentEvent: null,

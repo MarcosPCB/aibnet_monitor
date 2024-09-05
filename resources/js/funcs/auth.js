@@ -144,6 +144,7 @@ function login(event) {
             $('#select_account_cancel_btn_id').hide();
             listAccounts();
         } else {
+            globals.login_flow = true;
             mainBrandSelect();
 
             $('#login_modal_id').modal('hide');

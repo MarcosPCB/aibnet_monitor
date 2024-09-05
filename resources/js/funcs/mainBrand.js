@@ -187,7 +187,11 @@ function loadBrandPic() {
 }
 
 function mainBrandSelect() {
-    globals.account_id = $('#account_select_id')[0].value;
+    if(!globals.login_flow)
+        globals.account_id = $('#account_select_id')[0].value;
+
+    globals.login_flow = false;
+    
     listBrands();
     listUsers();
 

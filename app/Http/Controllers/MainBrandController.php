@@ -104,6 +104,56 @@ class MainBrandController extends Controller
         return response()->json('Success', 200);
     }
 
+    public function buildDeltaMonth($id, $month) {
+        $mainBrand = MainBrand::findOrFail($id);
+
+        $primary = $mainBrand->primaryBrand()->first();
+        $opponents = $mainBrand->opponents()->get();
+
+        $delta = new DeltaController();
+
+        $sRequest = Request::create('/', 'POST', [
+            'brand_id' => $primary->id,
+            'month' => $month
+        ]);
+
+        $primaryJson = $delta->buildMonth($sRequest)->getData();
+
+        $opponentsJson = [];
+
+        if($opponents) {
+            foreach($opponents as $brand) {
+                $sRequest = Request::create('/', 'POST', [
+                    'brand_id' => $brand->id,
+                ]);
+        
+                $opponentsJson[] = $delta->buildMonth($sRequest)->getData();
+            }
+        }
+
+        $completeDelta = new \stdClass();
+        $completeDelta->primary_brand = $primaryJson;
+        $completeDelta->opponents = $opponentsJson;
+
+        $llm = new LLMComm($id);
+
+        $report = $llm->generateReport($completeDelta->primary_brand);
+
+        if(!$report)
+            return response()->json([
+                'error' => 'report-generation'
+                ], 500);
+
+        $result = $llm->storeReport($completeDelta->primary_brand->brand_name, $report);
+
+        if(!$result)
+            return response()->json([
+                'error' => 'report-store'
+                ], 500);
+
+        return response()->json('Success', 200);
+    }
+
     // Deleta uma MainBrand e suas associações
     public function delete($id)
     {

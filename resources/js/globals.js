@@ -13,6 +13,7 @@ const globals = {
         chat_model: ''
     },
     selected_edit_brand: 0,
+    login_flow: false,
     incompleteData: '',
     incompleteEvent: '',
     currentEvent: null,
