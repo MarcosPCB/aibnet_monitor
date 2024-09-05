@@ -3394,10 +3394,21 @@ function loadBrandPic() {
     var platforms = response.data;
     for (var i = 0; i < platforms.length; i++) {
       if (platforms[i].avatar_url != null && platforms[i].avatar_url != '') {
-        brand_pic.src = "/api/proxy-image?url=".concat(platforms[i].avatar_url);
+        brand_pic.src = platforms[i].avatar_url;
         break;
       }
     }
+    fetch(brand_pic.src, {
+      method: 'GET'
+    }).then(function (response) {
+      return response.blob();
+    }) // Recebe a imagem como blob
+    .then(function (blob) {
+      brand_pic.src = URL.createObjectURL(blob); // Exibe a imagem
+    })["catch"](function (error) {
+      console.error('Erro puxando a imagem:', error);
+      brand_pic.src = 'img/logo_black.png';
+    });
     appLoad();
   })["catch"](function (e) {
     alert('Erro ao mudar avatar', e);

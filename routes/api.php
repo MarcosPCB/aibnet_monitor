@@ -152,29 +152,6 @@ Route::middleware(['auth:sanctum', 'isOperatorOrAccountUser'])->group(function (
      });
 });
 
-Route::get('/proxy-image', function (Request $request) {
-    $url = $request->query('url');
-
-    if (!$url) {
-        return response()->json(['error' => 'URL is required'], 400);
-    }
-
-    try {
-        // Tenta fazer a requisição da imagem externa
-        $response = Http::get($url);
-
-        if ($response->successful()) {
-            return response($response->body())->header('Content-Type', 'image/jpeg');
-        }
-    } catch (\Exception $e) {
-        // Se falhar, cai na imagem local
-    }
-
-    // Retorna a imagem local como fallback
-    $fallbackImagePath = public_path('img/logo_black.png');
-    return response()->file($fallbackImagePath);
-});
-
 Route::get('/mock-complete-profile', function () {
     $filePath = base_path('tests/Mocks/complete-profile.json');
 
