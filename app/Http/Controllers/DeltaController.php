@@ -333,6 +333,8 @@ class DeltaController extends Controller
             $platform->avatar_url = $json->profile_pic_url;
             $platform->platform_id2 = $json->id;
 
+            $platform->save();
+
             
             $deltaWeek->platforms[] = new \stdClass();
             $deltaWeek->platforms[$i]->id = $platform->id;
@@ -474,6 +476,7 @@ class DeltaController extends Controller
             $platform->avatar_url = $json->profile_pic_url;
             $platform->platform_id2 = $json->id;
 
+            $platform->save();
             
             $deltaWeek->platforms[] = new \stdClass();
             $deltaWeek->platforms[$i]->id = $platform->id;

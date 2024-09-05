@@ -152,6 +152,14 @@ Route::middleware(['auth:sanctum', 'isOperatorOrAccountUser'])->group(function (
      });
 });
 
+Route::get('/proxy-image', function () {
+    $url = 'https://instagram.fthe13-1.fna.fbcdn.net/v/t51.2885-19/448488519_807174578172136_4689952809277985499_n.jpg?stp=dst-jpg_s150x150&_nc_ht=instagram.fthe13-1.fna.fbcdn.net&_nc_cat=104&_nc_ohc=2ZLQhffhZpMQ7kNvgEn0x3d&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AYDfxGIiHglWhga-TAbCr2cYVcj3f6M1pyn5Q2bpqtkL0w&oe=66DF9D79&_nc_sid=8b3546';
+
+    $response = Http::get($url);
+
+    return response($response->body())->header('Content-Type', 'image/jpeg');
+});
+
 Route::get('/mock-complete-profile', function () {
     $filePath = base_path('tests/Mocks/complete-profile.json');
 
