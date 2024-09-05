@@ -178,8 +178,12 @@ function loadBrandPic() {
             }
         }
 
-        fetch(brand_pic.src, {
-            method: 'GET'
+        fetch(`/api/pproxy-image`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ url: brand_pic.src })
         })
         .then(response => response.blob()) // Recebe a imagem como blob
         .then(blob => {
