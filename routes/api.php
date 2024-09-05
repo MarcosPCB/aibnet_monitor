@@ -153,7 +153,7 @@ Route::middleware(['auth:sanctum', 'isOperatorOrAccountUser'])->group(function (
 });
 
 Route::post('/proxy-image', function (Request $request) {
-    $url = $request->only('url');
+    $url = $request->input('url');
 
     if (!$url) {
         return response()->json(['error' => 'URL is required'], 400);
@@ -161,7 +161,7 @@ Route::post('/proxy-image', function (Request $request) {
 
     try {
         // Tenta fazer a requisição da imagem externa
-        $response = Http::get($url);
+        $response = Http::withoutVerifying()->get($url);
 
         if ($response->successful()) {
             return response($response->body())->header('Content-Type', 'image/jpeg');

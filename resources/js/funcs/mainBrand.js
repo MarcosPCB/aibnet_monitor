@@ -171,6 +171,10 @@ function loadBrandPic() {
 
         const platforms = response.data;
 
+        if(platforms.length == 0) {
+            throw 'Nenhuma plataforma foi carregada. acione o administrador da conta';
+        }
+
         for(let i = 0; i < platforms.length; i++) {
             if(platforms[i].avatar_url != null && platforms[i].avatar_url != '') {
                 brand_pic.src = platforms[i].avatar_url;
@@ -178,7 +182,7 @@ function loadBrandPic() {
             }
         }
 
-        fetch(`/api/pproxy-image`, {
+        fetch(`/api/proxy-image`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -196,7 +200,7 @@ function loadBrandPic() {
 
         appLoad();
     }).catch(e => {
-        alert('Erro ao mudar avatar', e);
+        alert(`Erro ao mudar avatar: ${e}`);
         checkAuth(e);
         appLoad();
     });

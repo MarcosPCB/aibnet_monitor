@@ -3392,13 +3392,16 @@ function loadBrandPic() {
     }
     var brand_pic = $('#brand_pic_id')[0];
     var platforms = response.data;
+    if (platforms.length == 0) {
+      throw 'Nenhuma plataforma foi carregada. acione o administrador da conta';
+    }
     for (var i = 0; i < platforms.length; i++) {
       if (platforms[i].avatar_url != null && platforms[i].avatar_url != '') {
         brand_pic.src = platforms[i].avatar_url;
         break;
       }
     }
-    fetch("/api/pproxy-image", {
+    fetch("/api/proxy-image", {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -3417,7 +3420,7 @@ function loadBrandPic() {
     });
     appLoad();
   })["catch"](function (e) {
-    alert('Erro ao mudar avatar', e);
+    alert("Erro ao mudar avatar: ".concat(e));
     checkAuth(e);
     appLoad();
   });
