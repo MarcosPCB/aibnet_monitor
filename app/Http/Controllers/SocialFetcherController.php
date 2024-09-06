@@ -142,7 +142,7 @@ class SocialFetcherController extends Controller
         
         $response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/user/posts?user_id='.$id.'&token='.$apiTokenData->token.'&depth='.$depth.'&chunk_size='.$chunk.'&oldest_timestamp='.$timestamp);
 
-        $json = (object) $response;
+        $json = (object) json_decode($response);
         $cost = $json->data->count;
 
         $this->updateApiTokenUsage($apiToken, $cost); // Exemplo de uso
