@@ -412,7 +412,7 @@ class DeltaController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'brand_id' => 'required|exists:brand,id',
-            'month' => 'required|number',
+            'month' => 'required|integer',
         ]);
 
         if ($validator->fails()) {
