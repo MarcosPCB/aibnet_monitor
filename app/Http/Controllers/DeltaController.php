@@ -499,7 +499,7 @@ class DeltaController extends Controller
 
             $json = (object) json_decode($response);
             $json = $json->data;
-            $posts = $decoder->instagramDecoder($json->data, 'posts', 'none');
+            $posts = $decoder->instagramDecoder($json, 'posts', 'none');
 
             // Lógica para capturar comments
             if ($posts->count > 0) {
