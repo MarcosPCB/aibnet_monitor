@@ -472,8 +472,8 @@ class DeltaController extends Controller
 
             if(isset($json->data))
                 $json = $json->data;
-            else if(isset($json->response))
-                $json = $json->response;
+            else if(isset($json->user))
+                $json = $json->user;
 
             $platform->description = $json->biography;
             $platform->num_followers = isset($json->edge_followed_by->count) 
