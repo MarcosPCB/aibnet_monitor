@@ -161,7 +161,7 @@ class SocialFetcherController extends Controller
             if($json->response->more_available && !$check) {
                 $finished = false;
                 while(!$finished) {
-                    $r = Http::withoutVerifying()->get($apiTokenData->url.'user/medias?user_id='.$id.'&page_id='.$json->response->next_page_id.'&access_key='.$apiTokenData->token);
+                    $r = Http::withoutVerifying()->get($apiTokenData->url.'user/medias?user_id='.$id.'&page_id='.$json->next_page_id.'&access_key='.$apiTokenData->token);
                     $json = (object) json_decode($r);
 
                     array_merge($response->response->items, $json->response->items);
