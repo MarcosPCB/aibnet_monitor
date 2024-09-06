@@ -124,7 +124,7 @@ class PostDecoder
             } else {
                 if (count($node->usertags) > 0) {
                     foreach ($node->usertags as $mention) {
-                        $mentions .= $mention->username . ', ';
+                        $mentions .= $mention->user->username . ', ';
                     }
                 }
             }
