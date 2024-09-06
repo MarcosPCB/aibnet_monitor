@@ -81,6 +81,7 @@ Route::middleware(['auth:sanctum', 'isOperator'])->group(function () {
     Route::get('/delta/find', [DeltaController::class, 'findByDate']);
     Route::delete('/delta/delete/{id?}', [DeltaController::class, 'delete']);
     Route::post('/delta/builder', [DeltaController::class, 'deltaBuilder']);
+    Route::post('/delta/builder/month', [DeltaController::class, 'buildMonth']);
     Route::get('/delta/find', [DeltaController::class, 'findDelta']);
 
     // Get routes
@@ -136,6 +137,7 @@ Route::middleware(['auth:sanctum', 'isOperatorOrAccountUser'])->group(function (
      Route::get('user/{id}/{account_id}', [UserController::class, 'get'])->name('user.get');
      Route::get('main-brand/{id}/{account_id}', [MainBrandController::class, 'get'])->name('main-brand.get');
      Route::get('main-brand/weekly/{id}/{account_id}', [MainBrandController::class, 'buildDelta'])->name('main-brand.weekly');
+     Route::get('main-brand/month/{id}/{month}/{account_id}', [MainBrandController::class, 'buildDeltaMonth'])->name('main-brand.month');
      Route::get('main-brand/primary/platforms/{id}/{account_id}', [MainBrandController::class, 'getPlatforms'])->name('main-brand.get.platforms');
 
      // Chat

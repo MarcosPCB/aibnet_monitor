@@ -6,6 +6,7 @@ use App\Models\MainBrand;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use DateTime;
 
 class LLMComm {
 
@@ -29,8 +30,44 @@ class LLMComm {
         $this->file_url = "https://api.openai.com/v1/files";
     }
 
-    public function generateReport($json) {
+    public function generateReport($json, $type) {
         $jsonString = json_encode($json);
+
+        $content = '';
+        $num_date = '';
+
+        switch( $type ) {
+            case 'week':
+                $content = 
+                    "Preciso que você, com muito amor e carinho, gere um relatório para o cliente {$json->brand_name} baseado
+                    nestes dados em formato JSON que vou te mandar. Estes dados se referem a postagens feitas
+                    em redes sociais na semana atual. Peço que, por favor, você gere um relatório bem detalhado,
+                    relatando a performance, sentimentos, reações, traga insights e melhorias entre outras coisas,
+                    com muita atenção e carinho, pois o cliente iria amar. Obrigado. Segue o JSON:
+                    {$jsonString}
+                    
+                    Por favor, siga a estrutura que você considerar melhor, confio em você. Caso dê tudo certo,
+                    apenas responda com o relatório e nada mais.";
+                    $num_date = $json->week;
+                break;
+
+            case 'month':
+                $content = 
+                    "Preciso que você, com muito amor e carinho, gere um relatório para o cliente {$json->brand_name} baseado
+                    nestes dados em formato JSON que vou te mandar. Estes dados se referem a postagens feitas
+                    em redes sociais dentro de um mês. Peço que, por favor, você gere um relatório bem detalhado,
+                    relatando a performance, sentimentos, reações, traga insights e melhorias entre outras coisas,
+                    com muita atenção e carinho, pois o cliente iria amar. Obrigado. Segue o JSON:
+                    {$jsonString}
+                    
+                    Por favor, siga a estrutura que você considerar melhor, confio em você. Caso dê tudo certo,
+                    apenas responda com o relatório e nada mais.";
+                    $num_date = $json->month;
+                    $dateObj = DateTime::createFromFormat('!m', $num_date); // O ponto de exclamação (!) força a criação do objeto a partir do mês
+                    $num_date = $dateObj->format('F');
+                break;
+        }
+
         $thread = (object) json_decode(Http::withoutVerifying()->withHeaders([
             'Authorization' => 'Bearer '.config('app.LLM_TOKEN'),
             'Accept' => 'application/json',
@@ -38,14 +75,7 @@ class LLMComm {
             ])->post($this->threads_url, [
                 'messages' => [[
                     'role' => 'user',
-                    'content' => "Preciso que você, com muito amor e carinho, gere um relatório para o cliente {$json->brand_name} baseado
-                        nestes dados em formato JSON que vou te mandar. Estes dados se referem a postagens feitas
-                        em redes sociais na semana atual. Peço que, por favor, você gere este relatório
-                        com muita atenção e carinho, pois o cliente iria amar. Obrigado. Segue o JSON:
-                        {$jsonString}
-                        
-                        Por favor, siga a estrutura que você considerar melhor, confio em você. Caso dê tudo certo,
-                        apenas responda com o relatório e nada mais."
+                    'content' => $content
                 ]]
             ]));
 
@@ -105,7 +135,7 @@ class LLMComm {
 
         $text = $messages->data[0]->content[0]->text->value;
 
-        $fileName = "report_{$json->week}_{$json->year}_{$json->brand_name}.txt";
+        $fileName = "report_{$num_date}_{$json->year}_{$json->brand_name}.txt";
         $location = "reports/{$json->brand_name}/{$fileName}";
 
         Storage::put($location, $text);

@@ -11,7 +11,7 @@
             </select>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 cancel-btn" data-bs-dismiss="modal">Cancelar</button>
             <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="switch_brand_btn_id">
                 <span><i class="fa-solid fa-arrow-right-arrow-left"></i></span>
             </button>

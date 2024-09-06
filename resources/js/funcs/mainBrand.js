@@ -175,9 +175,11 @@ function loadBrandPic() {
             throw 'Nenhuma plataforma foi carregada. acione o administrador da conta';
         }
 
+        let src = '';
+
         for(let i = 0; i < platforms.length; i++) {
             if(platforms[i].avatar_url != null && platforms[i].avatar_url != '') {
-                brand_pic.src = platforms[i].avatar_url;
+                src = platforms[i].avatar_url;
                 break;
             }
         }
@@ -187,7 +189,7 @@ function loadBrandPic() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ url: brand_pic.src })
+            body: JSON.stringify({ url: src })
         })
         .then(response => response.blob()) // Recebe a imagem como blob
         .then(blob => {
@@ -298,6 +300,34 @@ function genWeeklyReport(event) {
     });
 }
 
+function genMonthReport(event) {
+    const token = readCookie('token');
+    const month = $('#select_month_id').val();
+    changeToLoad(event.currentTarget);
+
+    window.axios.get(globals.api_url + `main-brand/month/${globals.main_brand_id}/${month}/${globals.account_id}`, {
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        if (response.status != 200) {
+            throw new Error(response.body + ` code: ${response.status}`);
+        }
+
+        returnToNormal(event.currentTarget);
+
+        alert('Relatório criado e armazenado no sistema');
+        $('#select_month_report_modal_id').modal('hide');
+        $('#config_modal_id').modal('show');
+    }).catch(e => {
+        alert(`Erro ao gerar relatório: ${e}`);
+        returnToNormal(event.currentTarget);
+        checkAuth(e);
+    });
+}
+
 async function editMainBrandBrands(event) {
     const token = readCookie('token');
     const brand_id = $('#select_edit_brand_id').val();
@@ -394,5 +424,6 @@ module.exports = {
     createMainBrand,
     fillEditOpponents,
     genWeeklyReport,
-    editMainBrandBrands
+    editMainBrandBrands,
+    genMonthReport
 };

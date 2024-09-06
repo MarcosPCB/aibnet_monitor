@@ -87,7 +87,7 @@ class MainBrandController extends Controller
 
         $llm = new LLMComm($id);
 
-        $report = $llm->generateReport($completeDelta->primary_brand);
+        $report = $llm->generateReport($completeDelta->primary_brand, 'week');
 
         if(!$report)
             return response()->json([
@@ -137,7 +137,7 @@ class MainBrandController extends Controller
 
         $llm = new LLMComm($id);
 
-        $report = $llm->generateReport($completeDelta->primary_brand);
+        $report = $llm->generateReport($completeDelta->primary_brand, 'month');
 
         if(!$report)
             return response()->json([

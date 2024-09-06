@@ -3395,9 +3395,10 @@ function loadBrandPic() {
     if (platforms.length == 0) {
       throw 'Nenhuma plataforma foi carregada. acione o administrador da conta';
     }
+    var src = '';
     for (var i = 0; i < platforms.length; i++) {
       if (platforms[i].avatar_url != null && platforms[i].avatar_url != '') {
-        brand_pic.src = platforms[i].avatar_url;
+        src = platforms[i].avatar_url;
         break;
       }
     }
@@ -3407,7 +3408,7 @@ function loadBrandPic() {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        url: brand_pic.src
+        url: src
       })
     }).then(function (response) {
       return response.blob();
@@ -3493,6 +3494,30 @@ function genWeeklyReport(event) {
     }
     returnToNormal(event.currentTarget);
     alert('Relatório criado e armazenado no sistema');
+  })["catch"](function (e) {
+    alert("Erro ao gerar relat\xF3rio: ".concat(e));
+    returnToNormal(event.currentTarget);
+    checkAuth(e);
+  });
+}
+function genMonthReport(event) {
+  var token = readCookie('token');
+  var month = $('#select_month_id').val();
+  changeToLoad(event.currentTarget);
+  window.axios.get(globals.api_url + "main-brand/month/".concat(globals.main_brand_id, "/").concat(month, "/").concat(globals.account_id), {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 200) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    returnToNormal(event.currentTarget);
+    alert('Relatório criado e armazenado no sistema');
+    $('#select_month_report_modal_id').modal('hide');
+    $('#config_modal_id').modal('show');
   })["catch"](function (e) {
     alert("Erro ao gerar relat\xF3rio: ".concat(e));
     returnToNormal(event.currentTarget);
@@ -3642,7 +3667,8 @@ module.exports = {
   createMainBrand: createMainBrand,
   fillEditOpponents: fillEditOpponents,
   genWeeklyReport: genWeeklyReport,
-  editMainBrandBrands: editMainBrandBrands
+  editMainBrandBrands: editMainBrandBrands,
+  genMonthReport: genMonthReport
 };
 
 /***/ }),
@@ -21700,7 +21726,8 @@ var _require6 = __webpack_require__(/*! ./funcs/mainBrand */ "./resources/js/fun
   createMainBrand = _require6.createMainBrand,
   fillEditOpponents = _require6.fillEditOpponents,
   genWeeklyReport = _require6.genWeeklyReport,
-  editMainBrandBrands = _require6.editMainBrandBrands;
+  editMainBrandBrands = _require6.editMainBrandBrands,
+  genMonthReport = _require6.genMonthReport;
 var _require7 = __webpack_require__(/*! ./funcs/brand */ "./resources/js/funcs/brand.js"),
   createBrand = _require7.createBrand,
   listBBrands = _require7.listBBrands,
@@ -21745,6 +21772,7 @@ $(document).ready(function () {
     $('#edit_main_brand_modal_id').modal('show');
   });
   $('#edit_select_brand_btn_id').click(editMainBrandBrands);
+  $('#generate_month_report_btn_id').click(genMonthReport);
   $(document).on('shown.bs.modal', function (e) {
     var modalId = $(e.target).attr('id');
     globals.modalHistory.push(modalId);

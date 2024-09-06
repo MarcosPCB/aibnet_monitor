@@ -450,7 +450,7 @@ class DeltaController extends Controller
         $decoder = new PostDecoder();
 
         $deltaWeek = new \stdClass();
-        $deltaWeek->month = date('m');
+        $deltaWeek->month = $month;
         $deltaWeek->year = date('Y');
         $deltaWeek->brand_name = $brand->name;
         $deltaWeek->platforms = [];

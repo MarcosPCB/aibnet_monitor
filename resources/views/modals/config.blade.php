@@ -1,3 +1,37 @@
+<!-- Modal select month report brand -->
+<div class="modal fade" id="select_month_report_modal_id" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-default">
+        <div class="modal-header">
+            <h5 class="modal-title text-white" id="staticBackdropLabel">Selecione o mês para gerar o relatório</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <select class="form-select type_msg" style="border-radius: 15px" id="select_month_id">
+                <option value="1">Janeiro</option>
+                <option value="2">Fevereiro</option>
+                <option value="3">Março</option>
+                <option value="4">Abril</option>
+                <option value="5">Maio</option>
+                <option value="6">Junho</option>
+                <option value="7">Julho</option>
+                <option value="8">Agosto</option>
+                <option value="9">Setembro</option>
+                <option value="10">Outubro</option>
+                <option value="11">Novembro</option>
+                <option value="12">Dezembro</option>
+            </select>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 cancel-btn" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-basic btn-primary rounded-pill px-4" id="generate_month_report_btn_id">
+                <span><i class="fa-solid fa-file-chart-column"></i></span>
+            </button>
+        </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Config account -->
 <div class="modal fade" id="config_modal_id" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -60,10 +94,11 @@
                         <h3 class="text-white">Gerenciar cliente</h3>
                         <hr class="dropdown-divider text-white">
                         <div class="d-flex">
-                            <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 me-2" data-bs-toggle="modal" data-bs-target="#switch_modal_id"><span><i class="fa-solid fa-arrow-right-arrow-left"></i></span></button>
+                            <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 me-2" data-bs-toggle="modal" data-bs-target="#switch_modal_id" data-bs-dismiss="modal"><span><i class="fa-solid fa-arrow-right-arrow-left"></i></span></button>
                             <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 me-2" id="edit_main_brand_config_btn_id"><span><i class="fa-solid fa-file-pen"></i></i></span></button>
                             <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 me-2" id="generate_weekly_report_btn_id"><span><i class="fa-solid fa-file-chart-pie"></i></span></button>
-                            <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 me-2" data-bs-toggle="modal" data-bs-target="create_main_brand_modal_id" data-bs-dismiss="modal"><span><i class="fa-solid fa-folder-plus"></i></span></button>
+                            <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 me-2" data-bs-toggle="modal" data-bs-target="#select_month_report_modal_id" data-bs-dismiss="modal"><span><i class="fa-solid fa-file-chart-column"></i></span></button>
+                            <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 me-2" data-bs-toggle="modal" data-bs-target="#create_main_brand_modal_id" data-bs-dismiss="modal"><span><i class="fa-solid fa-folder-plus"></i></span></button>
                         </div>
                     </div>
                 </div>
@@ -75,3 +110,4 @@
         </div>
     </div>
 </div>
+

@@ -5,7 +5,7 @@ const { cleanDOM, cleanMsgBody, readCookie, appLoad } = require('./utils');
 const { addThread, sendMsgThread, renameChat, deleteChat, listChats } = require('./funcs/chat');
 const { login, logout, changePassword } = require('./funcs/auth');
 const { listAccounts, createAccount } = require('./funcs/account');
-const { switchBrand, mainBrandSelect, listBrands, loadBrandPic, createMainBrand, fillEditOpponents, genWeeklyReport, editMainBrandBrands } = require('./funcs/mainBrand');
+const { switchBrand, mainBrandSelect, listBrands, loadBrandPic, createMainBrand, fillEditOpponents, genWeeklyReport, editMainBrandBrands, genMonthReport } = require('./funcs/mainBrand');
 const { createBrand, listBBrands, editPrimaryBrand } = require('./funcs/brand');
 const { createUser, listUsers } = require('./funcs/user');
 const { createPlatform, savePlatform } = require('./funcs/platform');
@@ -47,6 +47,7 @@ $(document).ready(function(){
         $('#edit_main_brand_modal_id').modal('show');
     })
     $('#edit_select_brand_btn_id').click(editMainBrandBrands);
+    $('#generate_month_report_btn_id').click(genMonthReport);
 
     $(document).on('shown.bs.modal', function (e) {
         const modalId = $(e.target).attr('id');
