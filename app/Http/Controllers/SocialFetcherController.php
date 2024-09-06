@@ -51,18 +51,11 @@ class SocialFetcherController extends Controller
 
         switch($type) {
             case 'complete':
-                $response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/user/detailed-info?username='.$id.'&token='.$apiTokenData->token);
-                /*$filePath = base_path('tests/Mocks/complete-profile.json');
-
-                // Verifica se o arquivo existe
-                if (File::exists($filePath)) {
-                    // Lê o conteúdo do arquivo
-                    $jsonContent = File::get($filePath);
-
-                    // Retorna o conteúdo como JSON
-                    //return response()->json(json_decode($jsonContent), 200);
-                    $response = json_decode($jsonContent);
-                }*/
+                if($apiTokenData->name == 'Ensemble') 
+                    $response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/user/detailed-info?username='.$id.'&token='.$apiTokenData->token);
+                else if($apiTokenData->name == 'Hiker' && $platform == 'instagram')
+                    $response = Http::withoutVerifying()->get($apiTokenData->url.'user/by/username?username='.$id.'&access_key='.$apiTokenData->token);
+               
                 break;
             
             case 'likes':
@@ -75,7 +68,7 @@ class SocialFetcherController extends Controller
         }
 
         $cost = 1;
-        if($platform == 'instagram') {
+        if($apiTokenData->name == 'Ensemble' && $platform == 'instagram') {
 
             switch($type) {
                 case 'complete':
@@ -140,10 +133,54 @@ class SocialFetcherController extends Controller
             return response()->json(['error' => 'Date range or specific date range must be provided'], 400);
         }
         
-        $response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/user/posts?user_id='.$id.'&token='.$apiTokenData->token.'&depth='.$depth.'&chunk_size='.$chunk.'&oldest_timestamp='.$timestamp);
+        $response = null;
+        $cost = 1;
 
-        $json = (object) json_decode($response);
-        $cost = $json->data->count;
+        if($apiTokenData->name == 'Ensemble') {
+            $response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/user/posts?user_id='.$id.'&token='.$apiTokenData->token.'&depth='.$depth.'&chunk_size='.$chunk.'&oldest_timestamp='.$timestamp);
+
+            $json = (object) json_decode($response);
+            $cost = count($json->data->posts);
+        } else if($apiTokenData->name == 'Hiker' && $platform == 'instagram') {
+            $r = Http::withoutVerifying()->get($apiTokenData->url.'user/medias?user_id='.$id.'&access_key='.$apiTokenData->token);
+            $json = (object) json_decode($r);
+
+            $response = $json;
+
+            // Check if the posts are at the current timestamp
+            $check = false;
+            for($i = 0; $i < count($json->response->items); $i++) {
+                $post = $json->response->items[$i];
+
+                if($post->taken_at < $timestamp) {
+                    $check = true;
+                    break;
+                }
+            }
+
+            if($json->response->more_available && !$check) {
+                $finished = false;
+                while(!$finished) {
+                    $r = Http::withoutVerifying()->get($apiTokenData->url.'user/medias?user_id='.$id.'&page_id='.$json->response->next_page_id.'&access_key='.$apiTokenData->token);
+                    $json = (object) json_decode($r);
+
+                    array_merge($response->response->items, $json->response->items);
+
+                    $check = false;
+                    for($i = 0; $i < count($json->response->items); $i++) {
+                        $post = $json->response->items[$i];
+
+                        if($post->taken_at < $timestamp) {
+                            $check = true;
+                            break;
+                        }
+                    }
+
+                    if($check || !$json->response->more_available)
+                        $finished = true;
+                }
+            }
+        }
 
         $this->updateApiTokenUsage($apiToken, $cost); // Exemplo de uso
 
@@ -159,24 +196,19 @@ class SocialFetcherController extends Controller
 
         $apiTokenData = ApiToken::where('id', $apiToken)->first();
         
-        $response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/post/details?code='.$id.'&token='.$apiTokenData->token.'&n_comments_to_fetch='.$limit);
+        if($apiTokenData->name == 'Ensemble') {
+            $response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/post/details?code='.$id.'&token='.$apiTokenData->token.'&n_comments_to_fetch='.$limit);
 
-        /*$filePath = base_path('tests/Mocks/comments.json');
-
-        // Verifica se o arquivo existe
-        if (File::exists($filePath)) {
-            // Lê o conteúdo do arquivo
-            $jsonContent = File::get($filePath);
-
-            $response = json_decode($jsonContent);
-        }*/
-
-        if($response) {
-            $json = (object) json_decode($response);
-            $num = $json->data->edge_media_to_comment->count;
-            $this->updateApiTokenUsage($apiToken, 2 + (ceil($num / 5.0)));
-        } else
-            $this->updateApiTokenUsage($apiToken, 2);
+            if($response) {
+                $json = (object) json_decode($response);
+                $num = $json->data->edge_media_to_comment->count;
+                $this->updateApiTokenUsage($apiToken, 2 + (ceil($num / 5.0)));
+            } else
+                $this->updateApiTokenUsage($apiToken, 2);
+        } else if($apiTokenData->name == 'Hiker' && $platform == 'instagram') {
+            $response = Http::withoutVerifying()->get($apiTokenData->url.'user/media/comments?id='.$id.'&access_key='.$apiTokenData->token);
+            $this->updateApiTokenUsage($apiToken, 1);
+        }
 
         return $response;//->json();
     }

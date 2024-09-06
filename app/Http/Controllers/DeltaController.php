@@ -469,10 +469,17 @@ class DeltaController extends Controller
             $response = $socialFetcher->fetchProfile($sRequest);  
 
             $json = (object) json_decode($response);
-            $json = $json->data;
+
+            if(isset($json->data))
+                $json = $json->data;
+            else if(isset($json->response))
+                $json = $json->response;
 
             $platform->description = $json->biography;
-            $platform->num_followers = $json->edge_followed_by->count;
+            $platform->num_followers = isset($json->edge_followed_by->count) 
+                ? $json->edge_followed_by->count 
+                : (isset($json->follower_count) ? $json->follower_count : 0);
+
             $platform->avatar_url = $json->profile_pic_url;
             $platform->platform_id2 = $json->id;
 
@@ -480,8 +487,10 @@ class DeltaController extends Controller
             
             $deltaWeek->platforms[] = new \stdClass();
             $deltaWeek->platforms[$i]->id = $platform->id;
-            $deltaWeek->platforms[$i]->followers = $json->edge_followed_by->count;
-            $deltaWeek->platforms[$i]->total_platform_posts = $json->edge_owner_to_timeline_media->count;
+            $deltaWeek->platforms[$i]->followers = $platform->num_followers;
+            $deltaWeek->platforms[$i]->total_platform_posts = isset($json->edge_owner_to_timeline_media->count)
+                ? $json->edge_owner_to_timeline_media->count
+                : (isset($json->media_count) ? $json->media_count : 0);
 
             $currentYear = Carbon::now()->year;
 
@@ -497,9 +506,18 @@ class DeltaController extends Controller
                 
             $response = $socialFetcher->fetchPosts($sRequest);
 
-            $json = (object) json_decode($response);
-            $json = $json->data;
-            $posts = $decoder->instagramDecoder($json, 'posts', 'none');
+            if(!isset($response->response))
+                $json = (object) json_decode($response);
+
+            if(isset($json->data)) {
+                $json = $json->data;
+                $posts = $decoder->instagramDecoder($json, 'posts', 'none');
+            } else if(isset($json->response)) {
+                $json = $json->response;
+                $posts = $decoder->instagramDecoder($json, 'items', 'none');
+            }
+
+            
 
             // Lógica para capturar comments
             if ($posts->count > 0) {
@@ -514,12 +532,18 @@ class DeltaController extends Controller
                     $response = $socialFetcher->fetchComments($sRequest);
 
                     $json = (object) $response;
-                    $json = $json->data;
-                    $post->comments = $decoder->instagramCommentDecoder($json->edge_media_to_comment);
+
+                    if(isset($json->data)) {
+                        $json = $json->data;
+                        $post->comments = $decoder->instagramCommentDecoder($json->edge_media_to_comment);
+                    } else {
+                        $json = $json->response;
+                        $post->comments = $decoder->instagramCommentDecoder($json);
+                    }
                 }
             }
 
-            $deltaWeek->platforms[$i]->week_posts = $posts;
+            $deltaWeek->platforms[$i]->month_posts = $posts;
         }
 
         return response()->json($deltaWeek, 200);

@@ -3415,11 +3415,12 @@ function loadBrandPic() {
     }) // Recebe a imagem como blob
     .then(function (blob) {
       brand_pic.src = URL.createObjectURL(blob); // Exibe a imagem
+      appLoad();
     })["catch"](function (error) {
       console.error('Erro puxando a imagem:', error);
       brand_pic.src = 'img/logo_black.png';
+      appLoad();
     });
-    appLoad();
   })["catch"](function (e) {
     alert("Erro ao mudar avatar: ".concat(e));
     checkAuth(e);

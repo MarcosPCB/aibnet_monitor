@@ -194,13 +194,13 @@ function loadBrandPic() {
         .then(response => response.blob()) // Recebe a imagem como blob
         .then(blob => {
             brand_pic.src = URL.createObjectURL(blob); // Exibe a imagem
+            appLoad();
         })
         .catch(error => {
             console.error('Erro puxando a imagem:', error);
             brand_pic.src = 'img/logo_black.png'
+            appLoad();
         });
-
-        appLoad();
     }).catch(e => {
         alert(`Erro ao mudar avatar: ${e}`);
         checkAuth(e);

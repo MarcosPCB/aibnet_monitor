@@ -16,10 +16,14 @@ class PostDecoder
             if (!isset($json->edges))
                 return null; // Retorna nulo caso o JSON não esteja no formato esperado
             $nodes = $json->edges;
-        } else {
+        } else if($nodeName == 'posts') {
             if (!isset($json->posts))
                 return null; // Retorna nulo caso o JSON não esteja no formato esperado
             $nodes = $json->posts;
+        } else if($nodeName == 'items') {
+            if (!isset($json->items))
+                return null; // Retorna nulo caso o JSON não esteja no formato esperado
+            $nodes = $json->items;
         }
 
         $timestamp = 0;
@@ -49,34 +53,57 @@ class PostDecoder
         $cleanedPosts = [];
 
         foreach ($nodes as $post) {
-            $node = $post->node;
+            if($nodeName != 'items')
+                $node = $post->node;
+            else $node = $post;
 
-            if($node->taken_at_timestamp < $timestamp)
-                continue;
+            $dateTime = null;
 
-            // Determina o tipo de postagem
-            switch ($node->__typename) {
-                case 'GraphImage':
-                    $type = 'image';
-                    break;
-                case 'GraphVideo':
-                    $type = 'video';
-                    break;
-                case 'GraphStory':
-                    $type = 'story';
-                    break;
-                case 'GraphSidecar':
-                    $type = 'carousel';
-                    break;
-                default:
-                    $type = 'unknown';
+            if(isset($node->taken_at_timestamp))
+                $dateTime = Carbon::parse($node->taken_at_timestamp);
+                if($node->taken_at_timestamp < $timestamp)
+                    continue;
+            else {
+                $dateTime = Carbon::createFromTimestamp($node->taken_at)->toDateTimeString();
+                if($node->taken_at < $timestamp)
+                    continue;
             }
 
-            // Converte o timestamp para um formato legível
-            $dateTime = Carbon::createFromTimestamp($node->taken_at_timestamp)->toDateTimeString();
+            if(isset($node->__typename)) {
+                // Determina o tipo de postagem
+                switch ($node->__typename) {
+                    case 'GraphImage':
+                        $type = 'image';
+                        break;
+                    case 'GraphVideo':
+                        $type = 'video';
+                        break;
+                    case 'GraphStory':
+                        $type = 'story';
+                        break;
+                    case 'GraphSidecar':
+                        $type = 'carousel';
+                        break;
+                    default:
+                        $type = 'unknown';
+                }
+            } else {
+                switch ($node->product_type) {
+                    case 'feed':
+                        $type = 'image';
+                        break;
+                    case 'clips':
+                        $type = 'video';
+                        break;
+                    default:
+                        $type = 'unknown';
+                }
+            }
 
             // Extrai a legenda (se houver)
-            $caption = $node->edge_media_to_caption->edges[0]->node->text ?? null;
+            $caption = isset($node->edge_media_to_caption)
+                ? ($node->edge_media_to_caption->edges[0]->node->text ?? null)
+                : (isset($node->caption) ? $node->caption->text : null);
 
             $tags = '';
             if (preg_match_all('/#\w+/', $caption, $matches)) {
@@ -88,23 +115,31 @@ class PostDecoder
             }
 
             $mentions = '';
-            if (count($node->edge_media_to_tagged_user->edges) > 0) {
-                foreach ($node->edge_media_to_tagged_user->edges as $mention) {
-                    $mentions .= $mention->node->user->username . ', ';
+            if(isset($node->edge_media_to_tagged_user)) {
+                if (count($node->edge_media_to_tagged_user->edges) > 0) {
+                    foreach ($node->edge_media_to_tagged_user->edges as $mention) {
+                        $mentions .= $mention->node->user->username . ', ';
+                    }
+                }
+            } else {
+                if (count($node->usertags) > 0) {
+                    foreach ($node->usertags as $mention) {
+                        $mentions .= $mention->username . ', ';
+                    }
                 }
             }
 
             // Monta o JSON limpo
             $cleanedPosts[] = (object)[
                 'id' => $node->id,
-                'shortcode' => $node->shortcode,
+                'shortcode' => $node->shortcode ?? $node->code ?? null,
                 'type' => $type,
                 'dateTime' => $dateTime,
                 'caption' => $caption,
                 'mentions' => $mentions,
                 'tags' => $tags,
-                'num_likes' => $node->edge_media_preview_like->count ?? 0,
-                'num_comments' => $node->edge_media_to_comment->count ?? 0,
+                'num_likes' => $node->edge_media_preview_like->count ?? $node->like_count ?? 0,
+                'num_comments' => $node->edge_media_to_comment->count ?? $node->comment_count ?? 0,
                 'comments' => array()
             ];
         }
@@ -118,13 +153,17 @@ class PostDecoder
     public function instagramCommentDecoder($json) {
         // Verifica se os dados estão no formato esperado
         if (!isset($json->edges)) {
-            return null; // Retorna nulo caso o JSON não esteja no formato esperado
-        }
+            if(isset($json->comments))
+                $json = $json->comments;
+            else return null; // Retorna nulo caso o JSON não esteja no formato esperado
+        } else  $json = $json->edges;
 
         $comments = [];
 
-        foreach ($json->edges as $post) {
-            $node = $post->node;
+        foreach ($json as $post) {
+            if($nodeName != 'items')
+                $node = $post->node;
+            else $node = $post;
 
             $tags = '';
             if (preg_match_all('/#\w+/', $node->text, $matches)) {
@@ -140,10 +179,10 @@ class PostDecoder
                 'text' => $node->text,
                 'tags' => $tags,
                 'author' => [
-                    'id' => $node->owner->id,
-                    'name' => $node->owner->username,
+                    'id' => $node->owner->id ?? $node->user->id ?? null,
+                    'name' => $node->owner->username ?? $node->user->username ?? null,
                 ],
-                'likes' => $node->edge_liked_by->count,
+                'likes' => $node->edge_liked_by->count ?? $node->like_count ?? 0,
             ];
         }
 
