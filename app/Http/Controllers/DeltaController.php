@@ -508,6 +508,7 @@ class DeltaController extends Controller
 
             if(!isset($response->response))
                 $json = (object) json_decode($response);
+            else $json = $response;
 
             $posts = null;
 
