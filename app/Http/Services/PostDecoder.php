@@ -10,12 +10,16 @@ class PostDecoder
     {
         // Verifica se os dados estão no formato esperado
 
+        $nodes = null;
+
         if($nodeName == 'edges') {
             if (!isset($json->edges))
                 return null; // Retorna nulo caso o JSON não esteja no formato esperado
+            $nodes = $json->edges;
         } else {
             if (!isset($json->posts))
                 return null; // Retorna nulo caso o JSON não esteja no formato esperado
+            $nodes = $json->posts;
         }
 
         $timestamp = 0;
@@ -44,7 +48,7 @@ class PostDecoder
 
         $cleanedPosts = [];
 
-        foreach ($json->edges as $post) {
+        foreach ($nodes as $post) {
             $node = $post->node;
 
             if($node->taken_at_timestamp < $timestamp)
