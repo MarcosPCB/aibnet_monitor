@@ -59,11 +59,11 @@ class PostDecoder
 
             $dateTime = null;
 
-            if(isset($node->taken_at_timestamp))
+            if(isset($node->taken_at_timestamp)) {
                 $dateTime = Carbon::parse($node->taken_at_timestamp);
                 if($node->taken_at_timestamp < $timestamp)
                     continue;
-            else {
+            } else {
                 $dateTime = Carbon::createFromTimestamp($node->taken_at)->toDateTimeString();
                 if($node->taken_at < $timestamp)
                     continue;
