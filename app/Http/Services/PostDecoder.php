@@ -161,7 +161,7 @@ class PostDecoder
         $comments = [];
 
         foreach ($json as $post) {
-            if($nodeName != 'items')
+            if(isset($post->node))
                 $node = $post->node;
             else $node = $post;
 
