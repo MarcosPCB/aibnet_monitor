@@ -526,6 +526,7 @@ class DeltaController extends Controller
                     $sRequest = Request::create('/',
                         'POST',
                         ['id' => $post->shortcode,
+                        'id2' => $post->id,
                         'platform' => $platform->type,
                         'comments_limit' => 20,
                         'api_id' => $apiToken->id]);

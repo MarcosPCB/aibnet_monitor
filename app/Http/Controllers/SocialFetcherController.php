@@ -190,6 +190,7 @@ class SocialFetcherController extends Controller
     public function fetchComments(Request $request)
     {
         $id = $request->input('id');
+        $id2 = $request->input('id2');
         $platform = $request->input('platform');
         $apiToken = $request->input('api_id');
         $limit = $request->input('comments_limit');
@@ -206,7 +207,7 @@ class SocialFetcherController extends Controller
             } else
                 $this->updateApiTokenUsage($apiToken, 2);
         } else if($apiTokenData->name == 'Hiker' && $platform == 'instagram') {
-            $response = Http::withoutVerifying()->get($apiTokenData->url.'user/media/comments?id='.$id.'&access_key='.$apiTokenData->token);
+            $response = Http::withoutVerifying()->get($apiTokenData->url.'user/media/comments?id='.$id2.'&access_key='.$apiTokenData->token);
             $this->updateApiTokenUsage($apiToken, 1);
         }
 
