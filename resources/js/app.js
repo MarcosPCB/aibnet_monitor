@@ -49,6 +49,14 @@ $(document).ready(function(){
     $('#edit_select_brand_btn_id').click(editMainBrandBrands);
     $('#generate_month_report_btn_id').click(genMonthReport);
 
+    $('#msg_area_id').on('keypress', function(e) {
+        if (e.which == 13) { // Pressiona Enter dentro do input
+            e.preventDefault();
+            $('#send_btn_id').click(); // Aciona o botão
+        }
+    });
+    
+
     $(document).on('shown.bs.modal', function (e) {
         const modalId = $(e.target).attr('id');
         globals.modalHistory.push(modalId);

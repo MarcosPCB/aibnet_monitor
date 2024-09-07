@@ -234,15 +234,26 @@ function createMainBrand(event) {
 
     changeToLoad(event.currentTarget);
 
-    window.axios.post(globals.api_url + `main-brand/create/${globals.account_id}`, {
+    const opponents = [];
+
+    if(opponentBrand1Id != -1)
+        opponents.push(opponentBrand1Id);
+
+    if(opponentBrand2Id != -1)
+        opponents.push(opponentBrand2Id);
+
+    const postData = (opponents.length == 0) ? {
+        name,
+        main_brand_id: primaryBrandId,
+        chat_model
+    } : {
         name,
         main_brand_id: primaryBrandId,
         chat_model,
-        opponents: [
-            opponentBrand1Id,
-            opponentBrand2Id
-        ]
-    }, {
+        opponents
+    };
+
+    window.axios.post(globals.api_url + `main-brand/create/${globals.account_id}`, postData, {
         headers: {
             'Authorization': 'Bearer ' + token,
             'Content-Type': 'application/json',

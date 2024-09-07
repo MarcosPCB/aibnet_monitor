@@ -94,11 +94,11 @@
                         <h3 class="text-white">Gerenciar cliente</h3>
                         <hr class="dropdown-divider text-white">
                         <div class="d-flex">
-                            <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 me-2" data-bs-toggle="modal" data-bs-target="#switch_modal_id" data-bs-dismiss="modal"><span><i class="fa-solid fa-arrow-right-arrow-left"></i></span></button>
-                            <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 me-2" id="edit_main_brand_config_btn_id"><span><i class="fa-solid fa-file-pen"></i></i></span></button>
-                            <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 me-2" id="generate_weekly_report_btn_id"><span><i class="fa-solid fa-file-chart-pie"></i></span></button>
-                            <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 me-2" data-bs-toggle="modal" data-bs-target="#select_month_report_modal_id" data-bs-dismiss="modal"><span><i class="fa-solid fa-file-chart-column"></i></span></button>
-                            <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 me-2" data-bs-toggle="modal" data-bs-target="#create_main_brand_modal_id" data-bs-dismiss="modal"><span><i class="fa-solid fa-folder-plus"></i></span></button>
+                            <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 me-2" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Trocar cliente" data-bs-toggle="modal" data-bs-target="#switch_modal_id" data-bs-dismiss="modal"><span><i class="fa-solid fa-arrow-right-arrow-left"></i></span></button>
+                            <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 me-2" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Editar cliente" id="edit_main_brand_config_btn_id"><span><i class="fa-solid fa-file-pen"></i></i></span></button>
+                            <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 me-2" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Gerar relatório da semana" id="generate_weekly_report_btn_id"><span><i class="fa-solid fa-file-chart-pie"></i></span></button>
+                            <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 me-2" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Gerar relatório do mês" data-bs-toggle="modal" data-bs-target="#select_month_report_modal_id" data-bs-dismiss="modal"><span><i class="fa-solid fa-file-chart-column"></i></span></button>
+                            <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4 mb-3 me-2" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Criar novo cliente" data-bs-toggle="modal" data-bs-target="#create_main_brand_modal_id" data-bs-dismiss="modal"><span><i class="fa-solid fa-folder-plus"></i></span></button>
                         </div>
                     </div>
                 </div>

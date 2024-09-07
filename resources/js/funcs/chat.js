@@ -225,6 +225,7 @@ async function addThread() {
     attachDOM(globals.msg_body, globals.bubble_sys);
     globals.loading_text = true;
     loadingTextLastBubble();
+    globals.msg_body.scrollTop = globals.msg_body.scrollHeight;
 
     try {
         const response = await fetch(globals.api_url + 'chat/create-run/' + globals.account_id, {
@@ -269,7 +270,6 @@ async function addThread() {
 
                 // Decodificar o chunk e atualizar o DOM
                 const chunk = decoder.decode(value, { stream: true });
-                console.log(chunk);
                 let arr = processString(chunk);
                 if(arr.length > 0) {
                     globals.loading_text = false;
@@ -320,6 +320,7 @@ async function sendMsgThread() {
 
     globals.loading_text = true;
     loadingTextLastBubble();
+    globals.msg_body.scrollTop = globals.msg_body.scrollHeight;
 
     try {
         const response = await fetch(globals.api_url + `chat/add/text/${globals.current_thread}/${globals.account_id}`, {
@@ -363,7 +364,6 @@ async function sendMsgThread() {
                     globals.loading_text = false;
                 }
 
-                console.log(chunk);
                 arr.forEach((e) => {
                     text += e;
                     setTextLastBubble(text);

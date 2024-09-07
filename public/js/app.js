@@ -2781,8 +2781,9 @@ function _addThread() {
           attachDOM(globals.msg_body, globals.bubble_sys);
           globals.loading_text = true;
           loadingTextLastBubble();
-          _context2.prev = 22;
-          _context2.next = 25;
+          globals.msg_body.scrollTop = globals.msg_body.scrollHeight;
+          _context2.prev = 23;
+          _context2.next = 26;
           return fetch(globals.api_url + 'chat/create-run/' + globals.account_id, {
             method: 'POST',
             headers: {
@@ -2796,20 +2797,20 @@ function _addThread() {
               name: new_chat_name
             })
           });
-        case 25:
+        case 26:
           response = _context2.sent;
           if (response.body) {
-            _context2.next = 28;
+            _context2.next = 29;
             break;
           }
           throw new Error('A resposta não contém uma stream legível.');
-        case 28:
+        case 29:
           if (!(response.status !== 200)) {
-            _context2.next = 30;
+            _context2.next = 31;
             break;
           }
           throw new Error('ERRO: não foi possível receber uma resposta do servidor');
-        case 30:
+        case 31:
           reader = response.body.getReader();
           decoder = new TextDecoder();
           globals.chat_num_msgs.innerHTML = '2 mensagens';
@@ -2835,13 +2836,12 @@ function _addThread() {
                       _context.next = 12;
                       break;
                     }
-                    return _context.abrupt("break", 19);
+                    return _context.abrupt("break", 18);
                   case 12:
                     // Decodificar o chunk e atualizar o DOM
                     chunk = decoder.decode(value, {
                       stream: true
                     });
-                    console.log(chunk);
                     arr = processString(chunk);
                     if (arr.length > 0) {
                       globals.loading_text = false;
@@ -2852,7 +2852,7 @@ function _addThread() {
                     });
                     _context.next = 4;
                     break;
-                  case 19:
+                  case 18:
                     globals.chat_cards.children[1].children[0].children[0].children[1].innerHTML = "chat: ".concat(globals.current_thread, " - 2 mensagens");
                     globals.chat_cards.children[1].setAttribute('data-api-thread', globals.current_thread);
                     globals.thread_ids.push(globals.current_thread);
@@ -2870,7 +2870,7 @@ function _addThread() {
                     json.push(msg01);
                     globals.thread_text.push(JSON.stringify(json));
                     enableButtons();
-                  case 30:
+                  case 29:
                   case "end":
                     return _context.stop();
                 }
@@ -2881,18 +2881,18 @@ function _addThread() {
             };
           }();
           processChunk();
-          _context2.next = 41;
+          _context2.next = 42;
           break;
-        case 37:
-          _context2.prev = 37;
-          _context2.t0 = _context2["catch"](22);
+        case 38:
+          _context2.prev = 38;
+          _context2.t0 = _context2["catch"](23);
           console.error('Erro ao processar o stream:', _context2.t0);
           checkAuth(_context2.t0.response);
-        case 41:
+        case 42:
         case "end":
           return _context2.stop();
       }
-    }, _callee2, null, [[22, 37]]);
+    }, _callee2, null, [[23, 38]]);
   }));
   return _addThread.apply(this, arguments);
 }
@@ -2914,8 +2914,9 @@ function _sendMsgThread() {
           attachDOM(globals.msg_body, globals.bubble_sys);
           globals.loading_text = true;
           loadingTextLastBubble();
-          _context4.prev = 9;
-          _context4.next = 12;
+          globals.msg_body.scrollTop = globals.msg_body.scrollHeight;
+          _context4.prev = 10;
+          _context4.next = 13;
           return fetch(globals.api_url + "chat/add/text/".concat(globals.current_thread, "/").concat(globals.account_id), {
             method: 'POST',
             headers: {
@@ -2927,20 +2928,20 @@ function _sendMsgThread() {
               text: message
             })
           });
-        case 12:
+        case 13:
           response = _context4.sent;
           if (response.body) {
-            _context4.next = 15;
+            _context4.next = 16;
             break;
           }
           throw new Error('A resposta não contém um stream legível.');
-        case 15:
+        case 16:
           if (!(response.status !== 200)) {
-            _context4.next = 17;
+            _context4.next = 18;
             break;
           }
           throw new Error('ERRO: não foi possível receber uma resposta do servidor');
-        case 17:
+        case 18:
           reader = response.body.getReader();
           decoder = new TextDecoder();
           processChunk = /*#__PURE__*/function () {
@@ -2964,7 +2965,7 @@ function _sendMsgThread() {
                       _context3.next = 11;
                       break;
                     }
-                    return _context3.abrupt("break", 18);
+                    return _context3.abrupt("break", 17);
                   case 11:
                     // Decodificar o chunk e atualizar o DOM
                     chunk = decoder.decode(value, {
@@ -2974,14 +2975,13 @@ function _sendMsgThread() {
                     if (arr.length > 0) {
                       globals.loading_text = false;
                     }
-                    console.log(chunk);
                     arr.forEach(function (e) {
                       text += e;
                       setTextLastBubble(text);
                     });
                     _context3.next = 3;
                     break;
-                  case 18:
+                  case 17:
                     json = JSON.parse(globals.thread_text[globals.selected_thread]);
                     msg00 = {
                       who: 'user',
@@ -3000,7 +3000,7 @@ function _sendMsgThread() {
                     }
                     globals.thread_text[globals.selected_thread] = JSON.stringify(json);
                     enableButtons();
-                  case 27:
+                  case 26:
                   case "end":
                     return _context3.stop();
                 }
@@ -3011,18 +3011,18 @@ function _sendMsgThread() {
             };
           }();
           processChunk();
-          _context4.next = 27;
+          _context4.next = 28;
           break;
-        case 23:
-          _context4.prev = 23;
-          _context4.t0 = _context4["catch"](9);
+        case 24:
+          _context4.prev = 24;
+          _context4.t0 = _context4["catch"](10);
           console.error('Erro ao processar o stream:', _context4.t0);
           checkAuth(_context4.t0.response);
-        case 27:
+        case 28:
         case "end":
           return _context4.stop();
       }
-    }, _callee4, null, [[9, 23]]);
+    }, _callee4, null, [[10, 24]]);
   }));
   return _sendMsgThread.apply(this, arguments);
 }
@@ -3446,12 +3446,20 @@ function createMainBrand(event) {
   var opponentBrand2Id = $('#new_main_brand_opponent_2_id').val();
   var chat_model = $('#new_main_brand_model_id').val();
   changeToLoad(event.currentTarget);
-  window.axios.post(globals.api_url + "main-brand/create/".concat(globals.account_id), {
+  var opponents = [];
+  if (opponentBrand1Id != -1) opponents.push(opponentBrand1Id);
+  if (opponentBrand2Id != -1) opponents.push(opponentBrand2Id);
+  var postData = opponents.length == 0 ? {
+    name: name,
+    main_brand_id: primaryBrandId,
+    chat_model: chat_model
+  } : {
     name: name,
     main_brand_id: primaryBrandId,
     chat_model: chat_model,
-    opponents: [opponentBrand1Id, opponentBrand2Id]
-  }, {
+    opponents: opponents
+  };
+  window.axios.post(globals.api_url + "main-brand/create/".concat(globals.account_id), postData, {
     headers: {
       'Authorization': 'Bearer ' + token,
       'Content-Type': 'application/json',
@@ -21774,6 +21782,13 @@ $(document).ready(function () {
   });
   $('#edit_select_brand_btn_id').click(editMainBrandBrands);
   $('#generate_month_report_btn_id').click(genMonthReport);
+  $('#msg_area_id').on('keypress', function (e) {
+    if (e.which == 13) {
+      // Pressiona Enter dentro do input
+      e.preventDefault();
+      $('#send_btn_id').click(); // Aciona o botão
+    }
+  });
   $(document).on('shown.bs.modal', function (e) {
     var modalId = $(e.target).attr('id');
     globals.modalHistory.push(modalId);
