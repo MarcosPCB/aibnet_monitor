@@ -208,12 +208,13 @@ class SocialFetcherController extends Controller
                 $this->updateApiTokenUsage($apiToken, 2 + (ceil($num / 5.0)));
             } else
                 $this->updateApiTokenUsage($apiToken, 2);
+
+                return $response;//->json();
         } else if($apiTokenData->name == 'Hiker' && $platform == 'instagram') {
             $response = Http::withoutVerifying()->get($apiTokenData->url.'user/media/comments?id='.$id2.'&access_key='.$apiTokenData->token);
             $this->updateApiTokenUsage($apiToken, 1);
+            return $response;//->json();
         }
-
-        return $response;//->json();
     }
 
     public function getLimit(Request $request)
