@@ -390,7 +390,7 @@ class DeltaController extends Controller
                     
                     $response = $socialFetcher->fetchComments($sRequest);
 
-                    $json = (object) $response;
+                    $json = (object) json_decode($response);
                     $json = $json->data;
                     $post->comments = $decoder->instagramCommentDecoder($json->edge_media_to_comment);
                 }
@@ -532,7 +532,7 @@ class DeltaController extends Controller
                     
                     $response = $socialFetcher->fetchComments($sRequest);
 
-                    $json = (object) $response;
+                    $json = (object) json_decode($response);
 
                     if(isset($json->data)) {
                         $json = $json->data;
