@@ -196,6 +196,8 @@ class SocialFetcherController extends Controller
         $limit = $request->input('comments_limit');
 
         $apiTokenData = ApiToken::where('id', $apiToken)->first();
+
+        $response = null;
         
         if($apiTokenData->name == 'Ensemble') {
             $response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/post/details?code='.$id.'&token='.$apiTokenData->token.'&n_comments_to_fetch='.$limit);
