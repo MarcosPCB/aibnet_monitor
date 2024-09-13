@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Email</title>
+    <title>{{ $detalhes['title'] }}</title>
+    <meta charset="UTF-8">
 </head>
 <body>
     <h1>{{ $detalhes['title'] }}</h1>

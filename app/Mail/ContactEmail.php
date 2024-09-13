@@ -12,16 +12,18 @@ class ContactEmail extends Mailable
     use Queueable, SerializesModels;
 
     public $detalhes;
+    public $subject;
 
-    public function __construct($detalhes)
+    public function __construct($detalhes, $subject)
     {
         $this->detalhes = $detalhes;
+        $this->subject = $subject;
     }
 
     public function build()
     {
         return $this->from('admin@aibnet.online')
-                    ->subject('Assunto do Email')
+                    ->subject($this->subject)
                     ->view('emails.contact_email')
                     ->with('detalhes', $this->detalhes);
     }

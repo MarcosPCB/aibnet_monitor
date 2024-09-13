@@ -27,32 +27,34 @@
 	<body>
 		<div class="container-fluid h-100">
 			<div class="row justify-content-center h-100">
-				<div class="col-md-4 col-xl-3 chat"><div class="card mb-sm-3 mb-md-0 contacts_card">
-					<div class="card-header">
-						<div class="input-group align-items-center">
-							<div class="btn-group dropend">
-								<div class="d-flex justify-content-center align-items-center me-3 btn" style="padding: 0;" data-bs-toggle="dropdown">
-									<img class="img-fluid" style="max-width: 64px; border-radius: 50%" id="brand_pic_id" src="img/logo_black.png">
+				<div class="col-md-4 col-xl-2 chat sidebar">
+					<div class="card mb-sm-3 mb-md-0 contacts_card">
+						<div class="card-header">
+							<div class="input-group align-items-center">
+								<div class="btn-group dropend">
+									<div class="d-flex justify-content-center align-items-center me-3 btn" style="padding: 0;" data-bs-toggle="dropdown">
+										<img class="img-fluid" style="max-width: 64px; border-radius: 50%" id="brand_pic_id" src="img/logo_black.png">
+									</div>
+									<ul class="dropdown-menu">
+										<li data-bs-toggle="modal" data-bs-target="#switch_modal_id"><i class="fa-solid fa-arrow-right-arrow-left"></i> Mudar cliente</li>
+										<li data-bs-toggle="modal" data-bs-target="#config_modal_id"><i class="fa-solid fa-gear"></i> Configurar</li>
+										<li data-bs-toggle="modal" data-bs-target="#logout_modal_id"><i class="fa-solid fa-circle-xmark"></i> Logout</li>
+									</ul>
 								</div>
-								<ul class="dropdown-menu">
-									<li data-bs-toggle="modal" data-bs-target="#switch_modal_id"><i class="fa-solid fa-arrow-right-arrow-left"></i> Mudar cliente</li>
-									<li data-bs-toggle="modal" data-bs-target="#config_modal_id"><i class="fa-solid fa-gear"></i> Configurar</li>
-									<li data-bs-toggle="modal" data-bs-target="#logout_modal_id"><i class="fa-solid fa-circle-xmark"></i> Logout</li>
-								</ul>
-							</div>
-							<input type="text" placeholder="Search..." name="" class="form-control search">
-							<div class="input-group-prepend">
-								<span class="input-group-text search_btn"><i class="fas fa-search"></i></span>
+								<input type="text" id="search_card" placeholder="Procurar..." name="" class="form-control search">
+								<!--div class="input-group-prepend">
+									<span class="input-group-text search_btn"><i class="fas fa-search"></i></span>
+								</div-->
 							</div>
 						</div>
+						<div class="card-body contacts_body">
+							<ui class="contacts d-flex justify-content-center align-items-center flex-column" id="chat_cards_id">
+							</ui>
+						</div>
+						<div class="card-footer"></div>
 					</div>
-					<div class="card-body contacts_body">
-                        <ui class="contacts d-flex justify-content-center align-items-center flex-column" id="chat_cards_id">
-						</ui>
-					</div>
-					<div class="card-footer"></div>
-				</div></div>
-				<div class="col-md-8 col-xl-6 chat">
+				</div>
+				<div class="col-md-10 col-xl-9 chat">
 					<div class="card">
 						<div class="card-header msg_head">
 							<div class="d-flex bd-highlight justify-content-between">

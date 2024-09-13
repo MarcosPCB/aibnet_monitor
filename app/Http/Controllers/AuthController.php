@@ -102,7 +102,7 @@ class AuthController extends Controller
             'body' => 'Teste'
         ];
 
-        Mail::to($email['email'])->send(new ContactEmail($detalhes));
+        Mail::to($email['email'])->send(new ContactEmail($detalhes, 'Recuperação de senha'));
 
         return response()->json(['message'=> 'Email send'], 200);
     }

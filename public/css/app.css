@@ -46,7 +46,7 @@ textarea.form-control {
     align-content: center;
 }
 .search{
-    border-radius: 15px 0 0 15px !important;
+    border-radius: 15px !important;
     background-color: rgba(0,0,0,0.3) !important;
     border:0 !important;
     color:white !important;
@@ -273,6 +273,7 @@ background-color: rgba(0,0,0,0.2);
 }
 .contacts_card{
     height: 90vh;
+    overflow-x: hidden;
 }
 
 .modal-content {
@@ -416,6 +417,11 @@ background-color: rgba(0,0,0,0.2);
 
 .form-floating {
     color: white;
+}
+
+.sidebar {
+    min-width: 256px;
+    max-width: 320px;
 }
 
 @media(max-width: 576px) {

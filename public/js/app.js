@@ -21789,6 +21789,27 @@ $(document).ready(function () {
       $('#send_btn_id').click(); // Aciona o botão
     }
   });
+  $(document).ready(function () {
+    $('#search_card').on('keyup', function () {
+      var searchText = $(this).val().toLowerCase(); // Obtém o texto da pesquisa e converte para minúsculas
+
+      // Verifica se o campo de pesquisa está vazio
+      if (searchText === "") {
+        $('#chat_cards_id li').show(); // Mostra todos os cards
+      } else {
+        $('#chat_cards_id li').each(function () {
+          var cardText = $(this).find('.user_info span').text().toLowerCase(); // Obtém o texto do card e converte para minúsculas
+
+          // Verifica se o texto do card contém o texto da pesquisa
+          if (cardText.includes(searchText)) {
+            $(this).show(); // Mostra o card se corresponder à pesquisa
+          } else {
+            $(this).hide(); // Esconde o card se não corresponder à pesquisa
+          }
+        });
+      }
+    });
+  });
   $(document).on('shown.bs.modal', function (e) {
     var modalId = $(e.target).attr('id');
     globals.modalHistory.push(modalId);
