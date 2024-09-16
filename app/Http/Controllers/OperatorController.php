@@ -42,7 +42,7 @@ class OperatorController extends Controller
         }
 
         if ($request->has('password')) {
-            $operator->password = Hash::make($request->password);
+            $operator->password = Hash::make($request->only('password'));
         }
 
         $operator->save();

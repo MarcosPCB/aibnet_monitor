@@ -98,14 +98,14 @@ return [
         'users' => [
             'provider' => 'users',
             'table' => 'password_resets',
-            'expire' => 60,
-            'throttle' => 60,
+            'expire' => 5,
+            'throttle' => 5,
         ],
         'operator' => [
             'provider' => 'operator',
             'table' => 'password_resets',
-            'expire' => 60,
-            'throttle' => 60,
+            'expire' => 5,
+            'throttle' => 5,
         ],
     ],
 

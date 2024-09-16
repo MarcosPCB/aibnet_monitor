@@ -11,6 +11,7 @@ use App\Models\Operator;
 use Illuminate\Support\Facades\Validator;
 use Log;
 use Illuminate\Support\Facades\Mail;
+use Password;
 
 class AuthController extends Controller
 {
@@ -90,21 +91,66 @@ class AuthController extends Controller
         $user = User::where('email', $email)->first();
 
         if (!$user) {
-            $operator = Operator::where('email', $email)->first();
+            $user = Operator::where('email', $email)->first();
             
-            if(!$operator)
+            if(!$user)
                 return response()->json(['message' => 'Invalid email'], 401);
         }
 
+       
+        $token =  Password::createToken($user);
+
+        $resetLink = 'https://aibnet.online/recovery/'.$email.'/'.$token;
 
         $detalhes = [
             'title' => 'Recuperação de senha',
-            'body' => 'Teste'
+            'body' => 'Olá, '.$user->name.'!
+            
+                        Recebemos uma solicitação para redefinir a senha associada ao seu e-mail. Se você não fez essa solicitação, por favor, entre em contato. Caso contrário, clique no link abaixo para redefinir sua senha:
+
+                        '.$resetLink.'
+
+                        Este link de redefinição de senha é válido por 5 minutos. Após esse período, você precisará solicitar um novo link de redefinição de senha.
+
+                        Se você tiver qualquer dúvida ou enfrentar problemas, entre em contato com nosso suporte.
+
+                        Obrigado por usar nossos serviços!
+
+                        Atenciosamente,
+                        Equipe de Suporte
+                        AIBNet'
         ];
 
         Mail::to($email['email'])->send(new ContactEmail($detalhes, 'Recuperação de senha'));
 
         return response()->json(['message'=> 'Email send'], 200);
+    }
+
+    public function resetPassword(Request $request) {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'password' => 'required|min:8|string',
+            'token' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $email = $request->only('email');
+
+        $user = User::where('email', $email)->first();
+
+        if (!$user) {
+            $user = Operator::where('email', $email)->first();
+            
+            if(!$user)
+                return response()->json(['message' => 'Invalid email'], 401);
+        }
+
+        $user->password = Hash::make($request->only('password'));
+
+        return response()->json(['message'=> 'Password changed'], 200);
     }
 
     public function checkToken(Request $request) {

@@ -36,6 +36,8 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware(['auth:san
 // Operator
 Route::post('/operator/register', [OperatorController::class, 'register'])->name('operator.register');
 
+Route::post('/reset/password', [AuthController::class, 'resetPassword'])->name('password.reset')->middleware('guest')->name('password.update');
+
 Route::middleware(['auth:sanctum', 'isOperator'])->group(function () {
     // Account
     Route::post('/account/create', [AccountController::class, 'create'])->name('account.create');
