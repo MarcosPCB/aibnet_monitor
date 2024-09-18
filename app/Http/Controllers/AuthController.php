@@ -148,7 +148,9 @@ class AuthController extends Controller
                 return response()->json(['message' => 'Invalid email'], 401);
         }
 
-        $user->password = Hash::make($request->only('password'));
+        $password = $request->only('password');
+
+        $user->password = Hash::make($password['password']);
 
         return response()->json(['message'=> 'Password changed'], 200);
     }
