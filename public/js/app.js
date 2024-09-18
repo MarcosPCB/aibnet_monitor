@@ -21836,7 +21836,7 @@ $(document).ready(function () {
     }
     $('#recovery_modal_id').modal('show');
     $('#recovery_password_btn_id').click(function (event) {
-      recoveryPassword(email, token, event);
+      recoveryPassword(email, pToken, event);
     });
     $('#recovery_cancel_btn_id').click(function () {
       window.location.href = 'https://aibnet.online';
