@@ -2305,6 +2305,10 @@ function logout() {
 function login(event) {
   var email = $('#email_id')[0].value;
   var password = $('#password_id')[0].value;
+  if (email.length < 4 || password.length < 6) {
+    alert('Email ou senha muito pequenos');
+    return;
+  }
   changeToLoad(event.currentTarget);
   window.axios.post(globals.api_url + "login", {
     email: email,
@@ -2359,10 +2363,75 @@ function login(event) {
     returnToNormal(event.currentTarget);
   });
 }
+function forgotPassword(event) {
+  var email = $('#forgot_email_id')[0].value;
+  if (email.length < 4) {
+    alert('Email muito pequeno');
+    return;
+  }
+  changeToLoad(event.currentTarget);
+  window.axios.post(globals.api_url + "recover", {
+    email: email
+  }, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 200) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    alert('Um email foi enviado no endereço, siga as instruções nele para recuperar a sua senha');
+    returnToNormal(event.currentTarget);
+    var currentModalId = globals.modalHistory.pop();
+    var previousModalId = globals.modalHistory[globals.modalHistory.length - 1];
+    if (previousModalId) {
+      $("#".concat(currentModalId)).modal('hide');
+      $("#".concat(previousModalId)).modal('show');
+    }
+  })["catch"](function (e) {
+    alert('Erro ao tentar enviar email de recuperação:', e);
+    console.error(e);
+    returnToNormal(event.currentTarget);
+  });
+}
+function recoveryPassword(email, token, event) {
+  var new_password = $('#recovery_password_id')[0].value;
+  var confirm_new_password = $('#recovery_confirm_password_id')[0].value;
+  if (new_password != confirm_new_password) {
+    alert('Senhas diferentes');
+    console.error('Senhas diferentes');
+    return;
+  }
+  changeToLoad(event.currentTarget);
+  window.axios.post(globals.api_url + "reset/password", {
+    email: email,
+    password: new_password,
+    token: token
+  }, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  }).then(function (response) {
+    if (response.status != 200) {
+      throw new Error(response.body + " code: ".concat(response.status));
+    }
+    alert('Senha alterada!');
+    returnToNormal(event.currentTarget);
+    window.location.href = 'https://aibnet.online';
+  })["catch"](function (e) {
+    alert('Erro ao mudar a senha:', e);
+    checkAuth(e.response);
+    returnToNormal(event.currentTarget);
+  });
+}
 module.exports = {
   changePassword: changePassword,
   logout: logout,
-  login: login
+  login: login,
+  forgotPassword: forgotPassword,
+  recoveryPassword: recoveryPassword
 };
 
 /***/ }),
@@ -21723,7 +21792,9 @@ var _require3 = __webpack_require__(/*! ./funcs/chat */ "./resources/js/funcs/ch
 var _require4 = __webpack_require__(/*! ./funcs/auth */ "./resources/js/funcs/auth.js"),
   login = _require4.login,
   logout = _require4.logout,
-  changePassword = _require4.changePassword;
+  changePassword = _require4.changePassword,
+  forgotPassword = _require4.forgotPassword,
+  recoveryPassword = _require4.recoveryPassword;
 var _require5 = __webpack_require__(/*! ./funcs/account */ "./resources/js/funcs/account.js"),
   listAccounts = _require5.listAccounts,
   createAccount = _require5.createAccount;
@@ -21754,6 +21825,27 @@ $(document).ready(function () {
   $('#load_app_id').on('transitionend', function () {
     if ($('#load_app_id').css('opacity') == '0') $('#load_app_id').hide();
   });
+  var urlParams = new URLSearchParams(window.location.search);
+  var mode = urlParams.get('mode');
+  if (mode == 'recovery') {
+    var email = urlParams.get('email');
+    var pToken = urlParams.get('token');
+    if (!email || !pToken) {
+      window.location.href = 'https://aibnet.online';
+      return;
+    }
+    $('#recovery_modal_id').modal('show');
+    $('#recovery_password_btn_id').click(function (event) {
+      recoveryPassword(email, token, event);
+    });
+    $('#recovery_cancel_btn_id').click(function () {
+      window.location.href = 'https://aibnet.online';
+    });
+    appLoad();
+    appLoad();
+    appLoad();
+    return;
+  }
   $('#add_thread_btn_id').click(addThread);
   $('#send_btn_id').click(sendMsgThread);
   $('#rename_chat_btn_id').click(renameChat);
@@ -21782,11 +21874,19 @@ $(document).ready(function () {
   });
   $('#edit_select_brand_btn_id').click(editMainBrandBrands);
   $('#generate_month_report_btn_id').click(genMonthReport);
+  $('#forgot_password_btn_id').click(forgotPassword);
   $('#msg_area_id').on('keypress', function (e) {
     if (e.which == 13) {
       // Pressiona Enter dentro do input
       e.preventDefault();
       $('#send_btn_id').click(); // Aciona o botão
+    }
+  });
+  $('#login_modal_id').on('keypress', function (e) {
+    if (e.which == 13 && $('#email_id').val().length >= 4 && $('#password_id').val().length >= 6) {
+      // Pressiona Enter dentro do input
+      e.preventDefault();
+      $('#login_btn_id').click(); // Aciona o botão
     }
   });
   $(document).ready(function () {

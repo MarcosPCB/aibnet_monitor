@@ -91,6 +91,12 @@ function logout() {
 function login(event) {    
     const email = $('#email_id')[0].value;
     const password = $('#password_id')[0].value;
+
+    if(email.length < 4 || password.length < 6) {
+        alert('Email ou senha muito pequenos');
+        return;
+    }
+
     changeToLoad(event.currentTarget);
 
     window.axios.post(globals.api_url + `login`, {
@@ -157,8 +163,86 @@ function login(event) {
     });
 }
 
+function forgotPassword(event) {    
+    const email = $('#forgot_email_id')[0].value;
+
+    if(email.length < 4) {
+        alert('Email muito pequeno');
+        return;
+    }
+
+    changeToLoad(event.currentTarget);
+
+    window.axios.post(globals.api_url + `recover`, {
+        email,
+    }, {
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        if (response.status != 200) {
+            throw new Error(response.body + ` code: ${response.status}`);
+        }
+
+        alert('Um email foi enviado no endereço, siga as instruções nele para recuperar a sua senha');
+        returnToNormal(event.currentTarget);
+        
+        const currentModalId = globals.modalHistory.pop();
+        const previousModalId = globals.modalHistory[globals.modalHistory.length - 1];
+    
+        if (previousModalId) {
+            $(`#${currentModalId}`).modal('hide');
+            $(`#${previousModalId}`).modal('show');
+        }
+            
+    }).catch(e => {
+        alert('Erro ao tentar enviar email de recuperação:', e);
+        console.error(e);
+        returnToNormal(event.currentTarget);
+    });
+}
+
+function recoveryPassword(email, token, event) {
+    const new_password = $('#recovery_password_id')[0].value;
+    const confirm_new_password = $('#recovery_confirm_password_id')[0].value;
+
+    if(new_password != confirm_new_password) {
+        alert('Senhas diferentes');
+        console.error('Senhas diferentes');
+        return;
+    }
+
+    changeToLoad(event.currentTarget)
+    
+    window.axios.post(globals.api_url + `reset/password`, {
+        email,
+        password: new_password,
+        token
+    }, {
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        if (response.status != 200) {
+            throw new Error(response.body + ` code: ${response.status}`);
+        }
+
+       alert('Senha alterada!');
+       returnToNormal(event.currentTarget);
+       window.location.href = 'https://aibnet.online';
+    }).catch(e => {
+        alert('Erro ao mudar a senha:', e);
+        checkAuth(e.response);
+        returnToNormal(event.currentTarget);
+    });
+}
+
 module.exports = {
     changePassword,
     logout,
-    login
+    login,
+    forgotPassword,
+    recoveryPassword
 }

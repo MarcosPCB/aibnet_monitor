@@ -100,7 +100,7 @@ class AuthController extends Controller
        
         $token =  Password::createToken($user);
 
-        $resetLink = 'https://aibnet.online/recovery/'.$email.'/'.$token;
+        $resetLink = 'https://aibnet.online?mode=recovery&email='.$email.'&token='.$token;
 
         $detalhes = [
             'title' => 'Recuperação de senha',

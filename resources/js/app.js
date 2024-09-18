@@ -3,7 +3,7 @@ require('./bootstrap');
 const globals = require('./globals');
 const { cleanDOM, cleanMsgBody, readCookie, appLoad } = require('./utils');
 const { addThread, sendMsgThread, renameChat, deleteChat, listChats } = require('./funcs/chat');
-const { login, logout, changePassword } = require('./funcs/auth');
+const { login, logout, changePassword, forgotPassword, recoveryPassword } = require('./funcs/auth');
 const { listAccounts, createAccount } = require('./funcs/account');
 const { switchBrand, mainBrandSelect, listBrands, loadBrandPic, createMainBrand, fillEditOpponents, genWeeklyReport, editMainBrandBrands, genMonthReport } = require('./funcs/mainBrand');
 const { createBrand, listBBrands, editPrimaryBrand } = require('./funcs/brand');
@@ -19,6 +19,32 @@ $(document).ready(function(){
         if($('#load_app_id').css('opacity') == '0')
             $('#load_app_id').hide();
     });
+
+    const urlParams = new URLSearchParams(window.location.search);
+
+    const mode = urlParams.get('mode');
+
+    if(mode == 'recovery') {
+        const email = urlParams.get('email');
+        const pToken = urlParams.get('token');
+
+        if(!email || !pToken) {
+            window.location.href = 'https://aibnet.online';
+            return;
+        }
+
+        $('#recovery_modal_id').modal('show');
+        $('#recovery_password_btn_id').click((event) => {
+            recoveryPassword(email, token, event);
+        });
+        $('#recovery_cancel_btn_id').click(() => {
+            window.location.href = 'https://aibnet.online';
+        });
+        appLoad();
+        appLoad();
+        appLoad();
+        return;
+    }
 
     $('#add_thread_btn_id').click(addThread);
     $('#send_btn_id').click(sendMsgThread);
@@ -48,11 +74,19 @@ $(document).ready(function(){
     })
     $('#edit_select_brand_btn_id').click(editMainBrandBrands);
     $('#generate_month_report_btn_id').click(genMonthReport);
+    $('#forgot_password_btn_id').click(forgotPassword);
 
     $('#msg_area_id').on('keypress', function(e) {
         if (e.which == 13) { // Pressiona Enter dentro do input
             e.preventDefault();
             $('#send_btn_id').click(); // Aciona o botão
+        }
+    });
+
+    $('#login_modal_id').on('keypress', function(e) {
+        if (e.which == 13 && $('#email_id').val().length >= 4 && $('#password_id').val().length >= 6) { // Pressiona Enter dentro do input
+            e.preventDefault();
+            $('#login_btn_id').click(); // Aciona o botão
         }
     });
 
