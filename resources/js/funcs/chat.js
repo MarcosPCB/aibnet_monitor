@@ -122,7 +122,9 @@ function processString(chunk) {
                 if (globals.currentEvent) {
                     const contentArray = jsonData.delta?.content || [];
                     for (let content of contentArray) {
-                        if (content.type === 'text' && content.text?.value) {
+                        if (content.type === 'image_file') {
+                            events.push(`![image](/storage/loading.gif)`);
+                        } else if (content.type === 'text' && content.text?.value) {
                             events.push(content.text.value);
                         }
                     }
@@ -387,6 +389,28 @@ async function sendMsgThread() {
 
             globals.thread_text[globals.selected_thread] = JSON.stringify(json);
 
+            try {
+                const response = await window.axios.get(globals.api_url + `chat/get/${globals.current_thread}/${globals.account_id}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+        
+                if (response.status != 200) {
+                    throw new Error(response.body + ` code: ${response.status}`);
+                }
+
+                let data = response.data;
+
+                globals.thread_text[globals.selected_thread] = data.text;
+                globals.msg_body.style.scrollBehavior = 'initial';
+                buildChat();
+            } catch(err) {
+                console.log('Unable to fetch texts from API');
+            }        
+
             enableButtons();
         }
 
@@ -517,14 +541,19 @@ async function buildChat() {
     let json = JSON.parse(globals.thread_text[globals.selected_thread]);
     globals.chat_num_msgs.innerHTML = `${json.length} mensagens`;
 
-    json.forEach(e => {
+    for(let i = 0; i < json.length; i++) {
+        const e = json[i];
+
         if(e.who == 'user')
             attachDOM(globals.msg_body, globals.bubble_user);
         else
             attachDOM(globals.msg_body, globals.bubble_sys);
 
         addTextLastBubble(e.text);
-    });
+    }
+
+    globals.msg_body.scrollTop = globals.msg_body.scrollHeight;
+    globals.msg_body.style.scrollBehavior = 'smooth';
 }
 
 function renameChat() {

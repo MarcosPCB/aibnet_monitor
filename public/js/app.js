@@ -2751,7 +2751,9 @@ function processString(chunk) {
               for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
                 var _content$text2;
                 var _content = _step3.value;
-                if (_content.type === 'text' && (_content$text2 = _content.text) !== null && _content$text2 !== void 0 && _content$text2.value) {
+                if (_content.type === 'image_file') {
+                  events.push("![image](/storage/loading.gif)");
+                } else if (_content.type === 'text' && (_content$text2 = _content.text) !== null && _content$text2 !== void 0 && _content$text2.value) {
                   events.push(_content.text.value);
                 }
               }
@@ -3015,7 +3017,7 @@ function _sendMsgThread() {
           decoder = new TextDecoder();
           processChunk = /*#__PURE__*/function () {
             var _ref2 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
-              var text, _yield$reader$read2, done, value, chunk, arr, json, msg00, msg01, len;
+              var text, _yield$reader$read2, done, value, chunk, arr, json, msg00, msg01, len, _response, data;
               return _regeneratorRuntime().wrap(function _callee3$(_context3) {
                 while (1) switch (_context3.prev = _context3.next) {
                   case 0:
@@ -3068,12 +3070,40 @@ function _sendMsgThread() {
                       globals.chat_cards.children[len - globals.selected_thread].children[0].children[0].children[1].innerHTML = "chat: ".concat(globals.current_thread, " - ").concat(json.length, " mensagens");
                     }
                     globals.thread_text[globals.selected_thread] = JSON.stringify(json);
+                    _context3.prev = 25;
+                    _context3.next = 28;
+                    return window.axios.get(globals.api_url + "chat/get/".concat(globals.current_thread, "/").concat(globals.account_id), {
+                      headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                      }
+                    });
+                  case 28:
+                    _response = _context3.sent;
+                    if (!(_response.status != 200)) {
+                      _context3.next = 31;
+                      break;
+                    }
+                    throw new Error(_response.body + " code: ".concat(_response.status));
+                  case 31:
+                    data = _response.data;
+                    globals.thread_text[globals.selected_thread] = data.text;
+                    globals.msg_body.style.scrollBehavior = 'initial';
+                    buildChat();
+                    _context3.next = 40;
+                    break;
+                  case 37:
+                    _context3.prev = 37;
+                    _context3.t0 = _context3["catch"](25);
+                    console.log('Unable to fetch texts from API');
+                  case 40:
                     enableButtons();
-                  case 26:
+                  case 41:
                   case "end":
                     return _context3.stop();
                 }
-              }, _callee3);
+              }, _callee3, null, [[25, 37]]);
             }));
             return function processChunk() {
               return _ref2.apply(this, arguments);
@@ -3201,7 +3231,7 @@ function buildChat() {
 }
 function _buildChat() {
   _buildChat = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee6() {
-    var len, json;
+    var len, json, i, _e;
     return _regeneratorRuntime().wrap(function _callee6$(_context6) {
       while (1) switch (_context6.prev = _context6.next) {
         case 0:
@@ -3220,11 +3250,14 @@ function _buildChat() {
           }
           json = JSON.parse(globals.thread_text[globals.selected_thread]);
           globals.chat_num_msgs.innerHTML = "".concat(json.length, " mensagens");
-          json.forEach(function (e) {
-            if (e.who == 'user') attachDOM(globals.msg_body, globals.bubble_user);else attachDOM(globals.msg_body, globals.bubble_sys);
-            addTextLastBubble(e.text);
-          });
-        case 7:
+          for (i = 0; i < json.length; i++) {
+            _e = json[i];
+            if (_e.who == 'user') attachDOM(globals.msg_body, globals.bubble_user);else attachDOM(globals.msg_body, globals.bubble_sys);
+            addTextLastBubble(_e.text);
+          }
+          globals.msg_body.scrollTop = globals.msg_body.scrollHeight;
+          globals.msg_body.style.scrollBehavior = 'smooth';
+        case 9:
         case "end":
           return _context6.stop();
       }

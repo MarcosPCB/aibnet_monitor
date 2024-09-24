@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use DateTime;
+use Log;
 
 class LLMComm {
 
@@ -23,6 +24,8 @@ class LLMComm {
             'Accept' => 'application/json',
             'OpenAI-Beta' => 'assistants=v2'
         ])->get('https://api.openai.com/v1/assistants/'.$brand->chat_model));
+
+        Log::info(json_encode($this->model));
 
         $this->threads_url = "https://api.openai.com/v1/threads";
         $this->vector_url = "https://api.openai.com/v1/vector_stores";

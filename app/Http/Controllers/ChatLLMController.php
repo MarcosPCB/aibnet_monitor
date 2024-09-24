@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Http;
 use App\Models\Chat;
 use App\Http\Services\LLMComm;
 use Log;
+use Storage;
 
 class ChatLLMController extends Controller
 {
@@ -103,7 +104,36 @@ class ChatLLMController extends Controller
 
                 foreach($streamObj as $e) {
                     if($e->event == "thread.message.delta") {
-                        $text['text'] .= $e->data->delta['content'][0]['text']['value'];
+                        if($e->data->delta['content'][0]['type'] == 'image_file') {
+                            $file_id = $e->data->delta['content'][0]['image_file']['file_id'];
+                            $result = Http::withoutVerifying()->withHeaders([
+                                'Authorization' => 'Bearer '.config('app.LLM_TOKEN'),
+                                'Accept' => 'application/json',
+                                'OpenAI-Beta' => 'assistants=v2'
+                                ])->get("https://api.openai.com/v1/files/".$file_id.'/content');
+
+                            // Verifique se a requisição foi bem-sucedida
+                            if ($result->successful()) {
+                                // Pegue o conteúdo do arquivo
+                                $fileContent = $result->body();
+
+                                // Defina o nome do arquivo (você pode personalizar o nome como desejar)
+                                $fileName = $file_id.'.png';
+
+                                // Salve o arquivo na pasta 'storage/app/tmp'
+                                Storage::disk('public')->put('tmp/'.$fileName, $fileContent);
+
+                                $fileUrl = Storage::url('tmp/'.$fileName);
+
+                                $text['text'] .= '![image]('.$fileUrl.')';
+                            } else {
+                                Log::error('Unable to retrieve image file '.$file_id);
+                            }
+
+                            if($e->data->delta['content'][1]['type'] == 'text')
+                                $text['text'] .= $e->data->delta['content'][1]['text']['value'];
+                        } else if($e->data->delta['content'][0]['type'] == 'text')
+                            $text['text'] .= $e->data->delta['content'][0]['text']['value'];
                     }
                 }
 
@@ -186,7 +216,36 @@ class ChatLLMController extends Controller
 
                 foreach($streamObj as $e) {
                     if($e->event == "thread.message.delta") {
-                        $text['text'] .= $e->data->delta['content'][0]['text']['value'];
+                        if($e->data->delta['content'][0]['type'] == 'image_file') {
+                            $file_id = $e->data->delta['content'][0]['image_file']['file_id'];
+                            $result = Http::withoutVerifying()->withHeaders([
+                                'Authorization' => 'Bearer '.config('app.LLM_TOKEN'),
+                                'Accept' => 'application/json',
+                                'OpenAI-Beta' => 'assistants=v2'
+                                ])->get("https://api.openai.com/v1/files/".$file_id.'/content');
+
+                            // Verifique se a requisição foi bem-sucedida
+                            if ($result->successful()) {
+                                // Pegue o conteúdo do arquivo
+                                $fileContent = $result->body();
+
+                                // Defina o nome do arquivo (você pode personalizar o nome como desejar)
+                                $fileName = $file_id.'.png';
+
+                                // Salve o arquivo na pasta 'storage/app/tmp'
+                                Storage::disk('public')->put('tmp/'.$fileName, $fileContent);
+
+                                $fileUrl = Storage::url('tmp/'.$fileName);
+
+                                $text['text'] .= '![image]('.$fileUrl.')';
+                            } else {
+                                Log::error('Unable to retrieve image file '.$file_id);
+                            }
+
+                            if($e->data->delta['content'][1]['type'] == 'text')
+                                $text['text'] .= $e->data->delta['content'][1]['text']['value'];
+                        } else if($e->data->delta['content'][0]['type'] == 'text')
+                            $text['text'] .= $e->data->delta['content'][0]['text']['value'];
                     }
                 }
 
