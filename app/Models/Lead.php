@@ -18,6 +18,13 @@ class Lead extends Model
         'shortcodes',
         'status',
         'score',
+        'reputation',
+        'follow',
+        'time_off_interactions',
+        'interactions',
+        'likes',
+        'comments',
+        'shares',
         'email',
         'phone',
         "main_brand_id"

@@ -16,10 +16,17 @@ class Lead extends Migration
         Schema::create('lead', function (Blueprint $table) {
             $table->id(); // Chave primária
             $table->string('name')->nullable();
-            $table->json('platform_ids')->nullable();
-            $table->json('shortcodes')->nullable();
+            $table->string('platform_id')->nullable();
+            $table->string('shortcode')->nullable();
+            $table->string('platform');
             $table->boolean('status')->default(true);
-            $table->float('score')->default(0.2);
+            $table->float('score')->default(2.0);
+            $table->float('reputation')->default(0.0);
+            $table->boolean('follow')->default(false);
+            $table->integer('time_off_interactions')->default(0);
+            $table->integer('likes')->default(0);
+            $table->integer('comments')->default(0);
+            $table->integer('shares')->default(0);
             $table->string('email')->nullable();
             $table->string('phone')->nullable();
 
