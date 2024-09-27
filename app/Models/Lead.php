@@ -14,14 +14,14 @@ class Lead extends Model
 
     protected $fillable = [
         "name",
-        "platform_ids",
-        'shortcodes',
+        "platform_id",
+        'shortcode',
+        'platform',
         'status',
         'score',
         'reputation',
         'follow',
         'time_off_interactions',
-        'interactions',
         'likes',
         'comments',
         'shares',
