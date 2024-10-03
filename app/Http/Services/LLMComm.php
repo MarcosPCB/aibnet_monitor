@@ -146,6 +146,77 @@ class LLMComm {
         return $fileName;
     }
 
+    public function getAnalysis($question) {
+        $thread = (object) json_decode(Http::withoutVerifying()->withHeaders([
+            'Authorization' => 'Bearer '.config('app.LLM_TOKEN'),
+            'Accept' => 'application/json',
+            'OpenAI-Beta' => 'assistants=v2'
+            ])->post($this->threads_url, [
+                'messages' => [[
+                    'role' => 'user',
+                    'content' => $question
+                ]]
+            ]));
+
+        if(isset($thread->error))
+            return null;
+
+        $run = (object) json_decode(Http::withoutVerifying()->withHeaders([
+            'Authorization' => 'Bearer '.config('app.LLM_TOKEN'),
+            'Accept' => 'application/json',
+            'OpenAI-Beta' => 'assistants=v2'
+            ])->post($this->threads_url.'/'.$thread->id.'/runs', [
+                'assistant_id' => $this->model->id
+            ]));
+
+        if(isset($runs->error))
+            return null;
+
+        $status = false;
+
+        if($run->status == 'completed')
+            $status = true;
+        else {
+            $run_id = $run->id;
+            $startTime = time();
+            $timeout = 30;
+
+            while(!$status) {
+                // Tempo excedido!
+                if (time() - $startTime > $timeout)
+                    break;
+                
+                $run = (object) json_decode(Http::withoutVerifying()->withHeaders([
+                    'Authorization' => 'Bearer '.config('app.LLM_TOKEN'),
+                    'Accept' => 'application/json',
+                    'OpenAI-Beta' => 'assistants=v2'
+                    ])->get($this->threads_url.'/'.$thread->id.'/runs'.'/'.$run_id));
+
+                if(isset($run->error))
+                    return null;
+
+                if($run->status == 'completed')
+                    $status = true;
+            }
+        }
+
+        if(!$status)
+            return null;
+
+        $messages = (object) json_decode(Http::withoutVerifying()->withHeaders([
+            'Authorization' => 'Bearer '.config('app.LLM_TOKEN'),
+            'Accept' => 'application/json',
+            'OpenAI-Beta' => 'assistants=v2'
+            ])->get($this->threads_url.'/'.$thread->id.'/messages?order=desc&run_id='.$run_id));
+
+        if(isset($messages->error))
+            return null;
+
+        $text = $messages->data[0]->content[0]->text->value;
+
+        return $text;
+    }
+
     private function getMimeType($fileExtension)
     {
         switch ($fileExtension) {
