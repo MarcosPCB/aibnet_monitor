@@ -93,7 +93,7 @@ class ChatLLMController extends Controller
                 // Lendo o stream em chunks
                 $body = $response->getBody();
                 while (!$body->eof()) {  // Usando eof() no lugar de feof()
-                    $chunk = $body->read(1024);  // Lendo o stream em pedaços de 1024 bytes
+                    $chunk = \GuzzleHttp\Psr7\Utils::readLine($body);
                     echo $chunk;  // Enviando o chunk para o cliente
                     $stream .= $chunk;
                     ob_flush();   // Despejando o buffer para o cliente
@@ -205,13 +205,13 @@ class ChatLLMController extends Controller
                 // Lendo o stream em chunks
                 $body = $response->getBody();
                 while (!$body->eof()) {  // Usando eof() no lugar de feof()
-                    $chunk = $body->read(1024);  // Lendo o stream em pedaços de 1024 bytes
+                    $chunk = \GuzzleHttp\Psr7\Utils::readLine($body);
                     echo $chunk;  // Enviando o chunk para o cliente
                     $stream .= $chunk;
                     ob_flush();   // Despejando o buffer para o cliente
                     flush();      // Garantindo que o conteúdo seja enviado imediatamente
                 }
-
+                
                 $streamObj = $llm->processString($stream);
 
                 foreach($streamObj as $e) {

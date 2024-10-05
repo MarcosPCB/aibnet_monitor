@@ -361,6 +361,7 @@ async function sendMsgThread() {
 
                 // Decodificar o chunk e atualizar o DOM
                 const chunk = decoder.decode(value, { stream: true });
+
                 let arr = processString(chunk);
                 if(arr.length > 0) {
                     globals.loading_text = false;
