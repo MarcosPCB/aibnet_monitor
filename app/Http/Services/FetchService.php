@@ -236,4 +236,85 @@ class FetchService {
         }
     }
 
+    public function GetLeadsFromComments($post_id, $apiToken, $platform, $mainBrandId) {
+        $mainBrand = MainBrand::findOrFail($mainBrandId);
+        $brand = $mainBrand->primaryBrand()->first();
+
+        $list = $this->FetchLikes($post_id, $apiToken, $platform);
+
+        foreach($list as $p) {
+            $lead = Lead::where('username', '=', $p->shortcode)->get();
+
+            if(!$lead) {
+                $score = 0.0;
+                if($p->is_verified)
+                    $score = 0.5;
+
+                $lead = Lead::create([
+                    'name' => $p->full_name,
+                    'shortcode' => $p->username,
+                    'platform' => $platform,
+                    'status' => true,
+                    'main_brand_id' => $mainBrandId,
+                    'likes' => 1,
+                    'reputation' => 0.0,
+                    'score' => $score,
+                    'time_off_interactions' => -1
+                ]);
+
+                if(!$p->is_private) {
+                    $profile = $this->FetchProfile($lead->shortcode, $apiToken, $platform);
+                    
+                    $lead->email = $profile->public_email;
+                    $lead->phone = $profile->public_phone_number;
+                    $lead->platform_id = $profile->id;
+
+                    if($lead->email != '')
+                        $score += 0.3;
+
+                    if($lead->phone != '')
+                        $score += 0.3;
+
+                    $lead->score = $score.
+                    $lead->save();
+
+                    $json = $this->FetchPosts($profile->id, $apiToken, $platform);
+
+                    $posts = null;
+
+                    $decoder = new PostDecoder();
+                    if(isset($json->data)) {
+                        $json = $json->data;
+                        $posts = $decoder->instagramDecoder($json, 'posts', 'none');
+                    } else if(isset($json->response)) {
+                        $json = $json->response;
+                        $posts = $decoder->instagramDecoder($json, 'items', 'none');
+                    }
+
+                    if($posts->count > 0) {
+                        $llm = new LLMComm($mainBrandId);
+
+                        $content = 'Levando em consideração o seu cliente principal '.$brand->name.', analise os dados deste perfil e suas postagens e diga se ele é um possível potencial comprador (lead). Seguem os dados:\n'.json_encode($profile).'\n'.json_encode($posts).'\nResponda apenas com uma pontuação entre 0.00 (ele não é) à 2.00 (lead qualificado) e mais nada.';
+                    
+                        $value = $llm->getAnalysis($content);
+
+                        $lead->score += floatval($value);
+                        $lead->save();
+                    }
+                } else {
+                    $profile = $this->FetchProfile($lead->shortcode, $apiToken, $platform);
+                    $lead->platform_id = $profile->id;
+                    $lead->save();
+                }
+            } else {
+                if($lead[0]->status == true) {
+                    $lead[0]->likes++;
+                    $lead[0]->score += 0.05;
+                    $lead[0]->time_off_interactions--;
+                    $lead->save();
+                }
+            }
+        }
+    }
+
 }

@@ -117,21 +117,39 @@ function attachDOM(dom, content) {
 
 function addTextLastBubble(text) {
     let len = globals.msg_body.children.length - 1;
-    let s = globals.msg_body.children[len].children[0].children[0];
+    let b = globals.msg_body.children[len];
+    let n = 0;
+
+    if(b.children.length > 1)
+        n = 1;
+
+    const s = b.children[n].children[0];
     s.innerHTML += marked.parse(text); 
     globals.msg_body.scrollTop = globals.msg_body.scrollHeight;
 }
 
 function setTextLastBubble(text) {
     let len = globals.msg_body.children.length - 1;
-    let s = globals.msg_body.children[len].children[0].children[0];
+    let b = globals.msg_body.children[len];
+    let n = 0;
+
+    if(b.children.length > 1)
+        n = 1;
+
+    const s = b.children[n].children[0];
     s.innerHTML = marked.parse(text); 
     globals.msg_body.scrollTop = globals.msg_body.scrollHeight;
 }
 
 async function loadingTextLastBubble() {
     let len = globals.msg_body.children.length - 1;
-    let s = globals.msg_body.children[len].children[0].children[0];
+    let b = globals.msg_body.children[len];
+    let n = 0;
+
+    if(b.children.length > 1)
+        n = 1;
+
+    const s = b.children[n].children[0];
     s.innerHTML = `<div class="spinner-border text-white" role="status"></div>`;
 } 
 

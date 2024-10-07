@@ -4138,7 +4138,7 @@ var globals = {
   selected_thread: -1,
   menu_chat: -1,
   menu_chat_index: -1,
-  bubble_sys: "<div class=\"d-flex justify-content-start mb-4\">\n                    <div class=\"msg_cotainer msg_bubble_sys\">\n                        <span></span>\n                    </div>\n                </div>",
+  bubble_sys: "<div class=\"d-flex justify-content-start mb-4\">\n                    <div>\n                        <img src=\"/img/lily00.png\" class=\"img-fluid\" style=\"max-width: 48px; border-radius: 50%;\">\n                    </div>\n                    <div class=\"msg_cotainer msg_bubble_sys\">\n                        <span></span>\n                    </div>\n                </div>",
   bubble_user: "<div class=\"d-flex justify-content-end mb-4\">\n                    <div class=\"msg_cotainer_send msg_bubble_user\">\n                        <span></span>\n                    </div>\n                </div>",
   chat_card: "<li class=\"chat_btn active-card\">\n                    <div class=\"d-flex justify-content-between bd-highlight btn w-100 text-start\">\n                        <div class=\"user_info\">\n                            <span></span>\n                            <p></p>\n                        </div>\n                        <span id=\"btn-group dropend\">\n                            <i class=\"fas fa-ellipsis-v btn btn-dots\" data-bs-toggle=\"dropdown\"></i>\n                            <ul class=\"dropdown-menu\">\n                                <li data-bs-toggle=\"modal\" data-bs-target=\"#rename_modal_id\"><i class=\"fas fa-pen\"></i> Renomear</li>\n                                <li data-bs-toggle=\"modal\" data-bs-target=\"#delete_modal_id\"><i class=\"fas fa-trash-can-xmark\"></i> Deletar</li>\n                            </ul>\n                        </span>\n                    </div>\n                </li>",
   add_chat: "<li class=\"d-flex flex-column justify-content-center align-items-center\" style=\"margin-bottom: 15px !important\">\n                    <button class=\"d-flex justify-content-center text-black rounded-pill btn-tertiary\" style=\"width: 90% !important; border: 0px;\" data-bs-toggle=\"modal\" data-bs-target=\"#add_thread_modal_id\">\n                        <span style=\"padding: 5px; border-radius: 10px;\">\n                            <i class=\"fa-solid fa-plus\"></i>\n                        </span>\n                    </button>\n                </li>"
@@ -4251,13 +4251,19 @@ function attachDOM(dom, content) {
 }
 function addTextLastBubble(text) {
   var len = globals.msg_body.children.length - 1;
-  var s = globals.msg_body.children[len].children[0].children[0];
+  var b = globals.msg_body.children[len];
+  var n = 0;
+  if (b.children.length > 1) n = 1;
+  var s = b.children[n].children[0];
   s.innerHTML += marked.parse(text);
   globals.msg_body.scrollTop = globals.msg_body.scrollHeight;
 }
 function setTextLastBubble(text) {
   var len = globals.msg_body.children.length - 1;
-  var s = globals.msg_body.children[len].children[0].children[0];
+  var b = globals.msg_body.children[len];
+  var n = 0;
+  if (b.children.length > 1) n = 1;
+  var s = b.children[n].children[0];
   s.innerHTML = marked.parse(text);
   globals.msg_body.scrollTop = globals.msg_body.scrollHeight;
 }
@@ -4266,14 +4272,17 @@ function loadingTextLastBubble() {
 }
 function _loadingTextLastBubble() {
   _loadingTextLastBubble = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
-    var len, s;
+    var len, b, n, s;
     return _regeneratorRuntime().wrap(function _callee$(_context) {
       while (1) switch (_context.prev = _context.next) {
         case 0:
           len = globals.msg_body.children.length - 1;
-          s = globals.msg_body.children[len].children[0].children[0];
+          b = globals.msg_body.children[len];
+          n = 0;
+          if (b.children.length > 1) n = 1;
+          s = b.children[n].children[0];
           s.innerHTML = "<div class=\"spinner-border text-white\" role=\"status\"></div>";
-        case 3:
+        case 6:
         case "end":
           return _context.stop();
       }

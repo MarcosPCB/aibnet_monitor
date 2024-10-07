@@ -33,6 +33,9 @@ const globals = {
     menu_chat: -1,
     menu_chat_index: -1,
     bubble_sys: `<div class="d-flex justify-content-start mb-4">
+                    <div>
+                        <img src="/img/lily00.png" class="img-fluid" style="max-width: 48px; border-radius: 50%;">
+                    </div>
                     <div class="msg_cotainer msg_bubble_sys">
                         <span></span>
                     </div>

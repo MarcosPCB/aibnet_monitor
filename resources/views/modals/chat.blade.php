@@ -9,7 +9,7 @@
         <div class="modal-body">
             <input type="text" class="form-control type_msg" id="add_thread_name_id" placeholder="Nome do chat..." style="border-radius: 15px"></input>
             <br>
-            <textarea class="form-control type_msg" id="add_thread_msg_id" placeholder="Primeira mensagem..." style="border-radius: 15px"></textarea>
+            <textarea class="form-control type_msg" id="add_thread_msg_id" style="border-radius: 15px">Olá, Lily, como você está hoje?</textarea>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-basic btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
