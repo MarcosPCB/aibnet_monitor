@@ -41,6 +41,31 @@ class FetchService {
         return $json;
     }
 
+    public function FetchComments($id, $id2, $apiToken, $platform, $limit)
+    {
+        $apiTokenData = ApiToken::where('id', $apiToken)->first();
+
+        $response = null;
+        
+        if($apiTokenData->name == 'Ensemble') {
+            $response = Http::withoutVerifying()->get($apiTokenData->url.$platform.'/post/details?code='.$id.'&token='.$apiTokenData->token.'&n_comments_to_fetch='.$limit);
+
+            if($response) {
+                $json = (object) json_decode($response);
+                $num = $json->data->edge_media_to_comment->count;
+                $this->updateApiTokenUsage($apiToken, 2 + (ceil($num / 5.0)));
+            } else
+                $this->updateApiTokenUsage($apiToken, 2);
+
+                return $response;//->json();
+        } else if($apiTokenData->name == 'Hiker' && $platform == 'instagram') {
+            $response = Http::withoutVerifying()->get($apiTokenData->url.'user/media/comments?id='.$id2.'&access_key='.$apiTokenData->token);
+            $json = (object) json_decode($response);
+            $this->updateApiTokenUsage($apiToken, 1);
+            return $json;//->json();
+        }
+    }
+
     public function FetchProfile($id, $apiToken, $platform) {
         $apiTokenData = ApiToken::where('id', $apiToken)->first();
 
@@ -159,7 +184,7 @@ class FetchService {
         $mainBrand = MainBrand::findOrFail($mainBrandId);
         $brand = $mainBrand->primaryBrand()->first();
 
-        $list = $this->FetchLikes($post_id, $apiToken, $platform);
+        $list = $this->FetchComments($post_id, $apiToken, $platform, 15);
 
         foreach($list as $p) {
             $lead = Lead::where('username', '=', $p->shortcode)->get();
@@ -236,11 +261,11 @@ class FetchService {
         }
     }
 
-    public function GetLeadsFromComments($post_id, $apiToken, $platform, $mainBrandId) {
+    public function GetLeadsFromComments($post_id, $post_shortcode, $apiToken, $platform, $mainBrandId) {
         $mainBrand = MainBrand::findOrFail($mainBrandId);
         $brand = $mainBrand->primaryBrand()->first();
 
-        $list = $this->FetchLikes($post_id, $apiToken, $platform);
+        $list = $this->FetchLikes($post_shortcode, $post_id, $apiToken, $platform);
 
         foreach($list as $p) {
             $lead = Lead::where('username', '=', $p->shortcode)->get();
